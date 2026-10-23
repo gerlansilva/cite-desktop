@@ -11,6 +11,7 @@
 - Instalador Windows x64 com telas padrão de instalação.
 - Instalador NSIS, ícone próprio, atalhos e desinstalador.
 - Documentação de instalação, desenvolvimento, publicação e release.
+- Capturas de tela da biblioteca e da tradução no PDF.
 
 ### Corrigido
 

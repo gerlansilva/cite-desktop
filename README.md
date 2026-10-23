@@ -4,6 +4,16 @@ Gerenciador de referências local para macOS e Windows, inspirado no Paperpile. 
 
 Versão atual: **0.2.0**.
 
+## Interface
+
+### Biblioteca
+
+![Biblioteca do Cite](docs/images/biblioteca.png)
+
+### Leitura de PDF e tradução
+
+![Tradução de um trecho do PDF para Tetum](docs/images/pdf-traducao.png)
+
 ## Recursos
 
 - Biblioteca local com favoritos, lixeira, coleções, etiquetas e busca.
