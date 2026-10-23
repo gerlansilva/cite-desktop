@@ -1,0 +1,1217 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cite</title>
+  <script>
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('cite-theme') === 'dark' ? 'dark' : 'light';
+    } catch {}
+  </script>
+  <style>
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-400.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-500.ttf") format("truetype"); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-600.ttf") format("truetype"); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-700.ttf") format("truetype"); font-weight: 700; font-style: normal; font-display: swap; }
+    :root {
+      color-scheme: light;
+      --accent: #0052cc;
+      --accent-dark: #0043a8;
+      --accent-soft: #eaf1ff;
+      --green: #22c55e;
+      --green-dark: #16a34a;
+      --bg: #f3f6f9;
+      --soft: #f7f9fc;
+      --line: #e4e9f0;
+      --line-strong: #d7dee8;
+      --text: #172033;
+      --muted: #667085;
+      --faint: #98a2b3;
+      --title: #0b3a6e;
+      --sidebar: #ffffff;
+      --panel: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font-family: inherit; }
+    .icon { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; flex: none; }
+    .icon.sm { width: 14px; height: 14px; }
+    .icon.lg { width: 18px; height: 18px; }
+    .icon-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+      width: 28px; height: 28px; padding: 0; border: 0; border-radius: 5px;
+      background: transparent; color: #66707d; cursor: pointer;
+    }
+    .icon-button:hover { background: #eef1f5; color: #20242a; }
+    .icon-button.active { background: #e8efff; color: var(--accent); }
+    .btn, .secondary {
+      border: 1px solid var(--line-strong); background: #fff; color: #3d4652;
+      border-radius: 5px; padding: 5px 10px; font-size: 12px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    .btn:hover, .secondary:hover { background: #f6f8fa; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: var(--accent-dark); }
+    .btn.green { background: var(--green); border-color: var(--green); color: #fff; }
+    .btn.green:hover { background: var(--green-dark); }
+    .btn.subtle { border-color: transparent; background: transparent; }
+    .btn.small { padding: 3px 7px; font-size: 11px; }
+    .btn:disabled { opacity: .5; cursor: default; }
+    input, select, textarea {
+      font-family: inherit; padding: 6px 8px; border: 1px solid var(--line-strong);
+      border-radius: 5px; font-size: 12px; background: #fff; color: var(--text); outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+    input[type="checkbox"] { accent-color: var(--accent); }
+
+    /* top bar */
+    .topbar { height: 58px; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); position: relative; z-index: 20; }
+    .brand { width: 142px; font-weight: 700; font-size: 20px; letter-spacing: -.5px; color: #16202c; display: flex; align-items: center; gap: 7px; flex: none; }
+    .brand-mark { width: 21px; height: 21px; border-radius: 5px; background: #1d4f91; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+    .add-wrap { position: relative; flex: none; }
+    .add-wrap .btn { height: 32px; padding: 0 11px; font-size: 12px; }
+    .menu {
+      position: absolute; top: calc(100% + 6px); left: 0; min-width: 260px; padding: 5px;
+      background: #fff; border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(15, 23, 42, .16); z-index: 80;
+    }
+    .menu[hidden] { display: none !important; }
+    .menu-item {
+      width: 100%; border: 0; background: transparent; color: #242a31; text-align: left;
+      display: flex; align-items: flex-start; gap: 10px; padding: 8px 9px; border-radius: 5px;
+      font-size: 12px; cursor: pointer;
+    }
+    .menu-item:hover { background: #f2f6fb; }
+    .menu-item .mi-icon { width: 16px; height: 16px; color: #66707d; margin-top: 1px; flex: none; }
+    .menu-item .mi-main { min-width: 0; flex: 1; }
+    .menu-item .mi-title { display: block; font-weight: 500; color: #222a33; }
+    .menu-item .mi-sub { display: block; margin-top: 1px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .menu-item .shortcut { margin-left: auto; color: var(--faint); font-size: 11px; white-space: nowrap; }
+    .menu-sep { height: 1px; background: var(--line); margin: 4px 6px; }
+    .menu-label { padding: 7px 9px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); }
+    .menu-item.disabled { opacity: .48; cursor: default; }
+    .menu-item.disabled:hover { background: transparent; }
+
+    .search-shell { position: relative; flex: 1; max-width: 760px; margin: 0 auto; min-width: 280px; }
+    .search-box { height: 34px; display: flex; align-items: center; gap: 5px; padding: 0 6px 0 10px; border: 1px solid var(--line-strong); border-radius: 7px; background: #fff; }
+    .search-box:focus-within { border-color: #a9bddb; box-shadow: 0 0 0 2px rgba(37,99,235,.08); }
+    .search-box > .icon { color: #7b8592; }
+    .search-box input { border: 0; box-shadow: none; background: transparent; padding: 0 2px; flex: 1; min-width: 0; font-size: 12px; }
+    .search-box input:focus { box-shadow: none; }
+    .key-hint { font-size: 11px; color: #a1a8b2; border: 1px solid #e0e4e9; background: #f8f9fb; border-radius: 4px; padding: 1px 5px; }
+    .search-shell .menu { left: 0; right: 0; min-width: 420px; }
+    .search-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+    .search-chip {
+      display: inline-block; border: 0; border-radius: 4px; background: #f0f4fa; color: #42526b;
+      padding: 3px 6px; margin: 2px 3px 2px 0; font-size: 11px; cursor: pointer;
+    }
+    .search-chip:hover { background: #e3ebf7; }
+    .search-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 9px; font-size: 12px; color: #3d4652; }
+    .search-toggle input { accent-color: #2563eb; }
+    .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; flex: none; }
+    #status { font-size: 11px; color: var(--muted); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* layout */
+    .app { display: flex; height: calc(100vh - 58px); overflow: hidden; }
+    .sidebar { width: 214px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line); padding: 8px 8px 14px; overflow-y: auto; display: flex; flex-direction: column; }
+    .sidebar.collapsed { display: none; }
+    .sidebar-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 1px 3px 4px 9px; color: #8b949f; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+    .sidebar-head .icon-button { width: 24px; height: 24px; }
+    .side-section { margin-bottom: 8px; }
+    .side-heading { padding: 10px 10px 5px; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: #9aa2ad; }
+    .nav-item {
+      width: 100%; border: 0; background: transparent; color: #47515e; text-align: left;
+      display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 4px;
+      font-size: 13px; cursor: pointer; margin: 1px 0;
+    }
+    .nav-item:hover { background: #eef2f7; }
+    .nav-item.active { background: #2b6cb0; color: #fff; }
+    .nav-item.active .nav-count { color: rgba(255,255,255,.82); }
+    .nav-item .icon { color: #7a8491; }
+    .nav-item.active .icon { color: #fff; }
+    .nav-count { margin-left: auto; color: #8a929d; font-size: 11px; }
+    .side-section h3 { font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: #9aa2ad; margin: 13px 10px 5px; font-weight: 600; }
+    #tags-list, #collections-list { list-style: none; padding: 0; margin: 0; }
+    #tags-list { display: flex; flex-wrap: wrap; gap: 3px; padding: 0 6px; }
+    #tags-list li { display: inline; }
+    #tags-list button { border: 0; border-radius: 4px; background: #eef3f9; color: #3c5a7c; padding: 3px 7px; font-size: 11px; cursor: pointer; }
+    #tags-list button.active { background: #2b6cb0; color: #fff; }
+    #collections-list li { display: flex; align-items: center; gap: 2px; border-radius: 4px; padding: 3px 6px; font-size: 12px; color: #4b5563; }
+    #collections-list li:hover { background: #eef2f7; }
+    #collections-list li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    #collections-list li button { padding: 1px 3px; font-size: 10px; border: 0; background: transparent; color: #8b95a1; }
+    #collections-list li button.collection-action { width: 19px; height: 19px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; }
+    #collections-list li button.collection-action:hover { background: #e2e8f0; color: #4b5563; }
+    #collections-list li button.collection-action .icon { width: 12px; height: 12px; }
+    .side-inputs { padding: 4px 6px 0; }
+    .side-inputs input, .side-inputs select { width: 100%; margin-bottom: 5px; font-size: 11px; padding: 5px 7px; }
+    .side-hint { color: var(--faint); font-size: 10px; line-height: 1.35; margin: -1px 1px 6px; }
+    .side-empty { padding: 2px 10px 6px; color: #9aa2ad; font-size: 11px; }
+    .show-trash { display: flex; align-items: center; gap: 6px; color: #8a929d; font-size: 11px; padding: 8px 10px; }
+    .side-bottom { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+    .tools > summary { list-style: none; cursor: pointer; padding: 7px 9px; font-size: 11px; color: #7a8491; display: flex; align-items: center; gap: 6px; }
+    .tools > summary::-webkit-details-marker { display: none; }
+    .tools > summary:hover { background: #eef2f7; border-radius: 4px; }
+    .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px 6px 8px; }
+    .tools-grid button { min-height: 27px; font-size: 10px; padding: 4px 5px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: #596371; cursor: pointer; white-space: normal; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.2; }
+    .tools-grid button:hover { background: #f3f6fa; }
+    .tools-grid button:disabled { opacity: .45; cursor: default; background: #fff; }
+    .tools-grid .tools-wide { grid-column: 1 / -1; }
+    .tools-grid .language-select { grid-column: 1 / -1; width: 100%; padding: 4px 6px; font-size: 10px; }
+    .tools-grid .tools-section-label { grid-column: 1 / -1; padding: 6px 2px 1px; color: var(--faint); font-size: 9px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+    .tools-grid .tools-section-label:first-child { padding-top: 1px; }
+
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+    .refs-head { min-height: 50px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--line); background: #fff; flex-wrap: wrap; }
+    .refs-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+    .refs-title h2 { font-size: 15px; margin: 0; font-weight: 600; color: #242a31; white-space: nowrap; }
+    #count { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .refs-controls { margin-left: auto; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .refs-controls select { max-width: 118px; padding: 4px 6px; font-size: 11px; border-color: transparent; background: transparent; color: #596371; }
+    .refs-controls select:hover { border-color: var(--line-strong); background: #fff; }
+    .select-wrap { position: relative; display: flex; align-items: center; border-left: 1px solid var(--line); margin-left: 3px; padding-left: 7px; }
+    .select-wrap #select-all { margin: 0 2px 0 0; }
+    .select-wrap .menu { left: auto; right: 0; min-width: 215px; }
+    .list-wrap { flex: 1; overflow-y: auto; background: #fff; }
+    #list { list-style: none; padding: 0; margin: 0; }
+    #list > li {
+      display: flex; gap: 9px; align-items: flex-start; background: #fff;
+      border: 0; border-bottom: 1px solid #edf0f3; border-radius: 0;
+      padding: 11px 14px 10px; margin: 0;
+    }
+    #list > li:hover { background: #fbfcfe; }
+    #list > li.selected { background: #f3f7fd; box-shadow: inset 3px 0 0 #2b6cb0; }
+    #list > li.empty-state { display: block; text-align: center; padding: 42px 20px; color: var(--muted); font-size: 12px; border: 0; }
+    #list > li.empty-state button { margin-top: 10px; }
+    #list > li > input.select-pub { width: 13px; height: 13px; flex: none; margin: 3px 0 0; }
+    .ref-info { flex: 1; min-width: 0; cursor: default; }
+    .ref-title-line { display: flex; align-items: flex-start; gap: 5px; }
+    .ref-info strong { font-size: 13px; line-height: 1.38; font-weight: 600; color: var(--title); display: block; margin: 0; }
+    .star-btn { border: 0; background: transparent; color: #b7bdc6; padding: 0 1px; cursor: pointer; line-height: 1; font-size: 14px; }
+    .ref-files { margin-top: 3px; color: #8a929d; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .star-btn.starred { color: #e0a800; }
+    .star-btn:hover { color: #e0a800; }
+    .ref-meta { margin-top: 3px; color: #4d5662; font-size: 11.5px; line-height: 1.4; }
+    .ref-meta .journal { color: #2d6a4f; }
+    .ref-meta .sep { color: #a4abb4; padding: 0 4px; }
+    .ref-type { display: inline-block; color: #6d7885; background: #f5f6f8; border-radius: 3px; padding: 0 4px; font-size: 10px; vertical-align: 1px; }
+    .ref-footer { display: flex; align-items: center; gap: 7px; margin-top: 6px; color: #8a929d; }
+    .ref-footer .icon-button { width: 23px; height: 23px; }
+    .ref-footer .icon-button .icon { width: 14px; height: 14px; }
+    .ref-footer .count-badge { font-size: 10px; margin-left: -4px; color: #7a8490; }
+    .ref-side { display: flex; align-items: center; gap: 6px; flex: none; padding-top: 1px; }
+    .pdf-btn { border: 1px solid #d9dee5; background: #fff; color: #4d5662; border-radius: 4px; padding: 4px 12px; font-size: 11px; cursor: pointer; }
+    .pdf-btn:hover { background: #f4f6f9; border-color: #c4ccd6; }
+    .row-actions { display: flex; align-items: center; gap: 1px; opacity: 0; transition: opacity .12s; }
+    #list > li:hover .row-actions, #list > li.selected .row-actions { opacity: 1; }
+    .pdf-snippet { margin-top: 5px; font-size: 11px; color: #7b8592; line-height: 1.4; }
+    .pdf-snippet mark { background: #fff0b8; color: #3b3b3b; padding: 0 1px; }
+    .attach-subrow { margin: 8px 0 0 22px; border: 1px solid #e1e6ec; border-radius: 5px; background: #f7f9fb; padding: 7px 9px; }
+    .attach-subrow .file-line { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #42526b; }
+    .attach-subrow .file-name { color: #1d5fa7; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .attach-subrow .file-meta { color: #8a929d; font-size: 10px; }
+    .attach-subrow .sub-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .attach-subrow .sub-actions button { font-size: 10px; padding: 3px 7px; }
+    .notes-panel { padding: 8px 14px 18px; border-top: 1px solid var(--line); }
+    .notes-panel h3 { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 3px 0 6px; }
+    #notes-results { list-style: none; padding: 0; margin: 0; }
+    #notes-results li { border-bottom: 1px solid var(--line); padding: 6px 0; font-size: 11px; }
+    #notes-results .note-comment { margin-top: 3px; color: #6d5b2c; }
+    .muted { color: var(--muted); font-size: 11px; }
+
+    .details { width: 272px; flex: none; background: #fff; border-left: 1px solid var(--line); overflow-y: auto; }
+    .details.collapsed { display: none; }
+    .details-bar { height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 16px; border-bottom: 1px solid var(--line); color: #8b949f; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; position: sticky; top: 0; background: #fff; z-index: 2; }
+    .details-bar .icon-button { width: 24px; height: 24px; }
+    .filter-panel { padding: 12px 16px 12px; border-bottom: 1px solid var(--line); }
+    .filter-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .filter-head h3 { margin: 0; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #7d8793; }
+    .filter-head button { border: 0; background: transparent; color: #9aa2ad; cursor: pointer; padding: 2px; }
+    .filter-row { width: 100%; display: flex; align-items: center; gap: 7px; border: 0; background: transparent; color: #4d5662; padding: 5px 0; font-size: 12px; text-align: left; cursor: pointer; }
+    .filter-row:hover { color: #174a8b; }
+    .filter-row .icon { width: 14px; height: 14px; color: #8a929d; }
+    .filter-row .n { margin-left: auto; color: #7d8793; font-size: 11px; }
+    .filter-row.active { color: #174a8b; font-weight: 600; }
+    .filter-type { padding-top: 10px; border-top: 1px solid var(--line); margin-top: 7px; }
+    .details-head { padding: 14px 16px 8px; display: flex; align-items: flex-start; gap: 6px; }
+    .details-head h3 { margin: 0; flex: 1; font-size: 13px; line-height: 1.4; color: var(--title); font-weight: 600; }
+    .details-head .icon-button { margin-top: -4px; }
+    #pub-details { padding: 0 16px 14px; }
+    .detail-row { display: grid; grid-template-columns: 76px 1fr; gap: 7px; padding: 4px 0; font-size: 11px; line-height: 1.45; }
+    .detail-row .label { color: #7d8793; }
+    .detail-row .value { color: #303842; overflow-wrap: anywhere; }
+    .detail-row .value a { color: #2d6ea8; text-decoration: none; }
+    .detail-row .value a:hover { text-decoration: underline; }
+    .detail-block { margin-top: 9px; padding-top: 8px; border-top: 1px solid #eef1f4; font-size: 11px; line-height: 1.5; color: #4d5662; }
+    .detail-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
+    .detail-actions select { padding: 3px 5px; font-size: 11px; }
+    .detail-actions button { font-size: 11px; padding: 3px 6px; }
+    .pill { display: inline-block; background: #eef4fb; color: #3c5a7c; border-radius: 4px; padding: 1px 6px; font-size: 10px; margin: 1px 3px 1px 0; }
+    .attachments-section { border-top: 1px solid var(--line); padding: 12px 14px 18px; }
+    .attachments-section h3 { margin: 0 0 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #7d8793; }
+    #attachments { list-style: none; padding: 0; margin: 0; }
+    #attachments li { padding: 9px 0; border-bottom: 1px solid #eef1f4; }
+    #attachments li:last-child { border-bottom: 0; }
+    .attachment-row { display: flex; align-items: flex-start; gap: 7px; min-width: 0; }
+    .attachment-icon { width: 21px; height: 23px; flex: none; border-radius: 4px; background: #f4f7fa; color: #5d7892; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+    .attachment-icon .icon { width: 13px; height: 13px; }
+    .attachment-copy { flex: 1; min-width: 0; }
+    .attachment-name { font-size: 11px; line-height: 1.35; color: #225a91; font-weight: 500; overflow-wrap: anywhere; }
+    .attachment-meta { margin-top: 2px; font-size: 10px; line-height: 1.35; color: #8a929d; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .attachment-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .attachment-actions .secondary { padding: 3px 7px; font-size: 10px; border-color: #e0e5ea; color: #56616e; }
+    .attachment-actions .secondary:hover { background: #f4f7fa; }
+    .empty-details { padding: 16px; color: #8a929d; font-size: 12px; line-height: 1.5; }
+
+    /* modals */
+    .modal { position: fixed; inset: 0; z-index: 1002; background: rgba(16, 24, 40, .48); display: flex; align-items: flex-start; justify-content: center; padding: 9vh 16px 20px; }
+    .modal[hidden] { display: none !important; }
+    .modal-card { width: 660px; max-width: 94vw; max-height: 82vh; overflow: auto; background: #fff; border-radius: 9px; box-shadow: 0 24px 64px rgba(15,23,42,.24); padding: 18px 20px; }
+    .modal-card.narrow { width: 520px; }
+    .modal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .modal-head h3 { margin: 0; flex: 1; font-size: 15px; font-weight: 600; }
+    .modal-head .icon-button { margin: -4px -4px 0 0; }
+    #edit-modal, #search-modal, #notes-modal { align-items: center; }
+    #edit-modal .modal-card, #search-modal .modal-card, #notes-modal .modal-card { max-height: 80vh; }
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .edit-grid [data-edit-field][hidden] { display: none; }
+    #type, #edit-type { width: 100%; }
+    .edit-grid #edit-type { grid-column: 1 / -1; }
+    .edit-meta-actions { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+    .integration-note { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .integration-note code { font-size: 10.5px; }
+    #add-form { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    #add-form #title, #add-form #authors, #add-form #type { grid-column: 1 / -1; }
+    #add-form #create-fields, #add-form #create-url, #add-form #folder { grid-column: 1 / -1; }
+    #add-form button[type="submit"] { grid-column: 1 / -1; justify-self: start; }
+    .create-or { display: flex; align-items: center; gap: 8px; color: #9aa2ad; font-size: 11px; margin: 14px 0 9px; }
+    .create-or::before, .create-or::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+    .doi-row { display: flex; gap: 6px; }
+    .doi-row input { flex: 1; }
+    #paste-text { width: 100%; min-height: 150px; resize: vertical; }
+    #search-modal .modal-card { width: 700px; }
+    #search-results { list-style: none; padding: 0; margin: 10px 0 0; }
+    #search-results li { border-bottom: 1px solid var(--line); padding: 9px 0; }
+    #search-results li strong { display: block; margin-bottom: 2px; color: var(--title); font-size: 12px; }
+    #search-results li button { margin-top: 5px; padding: 4px 8px; font-size: 11px; }
+    #search-more { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 0 4px; }
+    #search-more[hidden] { display: none; }
+    #search-more-status { font-size: 11px; }
+    #notes-list { list-style: none; padding: 0; }
+    #notes-list li { border-bottom: 1px solid var(--line); padding: 6px 0; font-size: 12px; }
+    #notes-list li .note-comment { margin-top: 4px; padding: 4px 6px; border-left: 3px solid #f2b84b; border-radius: 0 3px 3px 0; background: #fff6d8; color: #42351a; font-size: 11px; }
+    #notes-list li button { margin-left: 6px; padding: 2px 6px; font-size: 10px; }
+    #viewer[hidden] { display: none !important; }
+    #viewer { position: fixed; inset: 0; z-index: 1000; background: #f4f5f7; }
+    #viewer #pdf-frame { width: 100%; height: 100%; border: 0; background: #f4f5f7; display: block; }
+    #viewer .viewer-close {
+      position: fixed; right: 14px; bottom: 14px; z-index: 1003; width: 34px; height: 34px;
+      border-radius: 50%; border: 1px solid #d7dce3; background: rgba(255,255,255,.94);
+      color: #4d5662; font-size: 19px; line-height: 1; padding: 0; box-shadow: 0 3px 10px rgba(15,23,42,.16);
+    }
+    #viewer .viewer-close:hover { background: #fff; color: #111827; }
+    #drop-overlay { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; background: rgba(26, 70, 120, .18); pointer-events: none; }
+    #drop-overlay .drop-card { width: 360px; padding: 26px 24px; border: 2px dashed #6f9dcc; border-radius: 12px; background: rgba(255,255,255,.97); box-shadow: 0 18px 50px rgba(15,23,42,.22); display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; }
+    #drop-overlay .drop-card .icon { width: 28px; height: 28px; color: #2a6da8; }
+    #drop-overlay .drop-card strong { font-size: 14px; color: #1f3d5c; }
+    #drop-overlay .drop-card span { font-size: 11px; color: #6f7885; }
+    /* Cite visual identity */
+    .topbar {
+      height: 72px; padding: 0 24px; gap: 16px;
+      border-bottom: 1px solid #e5eaf1; background: #fff;
+    }
+    .brand {
+      width: 188px; gap: 10px; font-size: 36px; font-weight: 700;
+      letter-spacing: -1.3px; color: #0b3a6e; line-height: 1;
+    }
+    .brand-mark {
+      width: 44px; height: 44px; border-radius: 0; background: transparent;
+      display: block; object-fit: contain; flex: none;
+    }
+    .brand-name { display: block; transform: translateY(-1px); }
+    .add-wrap .btn {
+      height: 38px; padding: 0 14px; border-radius: 9px; font-size: 14px; font-weight: 500;
+      gap: 8px; box-shadow: 0 2px 5px rgba(34,197,94,.18);
+    }
+    .add-wrap .btn .icon { width: 16px; height: 16px; }
+    .search-shell { max-width: 816px; min-width: 300px; }
+    .search-box {
+      height: 38px; padding: 0 8px 0 12px; border-radius: 10px;
+      border-color: #dfe5ee; gap: 7px;
+    }
+    .search-box > .icon { width: 17px; height: 17px; color: #667085; }
+    .search-box input { font-size: 14px; }
+    .key-hint {
+      min-width: 21px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 5px; color: #98a2b3; font-size: 11px;
+    }
+    .topbar-actions { margin-left: 0; gap: 14px; }
+    #status { font-size: 12px; color: #667085; max-width: 230px; }
+    .lang-switch {
+      display: flex; align-items: center; gap: 2px; padding: 3px;
+      border: 1px solid #e4e9f0; border-radius: 999px; background: #f5f7fa;
+    }
+    .lang-btn {
+      min-width: 34px; height: 27px; padding: 0 9px; border: 0; border-radius: 999px;
+      background: transparent; color: #475467; font-family: inherit; font-size: 11px;
+      font-weight: 600; letter-spacing: .02em; cursor: pointer;
+    }
+    .lang-btn:hover { color: #0052cc; }
+    .lang-btn.active { background: #0052cc; color: #fff; box-shadow: 0 1px 3px rgba(0,82,204,.28); }
+
+    .app { height: calc(100vh - 72px); background: #fff; }
+    .sidebar {
+      width: 272px; padding: 18px 12px 14px; background: #fff;
+      border-right: 1px solid #e7ebf1;
+    }
+    .sidebar-head {
+      padding: 0 10px 6px; color: #667085; font-size: 11px;
+      letter-spacing: .09em; font-weight: 600;
+    }
+    .sidebar-head .icon-button { width: 27px; height: 27px; color: #98a2b3; }
+    .side-section { margin-bottom: 10px; }
+    .side-heading { display: none; }
+    .nav-item {
+      min-height: 36px; padding: 7px 12px; margin: 0; border-radius: 9px;
+      gap: 10px; font-size: 14px; font-weight: 500; color: #344054;
+    }
+    .nav-item:hover { background: #f2f5fa; }
+    .nav-item .icon { width: 18px; height: 18px; color: #667085; }
+    .nav-item.active {
+      background: #0052cc; color: #fff; box-shadow: 0 2px 6px rgba(0,82,204,.22);
+    }
+    .nav-item.active .icon { color: #fff; }
+    .nav-item.active:hover { background: #0052cc; }
+    .nav-count { color: #667085; font-size: 12px; font-weight: 500; }
+    .nav-item.active .nav-count { color: rgba(255,255,255,.9); }
+    .side-section h3 {
+      margin: 22px 10px 8px; color: #667085; font-size: 11px;
+      font-weight: 600; letter-spacing: .09em;
+    }
+    .side-inputs { padding: 0 4px; }
+    .side-inputs input, .side-inputs select {
+      height: 34px; margin-bottom: 7px; padding: 0 36px 0 12px; border-radius: 8px;
+      border-color: #dfe5ee; color: #344054; font-size: 13px;
+      background-color: #fff;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; background-size: 12px;
+      appearance: none;
+    }
+    .side-inputs input::placeholder { color: #667085; opacity: 1; }
+    .side-hint { margin: 1px 1px 8px; color: #98a2b3; font-size: 11px; line-height: 1.45; }
+    #add-collection {
+      width: 100%; height: 34px; justify-content: flex-start; padding: 0 12px;
+      border-radius: 8px; border-color: #dfe5ee; color: #344054; font-size: 13px;
+      background: #fff;
+    }
+    #add-collection:hover { background: #f8fafc; }
+    #collections-list li { min-height: 30px; padding: 4px 8px; gap: 7px; font-size: 13px; color: #344054; }
+    #collections-list li:hover, #collections-list li.active { background: #f2f5fa; }
+    #collections-list li button.collection-color {
+      width: 11px; height: 11px; padding: 0; flex: none; border-radius: 50%;
+      border: 1px solid rgba(15, 23, 42, .18); box-shadow: 0 0 0 2px #fff;
+      transition: transform .12s ease;
+    }
+    #collections-list li button.collection-color:hover { transform: scale(1.25); }
+    .collection-color-menu {
+      position: fixed; z-index: 100; display: grid; grid-template-columns: repeat(4, 22px);
+      gap: 7px; padding: 9px; border: 1px solid #dfe5ee; border-radius: 10px;
+      background: #fff; box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+    }
+    .collection-color-choice {
+      width: 22px; height: 22px; padding: 0; border: 2px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 0 1px #d7dee8; cursor: pointer;
+    }
+    .collection-color-choice:hover { transform: scale(1.12); }
+    .collection-color-choice.selected { box-shadow: 0 0 0 2px #0052cc; }
+    #tags-list button { border-radius: 6px; background: #eef4ff; color: #0052cc; padding: 4px 8px; font-size: 11px; }
+    #tags-list button.active { background: #0052cc; color: #fff; }
+    .show-trash {
+      margin-top: 0; padding: 8px 12px; color: #475467; font-size: 13px; gap: 8px;
+    }
+    .show-trash input { width: 15px; height: 15px; }
+    .side-bottom { padding-top: 10px; border-top: 1px solid #edf0f4; }
+    .tools > summary { padding: 9px 11px; color: #475467; font-size: 13px; gap: 8px; border-radius: 8px; }
+    .tools > summary .icon { width: 17px; height: 17px; color: #667085; }
+    .tools > summary:hover { background: #f5f7fa; }
+    .tools-grid { padding: 8px 4px 6px; gap: 6px; }
+    .tools-grid button { border-radius: 7px; font-size: 11px; min-height: 30px; }
+    .tools-grid .tools-section-label { font-size: 9px; }
+
+    .main { background: #fff; }
+    .refs-head {
+      min-height: 50px; padding: 0 16px; gap: 16px;
+      border-bottom: 1px solid #e7ebf1;
+    }
+    .refs-title { gap: 10px; }
+    .refs-title h2 {
+      font-size: 20px; font-weight: 600; letter-spacing: -.35px; color: #101828;
+    }
+    #count { color: #98a2b3; font-size: 12px; }
+    .refs-controls { gap: 1px; }
+    .refs-controls select {
+      max-width: none; height: 34px; padding: 0 28px 0 9px; border: 0; border-radius: 7px;
+      color: #475467; font-size: 12px; background-color: transparent;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center; background-size: 12px;
+      appearance: none;
+    }
+    .refs-controls select:hover { background-color: #f7f9fc; }
+    .refs-controls .icon-button { width: 32px; height: 32px; border-radius: 7px; color: #667085; }
+    .refs-controls .icon-button:hover { background: #f2f5fa; color: #344054; }
+    .select-wrap { border-left: 1px solid #e7ebf1; padding-left: 8px; margin-left: 4px; }
+    .list-wrap { background: #fff; }
+    #list > li {
+      padding: 14px 24px 13px; border-bottom: 1px solid #eef1f5; gap: 12px;
+    }
+    #list > li:hover { background: #fbfcfe; }
+    #list > li.selected { background: #f3f7ff; box-shadow: inset 3px 0 0 #0052cc; }
+    #list > li > input.select-pub { width: 14px; height: 14px; margin-top: 3px; }
+    .ref-info strong { font-size: 14px; line-height: 1.42; color: #0b3a6e; }
+    .ref-meta { font-size: 12px; color: #475467; }
+    .ref-files { font-size: 11px; color: #98a2b3; }
+    .ref-type { background: #f2f5fa; color: #667085; font-size: 10px; border-radius: 4px; padding: 1px 5px; }
+    .pdf-btn { height: 27px; padding: 0 13px; border-radius: 6px; font-size: 11px; color: #475467; }
+    #list > li.empty-state, #list > li.empty-state:hover {
+      background: #fff;
+      min-height: 620px; padding: 132px 24px 72px; border-bottom: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      color: #667085;
+    }
+    .empty-art { width: 274px; max-width: 70%; height: auto; margin: 64px 0 -12px; object-fit: contain; }
+    .empty-title { margin: 0 0 2px; color: #101828; font-size: 23px; line-height: 1.25; font-weight: 600; letter-spacing: -.35px; }
+    .empty-subtitle { margin: 0 0 12px; color: #667085; font-size: 15px; line-height: 1.45; }
+    .empty-action {
+      min-width: 190px; height: 44px; padding: 0 22px; border: 0; border-radius: 9px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      background: #0052cc; color: #fff; font-family: inherit; font-size: 14px;
+      font-weight: 500; cursor: pointer; box-shadow: 0 2px 5px rgba(0,82,204,.2);
+    }
+    .empty-action:hover { background: #0043a8; }
+    .empty-action .icon { width: 16px; height: 16px; }
+    .notes-panel h3 { color: #667085; font-size: 10px; }
+    .main-footer {
+      flex: none; min-height: 58px; padding: 8px 16px; border-top: 1px solid #e7ebf1;
+      display: flex; align-items: center; align-content: center; flex-wrap: wrap;
+      gap: 2px 9px; background: #fff; color: #667085; font-size: 11.5px; line-height: 1.45;
+    }
+    .main-footer .icon { width: 16px; height: 16px; color: #667085; }
+    .footer-credit { margin: 0; color: #667085; }
+    .main-footer a { color: #0052cc; font-weight: 500; text-decoration: none; white-space: nowrap; }
+    .main-footer a:hover { text-decoration: underline; }
+
+    .details { width: 272px; border-left: 1px solid #e7ebf1; background: #fff; }
+    .details-bar {
+      height: 50px; padding: 0 20px 0 12px; border-bottom: 1px solid #e7ebf1;
+      color: #475467; font-size: 12px; letter-spacing: .08em; font-weight: 600;
+    }
+    .details-bar .icon-button { color: #98a2b3; }
+    .filter-panel { padding: 12px 20px 14px 12px; border-bottom: 1px solid #e7ebf1; }
+    .filter-head { margin-bottom: 6px; }
+    .filter-head h3 { color: #475467; font-size: 12px; letter-spacing: .08em; }
+    .filter-row { gap: 9px; padding: 6px 0; color: #344054; font-size: 13px; }
+    .filter-row .icon { width: 16px; height: 16px; color: #667085; }
+    .filter-row .n { color: #667085; font-size: 12px; }
+    .filter-row:hover, .filter-row.active { color: #0052cc; }
+    .filter-row.active .icon { color: #0052cc; }
+    .filter-type { padding-top: 15px; margin-top: 11px; border-top: 1px solid #e7ebf1; }
+    .filter-type .filter-head { margin-bottom: 3px; }
+    .filter-type .filter-head h3 { font-size: 12px; }
+    .details-head { padding: 20px 20px 10px 12px; }
+    .details-head h3 { font-size: 14px; color: #0b3a6e; }
+    #pub-details { padding: 0 20px 18px 12px; }
+    .detail-row { grid-template-columns: 82px 1fr; gap: 8px; padding: 5px 0; font-size: 12px; }
+    .detail-row .label { color: #667085; }
+    .detail-row .value { color: #344054; }
+    .detail-block { border-top-color: #eef1f5; font-size: 12px; color: #475467; }
+    .attachments-section { padding: 18px 20px 24px 12px; border-top: 1px solid #e7ebf1; }
+    .attachments-section h3 { margin-bottom: 12px; color: #475467; font-size: 12px; letter-spacing: .08em; }
+    #attachments li { padding: 0 0 16px; margin-bottom: 14px; border-bottom: 1px solid #edf0f4; }
+    .attachment-icon { width: 24px; height: 26px; border-radius: 5px; background: #f2f6ff; color: #0052cc; }
+    .attachment-name { color: #0052cc; font-size: 12px; font-weight: 500; line-height: 1.45; }
+    .attachment-meta { margin-top: 3px; color: #667085; font-size: 11px; line-height: 1.45; }
+    .attachment-actions { gap: 5px; margin-top: 7px; }
+    .attachment-actions .secondary {
+      height: 27px; padding: 0 10px; border-radius: 6px; border-color: #dfe5ee;
+      color: #475467; font-size: 11px; background: #fff;
+    }
+
+    .btn, .secondary { border-radius: 8px; font-size: 13px; }
+    .btn.primary { box-shadow: 0 1px 3px rgba(0,82,204,.2); }
+    .btn.green { box-shadow: 0 1px 3px rgba(34,197,94,.2); }
+    input, select, textarea { border-radius: 8px; font-size: 13px; }
+    .modal-card { border-radius: 12px; }
+    .modal-head h3 { font-size: 16px; }
+    .integration-note code { color: #0052cc; }
+
+    @media (max-width: 1180px) {
+      .brand { width: 168px; font-size: 27px; }
+      .sidebar { width: 248px; }
+      .search-shell { min-width: 240px; }
+      .details { width: 252px; }
+    }
+    @media (max-width: 980px) {
+      .brand { width: 54px; }
+      .brand-name { display: none; }
+      .sidebar { width: 224px; }
+      .details { display: none; }
+      .topbar { padding: 0 16px; gap: 12px; }
+      #status { display: none; }
+    }
+
+    /* Dark theme */
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --accent: #6ea8ff;
+      --accent-dark: #8bbcff;
+      --accent-soft: #182942;
+      --green: #34d399;
+      --green-dark: #10b981;
+      --bg: #0d1218;
+      --soft: #151d26;
+      --line: #26313d;
+      --line-strong: #344252;
+      --text: #e7edf5;
+      --muted: #9daab8;
+      --faint: #758494;
+      --title: #d7e7ff;
+      --sidebar: #121922;
+      --panel: #121922;
+    }
+    html[data-theme="dark"] body { background: var(--bg); color: var(--text); }
+    html[data-theme="dark"] .topbar,
+    html[data-theme="dark"] .app,
+    html[data-theme="dark"] .sidebar,
+    html[data-theme="dark"] .main,
+    html[data-theme="dark"] .refs-head,
+    html[data-theme="dark"] .list-wrap,
+    html[data-theme="dark"] .details,
+    html[data-theme="dark"] .details-bar,
+    html[data-theme="dark"] .main-footer,
+    html[data-theme="dark"] .modal-card { background: var(--panel); border-color: var(--line); }
+    html[data-theme="dark"] .brand { color: #e8f1ff; }
+    html[data-theme="dark"] .icon-button { color: var(--muted); }
+    html[data-theme="dark"] .icon-button:hover,
+    html[data-theme="dark"] .nav-item:hover,
+    html[data-theme="dark"] #collections-list li:hover,
+    html[data-theme="dark"] #collections-list li.active,
+    html[data-theme="dark"] .tools > summary:hover,
+    html[data-theme="dark"] .refs-controls .icon-button:hover,
+    html[data-theme="dark"] .refs-controls select:hover { background: #1c2631; color: var(--text); }
+    html[data-theme="dark"] .menu {
+      background: var(--panel); border-color: var(--line);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, .45);
+    }
+    html[data-theme="dark"] .menu-item { color: var(--text); }
+    html[data-theme="dark"] .menu-item:hover { background: #1c2631; }
+    html[data-theme="dark"] .menu-item .mi-title { color: var(--text); }
+    html[data-theme="dark"] .menu-item .mi-sub,
+    html[data-theme="dark"] .menu-item .mi-icon,
+    html[data-theme="dark"] .menu-item .shortcut,
+    html[data-theme="dark"] .menu-label,
+    html[data-theme="dark"] .search-toggle { color: var(--muted); }
+    html[data-theme="dark"] .menu-sep { background: var(--line); }
+    html[data-theme="dark"] .search-box {
+      background: #0f151c; border-color: var(--line-strong);
+    }
+    html[data-theme="dark"] .search-box input { background: transparent; border: 0; color: var(--text); }
+    html[data-theme="dark"] .search-box > .icon,
+    html[data-theme="dark"] #status,
+    html[data-theme="dark"] #count,
+    html[data-theme="dark"] .sidebar-head,
+    html[data-theme="dark"] .side-heading,
+    html[data-theme="dark"] .side-hint,
+    html[data-theme="dark"] .show-trash,
+    html[data-theme="dark"] .details-bar,
+    html[data-theme="dark"] .filter-head h3,
+    html[data-theme="dark"] .filter-row,
+    html[data-theme="dark"] .detail-row .label,
+    html[data-theme="dark"] .detail-block,
+    html[data-theme="dark"] .attachments-section h3,
+    html[data-theme="dark"] .attachment-meta,
+    html[data-theme="dark"] .ref-meta,
+    html[data-theme="dark"] .ref-files,
+    html[data-theme="dark"] .main-footer,
+    html[data-theme="dark"] .footer-credit,
+    html[data-theme="dark"] .empty-subtitle,
+    html[data-theme="dark"] .muted { color: var(--muted); }
+    html[data-theme="dark"] .key-hint {
+      background: var(--soft); color: var(--muted); border-color: var(--line);
+    }
+    html[data-theme="dark"] .search-chip {
+      background: var(--accent-soft); color: #a9caff;
+    }
+    html[data-theme="dark"] .search-chip:hover { background: #223550; }
+    html[data-theme="dark"] .lang-switch { background: var(--soft); border-color: var(--line); }
+    html[data-theme="dark"] .lang-btn { color: var(--muted); }
+    html[data-theme="dark"] .lang-btn:hover { color: var(--accent); }
+    html[data-theme="dark"] .lang-btn.active,
+    html[data-theme="dark"] .nav-item.active,
+    html[data-theme="dark"] #tags-list button.active { background: var(--accent); color: #08111f; }
+    html[data-theme="dark"] .nav-item.active .icon { color: #08111f; }
+    html[data-theme="dark"] .nav-item.active .nav-count { color: rgba(8, 17, 31, .75); }
+    html[data-theme="dark"] .nav-item { color: var(--text); }
+    html[data-theme="dark"] .nav-item .icon,
+    html[data-theme="dark"] .tools > summary,
+    html[data-theme="dark"] .tools > summary .icon,
+    html[data-theme="dark"] .filter-row .icon,
+    html[data-theme="dark"] .filter-row .n { color: var(--muted); }
+    html[data-theme="dark"] .nav-count { color: var(--muted); }
+    html[data-theme="dark"] .side-section h3 { color: var(--muted); }
+    html[data-theme="dark"] .side-inputs input,
+    html[data-theme="dark"] .side-inputs select,
+    html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+    html[data-theme="dark"] select,
+    html[data-theme="dark"] textarea {
+      background-color: #0f151c; color: var(--text); border-color: var(--line-strong);
+    }
+    html[data-theme="dark"] input::placeholder,
+    html[data-theme="dark"] textarea::placeholder { color: #718091; }
+    html[data-theme="dark"] #add-collection {
+      background: var(--panel); color: var(--text); border-color: var(--line-strong);
+    }
+    html[data-theme="dark"] #add-collection:hover { background: #1c2631; }
+    html[data-theme="dark"] #collections-list li { color: var(--text); }
+    html[data-theme="dark"] #collections-list li button.collection-color { box-shadow: 0 0 0 2px var(--panel); }
+    html[data-theme="dark"] .collection-color-menu {
+      background: var(--panel); border-color: var(--line);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+    }
+    html[data-theme="dark"] .collection-color-choice { border-color: var(--panel); box-shadow: 0 0 0 1px var(--line-strong); }
+    html[data-theme="dark"] .collection-color-choice.selected { box-shadow: 0 0 0 2px var(--accent); }
+    html[data-theme="dark"] #tags-list button { background: var(--accent-soft); color: #a9caff; }
+    html[data-theme="dark"] .side-bottom { border-top-color: var(--line); }
+    html[data-theme="dark"] .tools-grid button {
+      background: var(--panel); color: var(--muted); border-color: var(--line);
+    }
+    html[data-theme="dark"] .refs-title h2,
+    html[data-theme="dark"] .ref-info strong,
+    html[data-theme="dark"] .empty-title,
+    html[data-theme="dark"] .details-head h3 { color: var(--text); }
+    html[data-theme="dark"] #list > li { background: var(--panel); border-bottom-color: var(--line); }
+    html[data-theme="dark"] #list > li:hover { background: #17202a; }
+    html[data-theme="dark"] #list > li.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+    html[data-theme="dark"] #list > li.empty-state,
+    html[data-theme="dark"] #list > li.empty-state:hover { background: var(--bg); }
+    html[data-theme="dark"] .empty-art { filter: invert(1) hue-rotate(180deg) saturate(.9); }
+    html[data-theme="dark"] .ref-type { background: var(--soft); color: var(--muted); }
+    html[data-theme="dark"] .pdf-btn,
+    html[data-theme="dark"] .secondary,
+    html[data-theme="dark"] .btn:not(.primary):not(.green) {
+      background: var(--panel); color: var(--text); border-color: var(--line-strong);
+    }
+    html[data-theme="dark"] .pdf-btn:hover,
+    html[data-theme="dark"] .secondary:hover,
+    html[data-theme="dark"] .btn:not(.primary):not(.green):hover { background: #1c2631; }
+    html[data-theme="dark"] .btn.primary { background: var(--accent); border-color: var(--accent); color: #08111f; }
+    html[data-theme="dark"] .btn.green { background: var(--green); border-color: var(--green); color: #062217; }
+    html[data-theme="dark"] .ref-meta .journal { color: #86efac; }
+    html[data-theme="dark"] .ref-meta .sep { color: var(--faint); }
+    html[data-theme="dark"] .pdf-snippet { color: var(--muted); }
+    html[data-theme="dark"] .pdf-snippet mark { background: #7c5d10; color: #fff3c4; }
+    html[data-theme="dark"] .ref-footer { color: var(--muted); }
+    html[data-theme="dark"] .ref-footer .count-badge { color: var(--muted); }
+    html[data-theme="dark"] .attach-subrow {
+      background: #151d26; border-color: var(--line); color: var(--text);
+    }
+    html[data-theme="dark"] .attach-subrow .file-line { color: var(--muted); }
+    html[data-theme="dark"] .attach-subrow .file-name { color: var(--accent); }
+    html[data-theme="dark"] .attach-subrow .file-meta { color: var(--faint); }
+    html[data-theme="dark"] .pill { background: var(--accent-soft); color: #a9caff; }
+    html[data-theme="dark"] .empty-action { background: var(--accent); color: #08111f; }
+    html[data-theme="dark"] .empty-action:hover { background: var(--accent-dark); }
+    html[data-theme="dark"] .main-footer { border-top-color: var(--line); }
+    html[data-theme="dark"] .main-footer a,
+    html[data-theme="dark"] .detail-row .value a,
+    html[data-theme="dark"] .attachment-name,
+    html[data-theme="dark"] .integration-note code { color: var(--accent); }
+    html[data-theme="dark"] .detail-row .value { color: var(--text); }
+    html[data-theme="dark"] .detail-block,
+    html[data-theme="dark"] .attachments-section,
+    html[data-theme="dark"] .filter-panel,
+    html[data-theme="dark"] .filter-type,
+    html[data-theme="dark"] #attachments li { border-color: var(--line); }
+    html[data-theme="dark"] .attachment-icon { background: var(--accent-soft); color: var(--accent); }
+    html[data-theme="dark"] .attachment-actions .secondary { background: var(--panel); color: var(--text); }
+    html[data-theme="dark"] .notes-panel h3 { color: var(--muted); }
+    html[data-theme="dark"] #notes-results .note-comment,
+    html[data-theme="dark"] #notes-list li .note-comment {
+      background: #2a2518; color: #f1dfad; border-left-color: #a87f2e;
+    }
+    html[data-theme="dark"] .modal-card { color: var(--text); }
+    html[data-theme="dark"] .modal-head h3 { color: var(--text); }
+    html[data-theme="dark"] .create-or { color: var(--muted); }
+    html[data-theme="dark"] .create-or::before,
+    html[data-theme="dark"] .create-or::after { background: var(--line); }
+    html[data-theme="dark"] .drop-overlay .drop-card,
+    html[data-theme="dark"] #drop-overlay .drop-card {
+      background: var(--panel); border-color: var(--accent); color: var(--text);
+    }
+    html[data-theme="dark"] #drop-overlay .drop-card strong { color: var(--text); }
+    html[data-theme="dark"] #drop-overlay .drop-card span { color: var(--muted); }
+    html[data-theme="dark"] #viewer { background: var(--bg); }
+    html[data-theme="dark"] #viewer .viewer-close {
+      background: var(--panel); border-color: var(--line-strong); color: var(--text);
+    }
+    html[data-theme="dark"] #viewer .viewer-close:hover { background: #1c2631; color: #fff; }
+    html[data-theme="dark"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+    html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #344252; border-radius: 8px; }
+    html[data-theme="dark"] ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M9 4v6M15 14v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.4-10.4a2 2 0 0 0-2.8-2.8L5.4 16.2 4 20Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><path d="M9 5h6v3H9V5Zm-2 0H5v15h14V5h-2M9 12h6M9 16h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-import" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.2-1.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 5h6v14H4V5Zm8 0h8v14h-8V5ZM7 8h1M16 8h2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9L12 3.5Z" fill="currentColor"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9 7V5h6v2m-8 0 1 13h8l1-13M10 11v5m4-5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6V3Zm8 0v5h4M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="m9 12 5.5-5.5a3 3 0 0 1 4.2 4.2l-7.8 7.8a5 5 0 0 1-7.1-7.1l8-8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M5 5h14v10H9l-4 4V5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h14v12l-4 4H5V4Zm10 16v-4h4M8 9h8M8 13h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10H3V7Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M4 5h7l9 9-7 7-9-9V5Zm4 4h.01" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M16 8V5H5v12h3" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20c.7-3.6 3.7-5.4 7.5-5.4s6.8 1.8 7.5 5.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-panel-left" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 4v16M15 9l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-panel-right" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 4v16M9 9l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-collapse-left" viewBox="0 0 24 24"><path d="M4 12h15m0 0-4-4m4 4-4 4M20 5v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-collapse-right" viewBox="0 0 24 24"><path d="M20 12H5m0 0 4-4m-4 4 4 4M4 5v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <div class="brand" aria-label="Cite"><img class="brand-mark" src="./assets/cite-icon.png" alt=""><span class="brand-name">Cite</span></div>
+    <button id="show-sidebar" class="icon-button" title="Mostrar barra lateral" aria-label="Mostrar barra lateral" hidden><svg class="icon"><use href="#i-panel-left"/></svg></button>
+    <div class="add-wrap">
+      <button id="add-menu-button" class="btn green" aria-haspopup="menu" aria-expanded="false">
+        <svg class="icon sm"><use href="#i-plus"/></svg> Adicionar <svg class="icon sm"><use href="#i-chevron"/></svg>
+      </button>
+      <div id="add-menu" class="menu" role="menu" hidden>
+        <button class="menu-item" id="menu-upload" role="menuitem">
+          <svg class="icon mi-icon"><use href="#i-upload"/></svg>
+          <span class="mi-main"><span class="mi-title">Enviar arquivos…</span><span class="mi-sub">Importar PDFs, BibTeX, RIS, EndNote…</span></span>
+          <span class="shortcut">⌘O</span>
+        </button>
+        <button class="menu-item" id="menu-pdf-url" role="menuitem">
+          <svg class="icon mi-icon"><use href="#i-link"/></svg>
+          <span class="mi-main"><span class="mi-title">Adicionar PDF por link…</span><span class="mi-sub">Baixar um PDF direto da web para o Cite</span></span>
+        </button>
+        <button class="menu-item" id="create-new" role="menuitem">
+          <svg class="icon mi-icon"><use href="#i-pen"/></svg>
+          <span class="mi-main"><span class="mi-title">Criar nova…</span><span class="mi-sub">Inserir metadados manualmente</span></span>
+          <span class="shortcut">N</span>
+        </button>
+        <button class="menu-item" id="menu-search" role="menuitem">
+          <svg class="icon mi-icon"><use href="#i-search"/></svg>
+          <span class="mi-main"><span class="mi-title">Buscar online…</span><span class="mi-sub">Buscar artigos em bases públicas</span></span>
+          <span class="shortcut">+</span>
+        </button>
+        <button class="menu-item" id="menu-paste" role="menuitem">
+          <svg class="icon mi-icon"><use href="#i-paste"/></svg>
+          <span class="mi-main"><span class="mi-title">Colar…</span><span class="mi-sub">Colar BibTeX, RIS, URL ou DOI</span></span>
+          <span class="shortcut">P</span>
+        </button>
+        <div class="menu-sep"></div>
+        <button class="menu-item" id="menu-import" role="menuitem">
+          <svg class="icon mi-icon"><use href="#i-import"/></svg>
+          <span class="mi-main"><span class="mi-title">Importar de outros programas…</span><span class="mi-sub">Migrar do EndNote, Mendeley, Zotero…</span></span>
+        </button>
+        <button class="menu-item disabled" role="menuitem" aria-disabled="true">
+          <svg class="icon mi-icon"><use href="#i-library"/></svg>
+          <span class="mi-main"><span class="mi-title">Criar biblioteca compartilhada</span><span class="mi-sub">Disponível em breve</span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="search-shell">
+      <div class="search-box">
+        <svg class="icon sm"><use href="#i-search"/></svg>
+        <input id="search" placeholder="Pesquisar biblioteca" autocomplete="off">
+        <span class="key-hint">/</span>
+        <button id="search-options" class="icon-button" title="Opções de busca" aria-label="Opções de busca"><svg class="icon sm"><use href="#i-sliders"/></svg></button>
+        <button id="open-search" class="icon-button" title="Buscar artigos online" aria-label="Buscar artigos"><svg class="icon sm"><use href="#i-plus"/></svg></button>
+      </div>
+      <div id="search-menu" class="menu" hidden>
+        <button class="menu-item" id="search-quick">
+          <svg class="icon mi-icon"><use href="#i-search"/></svg>
+          <span class="mi-main"><span class="mi-title">Busca rápida</span><span class="mi-sub">Autores, periódicos, etiquetas, coleções</span></span>
+          <span class="shortcut">@</span>
+        </button>
+        <button class="menu-item" id="search-online-item">
+          <svg class="icon mi-icon"><use href="#i-plus"/></svg>
+          <span class="mi-main"><span class="mi-title">Buscar online</span></span>
+          <span class="shortcut">+</span>
+        </button>
+        <div class="menu-sep"></div>
+        <button class="menu-item" id="search-phrase">
+          <svg class="icon mi-icon"><use href="#i-message"/></svg>
+          <span class="mi-main"><span class="mi-title">Buscar frase exata</span></span>
+          <span class="shortcut">“”</span>
+        </button>
+        <button class="menu-item" id="search-exclude">
+          <svg class="icon mi-icon"><use href="#i-x"/></svg>
+          <span class="mi-main"><span class="mi-title">Excluir da busca</span></span>
+          <span class="shortcut">−</span>
+        </button>
+        <div class="menu-label">Buscar em um campo</div>
+        <div style="padding:0 9px 6px">
+          <button class="search-chip" data-search-field="title">título:</button>
+          <button class="search-chip" data-search-field="author">autor:</button>
+          <button class="search-chip" data-search-field="year">ano:</button>
+          <button class="search-chip" data-search-field="doi">doi:</button>
+          <button class="search-chip" data-search-field="abstract">resumo:</button>
+          <button class="search-chip" data-search-field="pdf">pdf:</button>
+        </div>
+        <div class="menu-label">Incluir na busca</div>
+        <label class="search-toggle">Resumos <input id="include-abstract" type="checkbox" checked></label>
+        <label class="search-toggle">Notas e anotações <input id="include-notes" type="checkbox" checked></label>
+        <label class="search-toggle">Texto completo do PDF <input id="include-pdf" type="checkbox" checked></label>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <span id="status"></span>
+      <button id="show-details" class="icon-button" title="Mostrar painel de detalhes" aria-label="Mostrar painel de detalhes" hidden><svg class="icon"><use href="#i-panel-right"/></svg></button>
+      <button id="theme-toggle" class="icon-button" title="Tema escuro" aria-label="Ativar tema escuro"><svg class="icon"><use href="#i-moon"/></svg></button>
+      <div class="lang-switch" role="group" aria-label="Idioma">
+        <button type="button" class="lang-btn" data-lang="pt" title="Português" aria-label="Português">PT</button>
+        <button type="button" class="lang-btn" data-lang="tet" title="Tetun Dili" aria-label="Tetun Dili">TET</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <span>Biblioteca</span>
+        <button id="collapse-sidebar" class="icon-button" title="Recolher barra lateral" aria-label="Recolher barra lateral"><svg class="icon sm"><use href="#i-collapse-left"/></svg></button>
+      </div>
+      <div class="side-section">
+        <button class="nav-item active" data-view="all"><svg class="icon sm"><use href="#i-library"/></svg><span>Todos</span><span class="nav-count" id="nav-count-all"></span></button>
+        <button class="nav-item" data-view="starred"><svg class="icon sm"><use href="#i-star"/></svg><span>Favoritos</span><span class="nav-count" id="nav-count-starred"></span></button>
+        <button class="nav-item" data-view="trash"><svg class="icon sm"><use href="#i-trash"/></svg><span>Lixeira</span><span class="nav-count" id="nav-count-trash"></span></button>
+      </div>
+
+      <div class="side-section" id="tags-section" hidden>
+        <h3>Etiquetas</h3>
+        <ul id="tags-list" class="tags"></ul>
+      </div>
+
+      <div class="side-section">
+        <h3>Coleções</h3>
+        <ul id="collections-list"></ul>
+        <div class="side-inputs">
+          <input id="collection-name" placeholder="Nova coleção" aria-label="Nome da nova coleção">
+          <select id="collection-parent" aria-label="Coleção superior">
+            <option value="">Sem coleção superior</option>
+          </select>
+          <div class="side-hint">Selecione uma coleção para criar uma subcoleção.</div>
+          <button id="add-collection" class="btn small" style="width:100%">Adicionar coleção</button>
+        </div>
+      </div>
+
+      <label class="show-trash"><input id="show-trashed" type="checkbox"> Mostrar itens na lixeira</label>
+
+      <div class="side-bottom">
+        <details class="tools">
+          <summary><svg class="icon sm"><use href="#i-settings"/></svg> Ferramentas</summary>
+          <div class="tools-grid">
+            <div class="tools-section-label">Biblioteca</div>
+            <button id="duplicates" class="secondary">Duplicadas</button>
+            <button id="merge-dups" class="secondary" title="Mesclar referências duplicadas">Mesclar</button>
+            <button id="clean-orphans" class="secondary" title="Remover referências órfãs">Órfãos</button>
+            <button id="empty-trash" class="secondary" title="Esvaziar lixeira">Esvaziar</button>
+
+            <div class="tools-section-label">Segurança</div>
+            <button id="backup" class="secondary" title="Fazer backup da biblioteca">Backup</button>
+            <button id="restore" class="secondary" title="Restaurar backup">Restaurar</button>
+
+            <div class="tools-section-label">Importar</div>
+            <input id="bibfile" type="file" accept=".bib" hidden>
+            <button id="import-bib" class="secondary">Importar .bib</button>
+            <input id="risfile" type="file" accept=".ris" hidden>
+            <button id="import-ris" class="secondary">Importar .ris</button>
+            <input id="notesfile" type="file" accept=".json" hidden>
+            <button id="import-notes" class="secondary tools-wide" title="Importar anotações">Anotações</button>
+
+            <div class="tools-section-label">Exportar</div>
+            <button id="export-bib" class="secondary">Exportar .bib</button>
+            <button id="export-ris" class="secondary">Exportar .ris</button>
+            <button id="export-md" class="secondary">Exportar .md</button>
+            <button id="export-csv" class="secondary">Exportar .csv</button>
+            <button id="export-notes" class="secondary tools-wide" title="Exportar anotações">Anotações</button>
+
+            <div class="tools-section-label">Conectar</div>
+            <button id="open-integrations" class="secondary tools-wide">Integrações</button>
+          </div>
+        </details>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="refs-head">
+        <div class="refs-title"><h2 id="view-title">Todos</h2><span id="count">0 referências</span></div>
+        <div class="refs-controls">
+          <select id="sort-select" title="Ordenar">
+            <option value="added">Data de adição</option>
+            <option value="title">Título A–Z</option>
+            <option value="year">Ano ↓</option>
+          </select>
+          <select id="folder-filter" title="Filtrar por coleção">
+            <option value="">Todas as coleções</option>
+          </select>
+          <select id="move-target" title="Mover para coleção">
+            <option value="">Mover para…</option>
+          </select>
+          <button id="move-selected" class="icon-button" title="Mover selecionados" aria-label="Mover"><svg class="icon sm"><use href="#i-folder"/></svg></button>
+          <button id="export-selected" class="icon-button" title="Exportar selecionados" aria-label="Exportar"><svg class="icon sm"><use href="#i-download"/></svg></button>
+          <button id="delete-selected" class="icon-button" title="Excluir selecionados" aria-label="Excluir selecionados"><svg class="icon sm"><use href="#i-trash"/></svg></button>
+          <div class="select-wrap">
+            <input id="select-all" type="checkbox" title="Selecionar tudo" aria-label="Selecionar tudo">
+            <button id="select-menu-button" class="icon-button" title="Seleção" aria-label="Opções de seleção"><svg class="icon sm"><use href="#i-chevron"/></svg></button>
+            <div id="select-menu" class="menu" hidden>
+              <button class="menu-item" id="select-all-item"><span class="mi-main"><span class="mi-title">Selecionar tudo</span></span><span class="shortcut">⌘A</span></button>
+              <button class="menu-item" id="clear-selection-item"><span class="mi-main"><span class="mi-title">Limpar seleção</span></span><span class="shortcut">Esc</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-wrap">
+        <ul id="list"></ul>
+        <div class="notes-panel" id="notes-panel" hidden>
+          <h3>Resultados nas anotações</h3>
+          <ul id="notes-results"></ul>
+        </div>
+      </div>
+      <footer class="main-footer">
+        <svg class="icon"><use href="#i-user"/></svg>
+        <p class="footer-credit">Ferramenta desenvolvida por Gerlan Silva da Silva, doutorando em Educação na Universidade Federal de São Carlos (UFSCar).</p>
+        <a id="orcid-link" href="https://orcid.org/0000-0002-9996-9983" data-external target="_blank" rel="noreferrer">ORCID: 0000-0002-9996-9983</a>
+      </footer>
+    </main>
+
+    <aside class="details" id="details-panel">
+      <div class="details-bar">
+        <span id="details-bar-title">Painel</span>
+        <button id="collapse-details" class="icon-button" title="Recolher painel de detalhes" aria-label="Recolher painel de detalhes"><svg class="icon sm"><use href="#i-collapse-right"/></svg></button>
+      </div>
+      <div id="filter-panel" class="filter-panel"></div>
+      <div id="pub-details" hidden></div>
+      <div class="attachments-section" id="attachments-section">
+        <h3>Anexos</h3>
+        <ul id="attachments"></ul>
+      </div>
+    </aside>
+  </div>
+
+  <div id="create-modal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head"><h3>Criar nova referência</h3><button id="close-create" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <form id="add-form">
+        <select id="type" aria-label="Tipo de documento">
+          <option value="article">Artigo de periódico</option>
+          <option value="book">Livro</option>
+          <option value="chapter">Capítulo de livro</option>
+          <option value="conference">Artigo de conferência</option>
+          <option value="thesis">Tese ou dissertação</option>
+          <option value="report">Relatório</option>
+          <option value="webpage">Página da web</option>
+          <option value="newspaper">Artigo de jornal</option>
+          <option value="magazine">Artigo de revista</option>
+        </select>
+        <input id="title" placeholder="Título" required>
+        <input id="authors" placeholder="Autores (separe com ;)">
+        <input id="year" placeholder="Ano">
+        <div id="create-fields" class="edit-grid"></div>
+        <input id="create-doi" placeholder="DOI">
+        <input id="create-url" placeholder="URL">
+        <input id="create-language" placeholder="Idioma (ex.: pt-BR)">
+        <input id="folder" placeholder="Coleção" list="folder-options">
+        <datalist id="folder-options"></datalist>
+        <button type="submit" class="btn primary">Adicionar</button>
+      </form>
+      <div class="create-or">ou adicione por DOI</div>
+      <div class="doi-row">
+        <input id="doi" placeholder="DOI (ex.: 10.1038/nature12373)">
+        <button id="add-doi" class="btn">Adicionar DOI</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="paste-modal" class="modal" hidden>
+    <div class="modal-card narrow">
+      <div class="modal-head"><h3>Colar referência</h3><button id="close-paste" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <p class="muted" style="margin:0 0 8px">Cole um DOI, BibTeX, RIS, link de artigo ou link direto de PDF.</p>
+      <textarea id="paste-text" placeholder="10.1038/nature12373&#10;https://exemplo.org/artigo.pdf&#10;@article{...&#10;TY  - JOUR ..."></textarea>
+      <div style="margin-top:8px"><button id="paste-import" class="btn primary">Importar</button></div>
+    </div>
+  </div>
+
+  <div id="url-modal" class="modal" hidden>
+    <div class="modal-card narrow">
+      <div class="modal-head"><h3>Adicionar PDF por link</h3><button id="close-url" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <p class="muted" style="margin:0 0 8px">Cole o endereço de um PDF de acesso aberto. O Cite baixa o arquivo e cria a referência com o PDF anexado.</p>
+      <div style="display:flex;gap:6px">
+        <input id="pdf-url" placeholder="https://…/artigo.pdf" style="flex:1" autocomplete="off">
+        <button id="import-pdf-url" class="btn primary">Importar PDF</button>
+      </div>
+      <p class="muted" style="margin:8px 0 0">Você também pode arrastar um link de PDF do navegador para a janela do Cite.</p>
+    </div>
+  </div>
+
+  <div id="edit-modal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head"><h3>Editar referência</h3><button id="cancel-edit" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <div class="edit-grid">
+        <select id="edit-type" aria-label="Tipo de documento"></select>
+        <input id="edit-title" placeholder="Título" style="grid-column:1/-1">
+        <input id="edit-authors" placeholder="Autores (separe com ;)" style="grid-column:1/-1">
+        <input id="edit-year" placeholder="Ano">
+        <input id="edit-language" placeholder="Idioma (ex.: pt-BR)">
+        <input id="edit-journal" placeholder="Periódico" data-edit-field="journal">
+        <input id="edit-volume" placeholder="Volume" data-edit-field="volume">
+        <input id="edit-issue" placeholder="Número" data-edit-field="issue">
+        <input id="edit-pages" placeholder="Páginas" data-edit-field="pages">
+        <input id="edit-issn" placeholder="ISSN" data-edit-field="issn">
+        <input id="edit-publisher" placeholder="Editora" data-edit-field="publisher">
+        <input id="edit-place" placeholder="Local de publicação" data-edit-field="place">
+        <input id="edit-edition" placeholder="Edição" data-edit-field="edition">
+        <input id="edit-isbn" placeholder="ISBN" data-edit-field="isbn">
+        <input id="edit-book-title" placeholder="Título do livro" data-edit-field="bookTitle">
+        <input id="edit-editors" placeholder="Editores" data-edit-field="editors">
+        <input id="edit-conference" placeholder="Nome do evento" data-edit-field="conference">
+        <input id="edit-proceedings" placeholder="Anais / Proceedings" data-edit-field="proceedings">
+        <input id="edit-university" placeholder="Universidade" data-edit-field="university">
+        <input id="edit-thesis-type" placeholder="Tipo de tese (mestrado, doutorado...)" data-edit-field="thesisType">
+        <input id="edit-institution" placeholder="Instituição" data-edit-field="institution">
+        <input id="edit-report-number" placeholder="Número do relatório" data-edit-field="reportNumber">
+        <input id="edit-website" placeholder="Nome do site" data-edit-field="website">
+        <input id="edit-accessed" placeholder="Acesso em (AAAA-MM-DD)" data-edit-field="accessed">
+        <input id="edit-section" placeholder="Seção" data-edit-field="section">
+        <input id="edit-doi" placeholder="DOI">
+        <input id="edit-url" placeholder="URL">
+        <input id="edit-folder" placeholder="Coleção" list="folder-options">
+        <input id="edit-tags" placeholder="Etiquetas (separadas por vírgula)" style="grid-column:1/-1">
+      </div>
+      <div class="edit-meta-actions">
+        <button id="refresh-metadata" type="button" class="btn small">Buscar metadados</button>
+        <span id="metadata-status" class="muted"></span>
+      </div>
+      <textarea id="edit-abstract" rows="4" placeholder="Resumo" style="width:100%;margin-top:7px"></textarea>
+      <div style="margin-top:10px;display:flex;gap:6px"><button id="save-edit" class="btn primary">Salvar</button><button id="cancel-edit-2" class="btn">Cancelar</button></div>
+    </div>
+  </div>
+
+  <div id="search-modal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head"><h3>Buscar artigos online</h3><button id="close-search" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <select id="search-source">
+          <option value="crossref">Crossref</option>
+          <option value="arxiv">arXiv</option>
+          <option value="pubmed">PubMed</option>
+          <option value="google">Google Acadêmico</option>
+        </select>
+        <input id="search-query" placeholder="Título, autor, DOI ou palavra-chave" style="flex:1">
+        <button id="run-search" class="btn primary">Buscar</button>
+      </div>
+      <p class="muted" style="margin:0 0 4px">Consulta bases públicas de artigos, sem login. Cole um DOI para consulta direta. O Google Acadêmico pode pedir verificação em caso de muitas consultas.</p>
+      <ul id="search-results"></ul>
+      <div id="search-more" hidden>
+        <button id="load-more-search" class="secondary">Carregar mais</button>
+        <span id="search-more-status" class="muted"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="notes-modal" class="modal" hidden>
+    <div class="modal-card narrow">
+      <div class="modal-head"><h3 id="notes-title">Anotações</h3><button id="close-notes" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input id="note-page" type="number" min="1" placeholder="Página" style="width:90px">
+        <input id="note-color" type="color" value="#fff176" title="Cor do destaque">
+      </div>
+      <textarea id="note-text" rows="3" style="width:100%" placeholder="Texto destacado ou anotação"></textarea>
+      <div style="margin:8px 0;display:flex;gap:6px"><button id="add-note" class="btn primary">Adicionar anotação</button><button id="close-notes-2" class="btn">Fechar</button></div>
+      <ul id="notes-list"></ul>
+    </div>
+  </div>
+
+  <div id="integrations-modal" class="modal" hidden>
+    <div class="modal-card narrow">
+      <div class="modal-head"><h3>Integrações</h3><button id="close-integrations" class="icon-button" aria-label="Fechar"><svg class="icon"><use href="#i-x"/></svg></button></div>
+      <p class="muted" style="margin:0 0 10px">Publique a biblioteca no GitHub para usar os add-ins do Word e do Google Docs.</p>
+      <div class="edit-grid">
+        <input id="github-repo" placeholder="usuario/repositorio" style="grid-column:1/-1">
+        <input id="github-branch" placeholder="Branch (ex.: main)">
+        <input id="github-folder" placeholder="Pasta no repositório (ex.: cite)">
+        <input id="github-token" type="password" placeholder="Token do GitHub (contents: write)" style="grid-column:1/-1">
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        <button id="save-github" class="btn">Salvar configuração</button>
+        <button id="publish-github" class="btn primary">Publicar no GitHub</button>
+        <button id="open-github-repo" class="btn subtle" hidden>Abrir repositório</button>
+      </div>
+      <div id="github-status" class="muted" style="margin-top:8px"></div>
+      <input id="github-bibliography-url" readonly placeholder="URL pública do bibliography.json" style="grid-column:1/-1;margin-top:8px" hidden>
+      <button id="copy-github-url" class="btn subtle" style="margin-top:6px" hidden>Copiar URL</button>
+      <div class="integration-note">
+        <strong>Word:</strong> instale o add-in de <code>integrations/word</code> e informe a URL do <code>bibliography.json</code>.<br>
+        <strong>Google Docs:</strong> publique o Apps Script de <code>integrations/google-docs</code> e informe a mesma URL.
+      </div>
+    </div>
+  </div>
+
+  <div id="viewer" hidden>
+    <button id="close-viewer" class="viewer-close" aria-label="Fechar visualizador" title="Fechar visualizador">×</button>
+    <iframe id="pdf-frame" title="Visualizador de PDF"></iframe>
+  </div>
+
+  <div id="drop-overlay" hidden>
+    <div class="drop-card">
+      <svg class="icon lg"><use href="#i-upload"/></svg>
+      <strong>Solte para importar no Cite</strong>
+      <span>Aceita arquivos PDF ou um link de PDF do navegador.</span>
+    </div>
+  </div>
+
+  <input id="file" type="file" accept="application/pdf" multiple hidden>
+  <input id="pub-file" type="file" accept="application/pdf" multiple hidden>
+
+  <script src="./i18n.js"></script>
+  <script src="./bibtex.js"></script>
+  <script src="./ris.js"></script>
+  <script src="./markdown.js"></script>
+  <script src="./csv.js"></script>
+  <script src="./citations.js"></script>
+  <script src="./pdf-text.bundle.js"></script>
+  <script src="./ui.js"></script>
+</body>
+</html>

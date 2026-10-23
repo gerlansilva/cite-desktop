@@ -1,0 +1,83 @@
+{
+  "name": "cite-desktop",
+  "version": "0.2.0",
+  "description": "Gerenciador de referências local inspirado no Paperpile",
+  "author": "Cite",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "test": "playwright test",
+    "test:data": "node --test tests/*.test.js",
+    "build": "electron-builder",
+    "build:win": "npm run build:viewer && node scripts/build-windows-installer.js",
+    "build:viewer": "esbuild src/pdf-viewer.js --bundle --format=iife --outfile=src/pdf-viewer.bundle.js --minify && esbuild src/pdf-text.js --bundle --format=iife --global-name=PdfText --outfile=src/pdf-text.bundle.js --minify && esbuild node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs --bundle --format=iife --outfile=src/pdf.worker.bundle.js --minify"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.0.0",
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.6",
+    "resedit": "^3.1.0"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  },
+  "build": {
+    "appId": "com.example.cite",
+    "productName": "Cite",
+    "icon": "build/icon.icns",
+    "files": [
+      "!tests/**",
+      "!scripts/**",
+      "!dist/**",
+      "!test-results/**",
+      "!playwright-report/**",
+      "!playwright.config.*",
+      "!paperpile-reverse-engineering-plan.md"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "Cite-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Cite",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "language": "1046",
+      "installerLanguages": [
+        "pt_BR",
+        "en_US"
+      ],
+      "multiLanguageInstaller": true
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "dependencies": {
+    "dexie": "^4.4.6",
+    "pdfjs-dist": "^6.4.299"
+  }
+}

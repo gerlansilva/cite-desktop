@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root { --accent: #1f6f5c; --line: #d9dee5; --muted: #68727f; --text: #222a33; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: #fff; }
+    h1 { font-size: 17px; margin: 0 0 2px; }
+    .muted { color: var(--muted); font-size: 11px; }
+    .row { display: flex; gap: 6px; margin-top: 8px; }
+    input, select, button { font: inherit; }
+    input, select { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+    button { border: 1px solid var(--line); border-radius: 5px; background: #fff; padding: 7px 10px; cursor: pointer; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    button:disabled { opacity: .5; cursor: default; }
+    .card { border: 1px solid var(--line); border-radius: 7px; padding: 10px; margin-top: 10px; }
+    .item { border-bottom: 1px solid #eef1f4; padding: 8px 0; cursor: pointer; }
+    .item:last-child { border-bottom: 0; }
+    .item:hover, .item.selected { background: #f3f8f6; }
+    .item strong { display: block; font-size: 12.5px; }
+    .item span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+    #list { max-height: 43vh; overflow: auto; }
+    #preview { min-height: 54px; }
+    .actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    #status { min-height: 17px; margin-top: 8px; color: var(--muted); font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h1>Cite</h1>
+  <div class="muted">Citações da sua biblioteca no Google Docs.</div>
+
+  <div class="card">
+    <label class="muted" for="bibliography-url">URL do bibliography.json</label>
+    <input id="bibliography-url" placeholder="https://raw.githubusercontent.com/.../bibliography.json">
+    <div class="row">
+      <select id="style" aria-label="Estilo"></select>
+      <button id="load">Carregar</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="row">
+    <input id="search" placeholder="Buscar por título, autor ou ano" autocomplete="off">
+  </div>
+  <div id="list" class="card"><div class="muted">Carregue uma bibliografia para começar.</div></div>
+
+  <div class="card">
+    <div class="muted">Citação selecionada</div>
+    <div id="preview">Nenhuma referência selecionada.</div>
+    <div class="actions">
+      <button id="insert-citation" class="primary" disabled>Inserir citação</button>
+      <button id="insert-bibliography" disabled>Inserir bibliografia</button>
+    </div>
+  </div>
+
+  <script>
+    let bibliography = null;
+    let selected = null;
+    let style = 'ABNT';
+
+    const $ = (id) => document.getElementById(id);
+    function setStatus(message, error) {
+      $('status').textContent = message || '';
+      $('status').style.color = error ? '#b42318' : '';
+    }
+    function itemText(item) {
+      return item.citations?.[style] || item.citations?.ABNT ||
+        [item.authors?.join('; '), item.title, item.year].filter(Boolean).join('. ');
+    }
+    function renderStyles() {
+      const styles = bibliography?.styles?.length
+        ? bibliography.styles
+        : ['ABNT', 'APA', 'MLA', 'Harvard', 'Vancouver', 'Chicago'];
+      const select = $('style');
+      select.innerHTML = '';
+      for (const value of styles) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      }
+      select.value = styles.includes(style) ? style : styles[0];
+      style = select.value;
+    }
+    function renderList() {
+      const list = $('list');
+      list.innerHTML = '';
+      const query = $('search').value.trim().toLowerCase();
+      const items = (bibliography?.items || []).filter((item) => {
+        if (!query) return true;
+        return [item.title, item.authors?.join(' '), item.year, item.journal, item.doi, itemText(item)]
+          .filter(Boolean).join(' ').toLowerCase().includes(query);
+      });
+      if (!items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Carregue uma bibliografia para começar.';
+        list.appendChild(empty);
+        selected = null;
+        renderPreview();
+        return;
+      }
+      for (const item of items) {
+        const row = document.createElement('div');
+        row.className = 'item' + (selected?.id === item.id ? ' selected' : '');
+        const title = document.createElement('strong');
+        title.textContent = item.title || '(sem título)';
+        const meta = document.createElement('span');
+        meta.textContent = [item.authors?.join(', '), item.year, item.journal].filter(Boolean).join(' · ');
+        row.append(title, meta);
+        row.onclick = () => {
+          selected = item;
+          renderList();
+          renderPreview();
+        };
+        list.appendChild(row);
+      }
+    }
+    function renderPreview() {
+      $('preview').textContent = selected ? itemText(selected) : 'Nenhuma referência selecionada.';
+      $('insert-citation').disabled = !selected;
+      $('insert-bibliography').disabled = !bibliography?.items?.length;
+    }
+    function loadBibliography() {
+      const url = $('bibliography-url').value.trim();
+      if (!url) {
+        setStatus('Informe a URL do bibliography.json.', true);
+        return;
+      }
+      setStatus('carregando…');
+      google.script.run
+        .withSuccessHandler((data) => {
+          bibliography = data;
+          selected = null;
+          renderStyles();
+          renderList();
+          renderPreview();
+          google.script.run.saveBibliographyUrl(url);
+          setStatus(`${data.items.length} referência(s) carregada(s).`);
+        })
+        .withFailureHandler((err) => {
+          bibliography = null;
+          renderList();
+          setStatus(`não foi possível carregar: ${err.message}`, true);
+        })
+        .loadBibliography(url);
+    }
+    function insertCitation() {
+      if (!selected) return;
+      google.script.run
+        .withSuccessHandler(() => setStatus('citação inserida.'))
+        .withFailureHandler((err) => setStatus(`não foi possível inserir: ${err.message}`, true))
+        .insertCitation(itemText(selected));
+    }
+    function insertBibliography() {
+      if (!bibliography?.items?.length) return;
+      google.script.run
+        .withSuccessHandler(() => setStatus('bibliografia inserida.'))
+        .withFailureHandler((err) => setStatus(`não foi possível inserir: ${err.message}`, true))
+        .insertBibliography(bibliography.items.map(itemText));
+    }
+    function init() {
+      renderStyles();
+      $('load').onclick = loadBibliography;
+      $('search').oninput = renderList;
+      $('style').onchange = () => {
+        style = $('style').value;
+        renderList();
+        renderPreview();
+      };
+      $('insert-citation').onclick = insertCitation;
+      $('insert-bibliography').onclick = insertBibliography;
+      google.script.run
+        .withSuccessHandler((config) => {
+          $('bibliography-url').value = config.url || '';
+          if (config.url) loadBibliography();
+        })
+        .getConfig();
+    }
+    init();
+  </script>
+</body>
+</html>

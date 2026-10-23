@@ -1,0 +1,722 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PDF</title>
+  <script>
+    try {
+      const theme = new URLSearchParams(location.search).get('theme') || localStorage.getItem('cite-theme');
+      if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+    } catch {}
+  </script>
+  <style>
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-400.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-500.ttf") format("truetype"); font-weight: 500; font-display: swap; }
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-600.ttf") format("truetype"); font-weight: 600; font-display: swap; }
+    @font-face { font-family: "Inter"; src: url("./assets/fonts/Inter-700.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: #f4f5f7;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #242a31;
+      overflow: hidden;
+    }
+    button, input, select, textarea { font-family: inherit; }
+    button { cursor: pointer; }
+    .icon { width: 17px; height: 17px; display: inline-block; vertical-align: -3px; flex: none; }
+    .icon.sm { width: 15px; height: 15px; }
+    .icon.lg { width: 19px; height: 19px; }
+
+    #toolbar {
+      height: 48px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 10px;
+      background: #fff;
+      border-bottom: 1px solid #e5e8ec;
+      position: relative;
+      z-index: 30;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .03);
+    }
+    .brand-btn {
+      width: 29px; height: 29px; border-radius: 7px; border: 0;
+      background: transparent; color: inherit; display: inline-flex; align-items: center;
+      justify-content: center; padding: 0; margin-right: 4px;
+    }
+    .brand-btn svg { width: 27px; height: 27px; display: block; }
+    .brand-btn:hover { opacity: .85; }
+    .tb-sep { width: 1px; height: 24px; background: #e7eaee; margin: 0 4px; flex: none; }
+    .tool-btn, .caret-btn, .tb-btn {
+      height: 30px; min-width: 30px; border: 1px solid transparent; border-radius: 5px;
+      background: transparent; color: #5d6672; display: inline-flex; align-items: center;
+      justify-content: center; padding: 0 6px; gap: 4px; font-size: 12px;
+    }
+    .tool-btn:hover, .caret-btn:hover, .tb-btn:hover { background: #f1f4f7; color: #20242a; }
+    .tool-btn.active, .tb-btn.active { background: #2d7dd2; border-color: #2d7dd2; color: #fff; }
+    .tool-btn.active:hover, .tb-btn.active:hover { background: #246cb7; border-color: #246cb7; color: #fff; }
+    .caret-btn { min-width: 20px; width: 20px; padding: 0; margin-left: -4px; color: #7b8592; }
+    .caret-btn .icon { width: 12px; height: 12px; }
+    .tool-group { display: flex; align-items: center; position: relative; }
+    .tool-group.text-tool { position: relative; }
+    .text-tool-btn { font-weight: 600; font-family: Georgia, serif; font-size: 17px; padding: 0 8px; }
+    .shape-tool-btn .icon { width: 18px; height: 18px; }
+    .color-button { width: 32px; height: 30px; border: 1px solid transparent; background: transparent; border-radius: 5px; display: flex; align-items: center; justify-content: center; padding: 0; }
+    .color-button:hover { background: #f1f4f7; }
+    #color-swatch { width: 17px; height: 17px; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); background: #ffe268; display: block; }
+    .tb-spacer { flex: 1; min-width: 8px; }
+    #findbar { display: flex; align-items: center; gap: 2px; height: 30px; border: 1px solid #e2e6ea; border-radius: 6px; padding: 0 3px 0 7px; background: #fafbfc; }
+    #findbar > .icon { color: #8a929d; }
+    #find-input { width: 162px; border: 0; background: transparent; outline: none; font-size: 12px; padding: 3px 2px; color: #303842; }
+    #find-count { font-size: 10px; color: #8a929d; min-width: 46px; text-align: center; white-space: nowrap; }
+    #find-prev, #find-next { width: 22px; height: 22px; border: 0; background: transparent; color: #6e7885; border-radius: 4px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+    #find-prev:hover, #find-next:hover { background: #e9edf2; color: #20242a; }
+    #hide-annotations { border: 0; background: transparent; color: #76808c; padding: 3px; border-radius: 4px; display: inline-flex; }
+    #hide-annotations:hover { background: #e9edf2; color: #20242a; }
+    #back-home { background: #2d7dd2; border-color: #2d7dd2; color: #fff; padding: 0 11px 0 9px; font-weight: 500; gap: 6px; }
+    #back-home:hover { background: #246cb7; border-color: #246cb7; color: #fff; }
+    #back-home .icon { width: 15px; height: 15px; }
+
+    .menu {
+      position: absolute; top: calc(100% + 5px); left: 0; min-width: 230px; padding: 5px;
+      border: 1px solid #e5e8ec; border-radius: 8px; background: #fff;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .16); z-index: 80;
+    }
+    .menu[hidden] { display: none !important; }
+    .menu.right { left: auto; right: 0; }
+    .menu-item {
+      width: 100%; border: 0; background: transparent; color: #303842; text-align: left;
+      display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 5px;
+      font-size: 12px; white-space: nowrap;
+    }
+    .menu-item:hover { background: #f2f6fa; }
+    .menu-item .mi-icon { width: 16px; height: 16px; color: #6e7885; flex: none; }
+    .menu-item .mi-label { flex: 1; }
+    .menu-item .shortcut { color: #a0a8b2; font-size: 11px; margin-left: 22px; }
+    .menu-item.active { color: #2368ad; font-weight: 600; }
+    .menu-item.active .mi-icon { color: #2368ad; }
+    .menu-sep { height: 1px; background: #edf0f3; margin: 4px 5px; }
+    .menu-title { padding: 6px 9px 3px; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: #9aa2ad; }
+    .menu-sub { position: relative; }
+    .menu-sub .menu { top: -5px; left: calc(100% + 3px); min-width: 150px; }
+    .font-row { display: flex; align-items: center; gap: 6px; padding: 4px 8px 6px; }
+    .font-row select { flex: 1; padding: 4px 5px; font-size: 11px; border: 1px solid #dfe3e8; border-radius: 4px; background: #fff; }
+    .font-toggle { width: 26px; height: 25px; border: 1px solid #dfe3e8; border-radius: 4px; background: #fff; color: #3c4652; font-size: 12px; }
+    .font-toggle.active { background: #e8f1fb; border-color: #9dc1e6; color: #1d5f9e; }
+    .swatches { display: grid; grid-template-columns: repeat(5, 26px); gap: 7px; padding: 7px 9px 9px; }
+    .swatch { width: 26px; height: 26px; border-radius: 5px; border: 1px solid rgba(0,0,0,.14); padding: 0; }
+    .swatch:hover { outline: 2px solid #9fc4e8; }
+    .swatch.selected { outline: 2px solid #2d7dd2; outline-offset: 1px; }
+
+    #app { display: flex; height: calc(100% - 48px); }
+    #annotations {
+      width: 336px; flex: none; display: flex; flex-direction: column;
+      background: #fff; border-right: 1px solid #e3e7eb; overflow: hidden;
+    }
+    body.ann-hidden #annotations { display: none; }
+    .panel-tools { display: flex; align-items: center; gap: 3px; padding: 8px 9px 6px; }
+    .panel-tools button { width: 28px; height: 27px; border: 0; background: transparent; color: #7a8491; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; }
+    .panel-tools button:hover { background: #e9edf2; color: #252b33; }
+    .panel-tools button.active { background: #e4edf7; color: #2468a8; }
+    .panel-tools .grow { flex: 1; }
+    .ann-head { display: flex; align-items: center; gap: 8px; padding: 1px 10px 7px; }
+    .ann-head strong { font-size: 14px; font-weight: 600; color: #3a424c; }
+    .ann-head .count { font-size: 11.5px; color: #8c949e; }
+    .ann-head .head-actions { margin-left: auto; display: flex; gap: 2px; }
+    .ann-head button { border: 0; background: transparent; color: #7b8592; padding: 3px; border-radius: 4px; display: inline-flex; }
+    .ann-head button:hover { background: #e9edf2; color: #20242a; }
+    #ann-search { margin: 0 10px 8px; padding: 6px 8px; border: 1px solid #dfe4e9; border-radius: 5px; font-size: 13px; background: #fff; }
+    #ann-list { flex: 1; overflow: auto; padding: 0 0 12px; }
+    .ann-card { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #eceff2; background: transparent; padding: 14px 16px 13px; cursor: pointer; font: inherit; color: inherit; }
+    .ann-card:hover { background: #eef3f8; }
+    .ann-card.active { background: #e8f0fa; }
+    .ann-quote { font-size: 14.5px; line-height: 1.55; color: #2f3238; white-space: normal; overflow-wrap: anywhere; }
+    .ann-meta { display: flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 11px; color: #7f8791; }
+    .ann-meta .icon { width: 13px; height: 13px; color: #8d959f; }
+    .ann-comment { margin-top: 8px; padding: 8px 10px; border-radius: 4px; background: #fff3c9; font-size: 13px; line-height: 1.5; color: #3f3a2c; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .ann-empty { padding: 26px 16px; font-size: 13.5px; line-height: 1.55; color: #7b8592; text-align: center; }
+
+    #comments-panel { width: 280px; flex: none; background: #fff; border-left: 1px solid #e3e7eb; display: flex; flex-direction: column; overflow: hidden; }
+    body.comments-hidden #comments-panel, body.no-comments #comments-panel { display: none; }
+    .comments-head { height: 40px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 8px 0 12px; border-bottom: 0; color: #59636f; font-size: 13px; }
+    .comments-head strong { font-weight: 600; color: #3a424c; }
+    .comments-head #comments-count { color: #8c949e; font-size: 11.5px; }
+    .comments-head button { margin-left: auto; width: 25px; height: 25px; border: 0; border-radius: 4px; background: transparent; color: #7b8592; display: inline-flex; align-items: center; justify-content: center; }
+    .comments-head button:hover { background: #e9edf2; color: #20242a; }
+    #comment-cards { flex: 1; overflow: auto; padding: 6px 10px 16px; }
+    .comment-panel-card { display: block; width: 100%; text-align: left; border: 1px solid #ead39a; border-radius: 7px; background: #fff3c9; padding: 10px 11px; margin: 0 0 9px; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+    .comment-panel-card:hover { background: #ffedb4; }
+    .comment-panel-quote { font-size: 13px; line-height: 1.45; color: #5c523c; border-left: 2px solid #e3b94f; padding-left: 6px; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .comment-panel-text { font-size: 14px; line-height: 1.5; color: #3d341d; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .comment-panel-page { display: block; margin-top: 6px; font-size: 11px; color: #85764f; }
+    .comment-empty { padding: 20px 10px; color: #8a929d; font-size: 13px; line-height: 1.5; text-align: center; }
+
+    #main { flex: 1; min-width: 0; overflow: auto; background: #f2f4f6; position: relative; }
+    body.tool-shape #pages, body.tool-text #pages { cursor: crosshair; }
+    body.tool-shape .textLayer span, body.tool-text .textLayer span { cursor: crosshair; }
+    body.drawing, body.drawing * { cursor: crosshair !important; }
+    body.drawing .textLayer { user-select: none; }
+    #pages { padding: 24px 18px 60px; display: flex; flex-direction: column; align-items: center; gap: 18px; min-height: 100%; }
+    .page { position: relative; background: #fff; box-shadow: 0 1px 3px rgba(15,23,42,.16), 0 8px 22px rgba(15,23,42,.06); overflow: hidden; }
+    .page canvas { display: block; }
+    .selection-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .selection-rect { position: absolute; border-radius: 1.5px; background: rgba(56, 133, 219, .34); pointer-events: none; }
+    .overlay { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+    .textLayer {
+      position: absolute; inset: 0; overflow: hidden; line-height: 1; z-index: 2;
+      --min-font-size: 1;
+      --text-scale-factor: calc(var(--total-scale-factor, 1) * var(--min-font-size));
+      --min-font-size-inv: calc(1 / var(--min-font-size));
+    }
+    .textLayer span {
+      position: absolute; white-space: pre; transform-origin: 0 0; cursor: text; color: transparent;
+      --scale-x: 1; --rotate: 0deg;
+      font-size: calc(var(--text-scale-factor) * var(--font-height));
+      transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+    }
+    .textLayer span::selection { background: transparent; color: transparent; }
+    .textLayer span::-moz-selection { background: transparent; color: transparent; }
+    .hl { position: absolute; left: 8%; right: 8%; padding: 4px 6px; font-size: 12px; border-radius: 3px; color: #111; opacity: .85; }
+    .hl-rect { position: absolute; border-radius: 2px; pointer-events: auto; cursor: pointer; opacity: .42; }
+    .hl-rect:hover { opacity: .58; }
+    .hl-rect.mode-highlight { opacity: .42; }
+    .hl-rect.mode-underline { background: transparent !important; opacity: 1; border-bottom: 2px solid var(--annot-color, #ffe268); border-radius: 0; }
+    .hl-rect.mode-strikethrough { background: transparent !important; opacity: 1; border-top: 0; }
+    .hl-rect.mode-strikethrough::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; background: var(--annot-color, #ffe268); }
+    .hl-rect.flash { animation: flash 1.2s ease; }
+    @keyframes flash { 0%, 100% { box-shadow: none; } 35% { box-shadow: 0 0 0 3px rgba(37, 99, 235, .55); } }
+    .shape-annotation, .text-annotation { position: absolute; pointer-events: auto; cursor: pointer; }
+    .shape-annotation svg { display: block; overflow: visible; }
+    .text-annotation { padding: 2px 3px; line-height: 1.25; white-space: pre-wrap; border-radius: 2px; }
+    .text-annotation:hover { outline: 1px dashed rgba(37,99,235,.55); }
+    .comment-badge { position: absolute; z-index: 3; min-width: 20px; height: 20px; padding: 0 4px; border: 2px solid #fff; border-radius: 10px; background: #f59e0b; color: #fff; font: 700 13px/16px -apple-system, sans-serif; text-align: center; cursor: pointer; pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+    .comment-badge:hover { background: #d97706; }
+    mark.find-hit { background: rgba(255, 179, 0, .45); color: transparent; border-radius: 2px; }
+    mark.find-hit.current { outline: 2px solid #e11d48; }
+    #selection-actions { position: fixed; display: none; z-index: 15; align-items: center; gap: 1px; padding: 3px; border-radius: 7px; background: #1f2937; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+    #selection-actions button { border: 0; border-radius: 5px; padding: 6px 9px; font-size: 11.5px; cursor: pointer; background: transparent; color: #fff; white-space: nowrap; }
+    #selection-actions button:hover { background: #374151; }
+    #selection-actions #comment-button { color: #fde68a; }
+    #selection-actions #translate-selection { color: #bbf7d0; }
+    #selection-actions #copy-selection { color: #bfdbfe; }
+    #translation-panel {
+      position: fixed; right: 18px; bottom: 62px; z-index: 25;
+      width: min(420px, calc(100vw - 36px)); max-height: 55vh; overflow: auto;
+      padding: 12px 14px; border: 1px solid #dfe5ee; border-radius: 10px;
+      background: #fff; box-shadow: 0 16px 40px rgba(15, 23, 42, .22);
+      color: #242a31;
+    }
+    #translation-panel[hidden] { display: none; }
+    .tr-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .tr-head strong { font-size: 13px; flex: 1; }
+    .tr-head select {
+      height: 26px; padding: 0 6px; border: 1px solid #dfe3e8; border-radius: 5px;
+      background: #fff; color: #3c4652; font-size: 11px;
+    }
+    #close-translation {
+      width: 24px; height: 24px; border: 0; border-radius: 5px;
+      background: transparent; color: #6e7885; font-size: 18px; line-height: 1; padding: 0;
+    }
+    #close-translation:hover { background: #eef1f5; color: #20242a; }
+    .tr-source {
+      margin: 0 0 8px; padding-left: 8px; border-left: 2px solid #cbd5e1;
+      color: #667085; font-size: 11.5px; line-height: 1.45; white-space: pre-wrap;
+    }
+    .tr-result {
+      margin: 0; color: #172033; font-size: 14px; line-height: 1.55;
+      white-space: pre-wrap; overflow-wrap: anywhere;
+    }
+    .tr-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
+    .tr-actions button {
+      border: 1px solid #dfe5ee; border-radius: 6px; background: #fff;
+      color: #475467; padding: 5px 9px; font-size: 11px; cursor: pointer;
+    }
+    .tr-actions button:hover { background: #f4f7fa; }
+    #comment-editor, #text-editor { position: fixed; z-index: 20; width: 300px; max-width: calc(100vw - 16px); padding: 12px; border: 1px solid #efd88d; border-radius: 12px; background: #fff6cf; box-shadow: 0 10px 30px rgba(60, 48, 15, .22); }
+    #comment-editor:focus { outline: none; }
+    #text-editor { border-color: #cbd7e4; background: #fff; }
+    #comment-editor[hidden], #text-editor[hidden] { display: none; }
+    #comment-editor .editor-title, #text-editor .editor-title { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: #4b3b12; }
+    #comment-editor .editor-title { display: none; }
+    #text-editor .editor-title { color: #374151; }
+    #comment-editor textarea, #text-editor textarea { width: 100%; min-height: 88px; resize: vertical; padding: 8px 9px; border: 1px solid #dcc27a; border-radius: 6px; background: #fff; font: 14px/1.5 -apple-system, sans-serif; color: #222; }
+    #comment-editor textarea { min-height: 76px; padding: 3px 2px; border: 0; border-radius: 0; background: transparent; font-size: 15px; line-height: 1.5; color: #3d392d; outline: none; resize: vertical; }
+    #comment-editor textarea::placeholder { color: #b3a986; }
+    #text-editor textarea { min-height: 60px; border-color: #cfd8e2; }
+    #comment-editor .editor-actions, #text-editor .editor-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+    #comment-editor .editor-actions { border-top: 1px solid #ecdfb1; padding-top: 8px; margin-top: 4px; }
+    #comment-editor button, #text-editor button { border: 0; border-radius: 5px; padding: 6px 10px; font-size: 12.5px; cursor: pointer; }
+    #comment-save, #text-save { background: #2d7dd2; color: #fff; }
+    #comment-editor #comment-save { background: #e8b93e; color: #3b341f; font-weight: 600; }
+    #comment-save:hover, #text-save:hover { background: #256cb8; }
+    #comment-editor #comment-save:hover { background: #dcaa2f; }
+    #comment-cancel, #text-cancel { background: #e5e7eb; color: #111827; }
+    #comment-editor #comment-cancel { background: transparent; color: #746c58; }
+    #comment-editor { overflow: visible; }
+    #comment-menu-button { position: absolute; top: 6px; right: 6px; z-index: 3; width: 28px; height: 28px; padding: 0; border: 1px solid rgba(126, 106, 51, .16); border-radius: 6px; background: rgba(255, 255, 255, .55); color: #756436; display: inline-flex; align-items: center; justify-content: center; }
+    #comment-menu-button:hover { background: #fff; border-color: rgba(126, 106, 51, .3); color: #4f431f; }
+    #comment-menu { position: absolute; top: 35px; right: 8px; z-index: 2; width: 214px; padding: 5px; border: 1px solid #e9e3d4; border-radius: 10px; background: #fff; box-shadow: 0 8px 26px rgba(30, 25, 10, .18); }
+    #comment-menu[hidden] { display: none; }
+    .comment-menu-item { width: 100%; border: 0; border-radius: 6px; background: transparent; color: #34312a; display: flex; align-items: center; gap: 8px; padding: 7px 8px; font-size: 13px; text-align: left; cursor: pointer; }
+    .comment-menu-item:hover { background: #f5f4ef; }
+    .comment-menu-item .icon { color: #6d685c; }
+    .comment-menu-item .shortcut { margin-left: auto; color: #a9a39a; font-size: 12px; }
+    .comment-menu-item .check { color: #2d7dd2; font-size: 13px; width: 14px; text-align: center; visibility: hidden; }
+    .comment-menu-item.selected .check { visibility: visible; }
+    .comment-menu-item .color-dot { width: 15px; height: 15px; flex: none; border-radius: 4px; border: 1px solid rgba(0,0,0,.12); }
+    .comment-menu-sep { height: 1px; margin: 4px 5px; background: #efede6; }
+    .comment-menu-item.danger { color: #a33a3a; }
+    .comment-menu-item.danger .icon { color: #a33a3a; }
+    #comment-delete[hidden] { display: none; }
+    #status-toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #1f2937; color: #fff; font-size: 11px; padding: 6px 10px; border-radius: 5px; opacity: 0; transition: opacity .15s; pointer-events: none; z-index: 40; }
+    #status-toast.show { opacity: .94; }
+    @media (max-width: 900px) {
+      #annotations { position: absolute; z-index: 12; height: calc(100% - 48px); box-shadow: 4px 0 18px rgba(0,0,0,.2); }
+      #find-input { width: 105px; }
+    }
+
+    /* Cite identity */
+    body { background: #eef2f7; color: #172033; }
+    #toolbar { height: 56px; padding: 0 14px; gap: 6px; border-bottom-color: #e4e9f0; box-shadow: none; }
+    .brand-btn { width: 34px; height: 34px; border-radius: 9px; margin-right: 4px; }
+    .brand-btn img { width: 30px; height: 30px; display: block; object-fit: contain; }
+    .tool-btn, .caret-btn, .tb-btn { height: 32px; border-radius: 7px; color: #475467; font-size: 12px; }
+    .tool-btn:hover, .caret-btn:hover, .tb-btn:hover { background: #f2f5fa; color: #172033; }
+    .tool-btn.active, .tb-btn.active { background: #0052cc; border-color: #0052cc; }
+    .tool-btn.active:hover, .tb-btn.active:hover { background: #0043a8; border-color: #0043a8; }
+    #findbar { height: 32px; border-color: #dfe5ee; border-radius: 8px; background: #fff; }
+    #findbar > .icon { color: #667085; }
+    #back-home { background: #0052cc; border-color: #0052cc; color: #fff; border-radius: 8px; }
+    #back-home:hover { background: #0043a8; border-color: #0043a8; }
+    .menu { border-color: #e4e9f0; border-radius: 10px; box-shadow: 0 14px 34px rgba(15,23,42,.16); }
+    .menu-item { border-radius: 7px; font-size: 12px; }
+    .menu-item.active { color: #0052cc; }
+    .menu-item.active .mi-icon { color: #0052cc; }
+    .swatch.selected { outline-color: #0052cc; }
+    #app { height: calc(100% - 56px); }
+    #annotations { width: 320px; border-right-color: #e4e9f0; }
+    .panel-tools button.active { background: #eaf1ff; color: #0052cc; }
+    .ann-head strong { color: #0b3a6e; font-size: 14px; }
+    .ann-card { border-radius: 8px; }
+    .ann-card.active { border-color: #9dbdf5; background: #f4f8ff; }
+    .comment-card, .empty-state { border-radius: 8px; }
+    .editor { border-color: #dfe5ee; border-radius: 9px; }
+    .comment-box, .comment-editor { border-radius: 8px; }
+    #status-toast { background: #0b3a6e; border-radius: 7px; font-size: 12px; }
+    @media (max-width: 900px) { #annotations { height: calc(100% - 56px); } }
+
+    /* Per-comment colors */
+    .ann-card { position: relative; border-left: 3px solid var(--note-color, transparent); padding: 14px 38px 13px 13px; }
+    .ann-comment { border-left: 3px solid transparent; }
+    .comment-panel-card { position: relative; padding: 10px 36px 10px 11px; }
+    .note-color-button {
+      position: absolute; top: 9px; right: 9px; width: 18px; height: 18px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      border: 0; border-radius: 50%; background: transparent; cursor: pointer;
+    }
+    .note-color-dot {
+      width: 13px; height: 13px; display: block; border-radius: 50%;
+      background: var(--note-color, #ffe268); border: 1px solid rgba(15,23,42,.16);
+      box-shadow: 0 0 0 2px #fff; transition: transform .12s ease;
+    }
+    .note-color-button:hover .note-color-dot { transform: scale(1.22); }
+    .note-color-menu {
+      position: fixed; z-index: 100; display: grid; grid-template-columns: repeat(4, 20px);
+      gap: 6px; padding: 8px; border: 1px solid #dfe5ee; border-radius: 9px;
+      background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.18);
+    }
+    .note-color-choice {
+      width: 20px; height: 20px; padding: 0; border: 2px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 0 1px #d7dee8; cursor: pointer;
+    }
+    .note-color-choice:hover { transform: scale(1.12); }
+    .note-color-choice.selected { box-shadow: 0 0 0 2px #0052cc; }
+
+    /* Dark theme */
+    html[data-theme="dark"] { color-scheme: dark; }
+    html[data-theme="dark"] body { background: #0d1218; color: #e7edf5; }
+    html[data-theme="dark"] #toolbar { background: #121922; border-bottom-color: #26313d; box-shadow: 0 1px 2px rgba(0,0,0,.35); }
+    html[data-theme="dark"] .tb-sep { background: #2a3542; }
+    html[data-theme="dark"] .tool-btn,
+    html[data-theme="dark"] .caret-btn,
+    html[data-theme="dark"] .tb-btn,
+    html[data-theme="dark"] .ann-head button,
+    html[data-theme="dark"] .comments-head button,
+    html[data-theme="dark"] #hide-annotations { color: #9daab8; }
+    html[data-theme="dark"] .tool-btn:hover,
+    html[data-theme="dark"] .caret-btn:hover,
+    html[data-theme="dark"] .tb-btn:hover,
+    html[data-theme="dark"] .ann-head button:hover,
+    html[data-theme="dark"] .comments-head button:hover,
+    html[data-theme="dark"] #hide-annotations:hover { background: #1c2631; color: #f1f5f9; }
+    html[data-theme="dark"] .tool-btn.active,
+    html[data-theme="dark"] .tb-btn.active { background: #2f80d8; border-color: #2f80d8; color: #fff; }
+    html[data-theme="dark"] .tool-btn.active:hover,
+    html[data-theme="dark"] .tb-btn.active:hover { background: #246cb7; border-color: #246cb7; }
+    html[data-theme="dark"] .color-button:hover { background: #1c2631; }
+    html[data-theme="dark"] #findbar { background: #0f151c; border-color: #2a3542; }
+    html[data-theme="dark"] #find-input { color: #e7edf5; }
+    html[data-theme="dark"] #find-count { color: #8c9aaa; }
+    html[data-theme="dark"] #find-prev:hover,
+    html[data-theme="dark"] #find-next:hover { background: #1c2631; color: #e7edf5; }
+    html[data-theme="dark"] #back-home { background: #2f80d8; border-color: #2f80d8; color: #fff; }
+    html[data-theme="dark"] #main { background: #090e13; }
+    html[data-theme="dark"] .page { box-shadow: 0 1px 3px rgba(0,0,0,.55), 0 10px 26px rgba(0,0,0,.35); }
+    html[data-theme="dark"] #annotations,
+    html[data-theme="dark"] #comments-panel { background: #121922; border-color: #26313d; }
+    html[data-theme="dark"] .ann-head strong,
+    html[data-theme="dark"] .comments-head strong { color: #e7edf5; }
+    html[data-theme="dark"] .ann-head .count,
+    html[data-theme="dark"] .comments-head #comments-count,
+    html[data-theme="dark"] .ann-meta,
+    html[data-theme="dark"] .comment-panel-page { color: #8c9aaa; }
+    html[data-theme="dark"] .ann-meta .icon { color: #7f8c9b; }
+    html[data-theme="dark"] #ann-search {
+      background: #0f151c; border-color: #2a3542; color: #e7edf5;
+    }
+    html[data-theme="dark"] #ann-search::placeholder { color: #718091; }
+    html[data-theme="dark"] .ann-card { border-bottom-color: #26313d; color: #e7edf5; }
+    html[data-theme="dark"] .ann-card:hover { background: #1a2430; }
+    html[data-theme="dark"] .ann-card.active { background: #1d2c40; border-color: #31557f; }
+    html[data-theme="dark"] .ann-quote { color: #d6dee8; }
+    html[data-theme="dark"] .ann-comment {
+      background: #2a2518; color: #f1dfad; border-left-color: #a87f2e;
+    }
+    html[data-theme="dark"] .ann-empty,
+    html[data-theme="dark"] .comment-empty { color: #7f8c9b; }
+    html[data-theme="dark"] .comment-panel-card {
+      background: #2a2518; border-color: #6b5725; box-shadow: none;
+    }
+    html[data-theme="dark"] .comment-panel-card:hover { background: #342d1c; }
+    html[data-theme="dark"] .comment-panel-quote { color: #d8c99b; border-left-color: #a87f2e; }
+    html[data-theme="dark"] .comment-panel-text { color: #f1dfad; }
+    html[data-theme="dark"] .comments-head { color: #9daab8; }
+    html[data-theme="dark"] .menu {
+      background: #151d26; border-color: #2a3542;
+      box-shadow: 0 14px 34px rgba(0,0,0,.55);
+    }
+    html[data-theme="dark"] .menu-item { color: #e7edf5; }
+    html[data-theme="dark"] .menu-item:hover { background: #1c2631; }
+    html[data-theme="dark"] .menu-item.active,
+    html[data-theme="dark"] .menu-item.active .mi-icon { color: #7fb2ff; }
+    html[data-theme="dark"] .menu-item .mi-icon,
+    html[data-theme="dark"] .menu-item .shortcut,
+    html[data-theme="dark"] .menu-title { color: #8c9aaa; }
+    html[data-theme="dark"] .menu-sep { background: #26313d; }
+    html[data-theme="dark"] .font-row select {
+      background: #0f151c; border-color: #2a3542; color: #e7edf5;
+    }
+    html[data-theme="dark"] .font-toggle {
+      background: #18212b; border-color: #2a3542; color: #e7edf5;
+    }
+    html[data-theme="dark"] .font-toggle.active {
+      background: #1d2c40; border-color: #31557f; color: #a9caff;
+    }
+    html[data-theme="dark"] #comment-editor {
+      background: #211d14; border-color: #5a4a22;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    }
+    html[data-theme="dark"] #comment-editor textarea { color: #f1dfad; }
+    html[data-theme="dark"] #comment-editor textarea::placeholder { color: #8e8059; }
+    html[data-theme="dark"] #comment-editor .editor-actions { border-top-color: #3d3522; }
+    html[data-theme="dark"] #comment-editor #comment-save { background: #d8a93a; color: #211d14; }
+    html[data-theme="dark"] #comment-editor #comment-cancel { color: #b3a986; }
+    html[data-theme="dark"] #comment-menu-button {
+      background: rgba(255,255,255,.06); border-color: rgba(168,127,46,.4); color: #d8c99b;
+    }
+    html[data-theme="dark"] #comment-menu-button:hover {
+      background: rgba(255,255,255,.12); border-color: rgba(168,127,46,.6); color: #f1dfad;
+    }
+    html[data-theme="dark"] #text-cancel { background: #29323d; color: #e7edf5; }
+    html[data-theme="dark"] #text-editor {
+      background: #151d26; border-color: #2a3542;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    }
+    html[data-theme="dark"] #text-editor .editor-title { color: #e7edf5; }
+    html[data-theme="dark"] #text-editor textarea {
+      background: #0f151c; border-color: #2a3542; color: #e7edf5;
+    }
+    html[data-theme="dark"] #comment-menu {
+      background: #151d26; border-color: #2a3542;
+      box-shadow: 0 8px 26px rgba(0,0,0,.5);
+    }
+    html[data-theme="dark"] .comment-menu-item { color: #e7edf5; }
+    html[data-theme="dark"] .comment-menu-item:hover { background: #1c2631; }
+    html[data-theme="dark"] .comment-menu-item .icon,
+    html[data-theme="dark"] .comment-menu-item .shortcut { color: #8c9aaa; }
+    html[data-theme="dark"] .comment-menu-sep { background: #26313d; }
+    html[data-theme="dark"] .note-color-menu {
+      background: #151d26; border-color: #2a3542;
+      box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    }
+    html[data-theme="dark"] .note-color-choice { border-color: #151d26; box-shadow: 0 0 0 1px #344252; }
+    html[data-theme="dark"] .note-color-choice.selected { box-shadow: 0 0 0 2px #7fb2ff; }
+    html[data-theme="dark"] .note-color-dot { box-shadow: 0 0 0 2px #151d26; }
+    html[data-theme="dark"] #status-toast { background: #0b3a6e; color: #fff; }
+    html[data-theme="dark"] #translation-panel {
+      background: #151d26; border-color: #2a3542; color: #e7edf5;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, .55);
+    }
+    html[data-theme="dark"] .tr-head select {
+      background: #0f151c; border-color: #2a3542; color: #e7edf5;
+    }
+    html[data-theme="dark"] #close-translation { color: #9daab8; }
+    html[data-theme="dark"] #close-translation:hover { background: #1c2631; color: #f1f5f9; }
+    html[data-theme="dark"] .tr-source { border-left-color: #344252; color: #9daab8; }
+    html[data-theme="dark"] .tr-result { color: #f1f5f9; }
+    html[data-theme="dark"] .tr-actions button {
+      background: #18212b; border-color: #344252; color: #e7edf5;
+    }
+    html[data-theme="dark"] .tr-actions button:hover { background: #1c2631; }
+    html[data-theme="dark"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+    html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #344252; border-radius: 8px; }
+    html[data-theme="dark"] ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M5 5h14v10H9l-4 4V5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.4-10.4a2 2 0 0 0-2.8-2.8L5.4 16.2 4 20Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-highlighter" viewBox="0 0 24 24"><path d="m5 16 8.5-8.5 3 3L8 19H5v-3Zm8.5-8.5 2-2 3 3-2 2M4 21h9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-square" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13M8 19h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 4v16" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-panel-right" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M15 4v16" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5m0 0 6-6m-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="4" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="14" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-collapse" viewBox="0 0 24 24"><path d="M4 12h14m0 0-4-4m4 4-4 4M20 5v14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-collapse-right" viewBox="0 0 24 24"><path d="M20 12H6m0 0 4-4m-4 4 4 4M4 5v14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-underline" viewBox="0 0 24 24"><path d="M7 5v7a5 5 0 0 0 10 0V5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-strike" viewBox="0 0 24 24"><path d="M6 12h12M8 8c0-2 1.7-3 4-3s4 1 4 3M16 16c0 2-1.7 3-4 3s-4-1-4-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-rect" viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-oval" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="6" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 19 19 5M12 5h7v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20c4-1 5-6 8-9s5-4 7-2-1 5-4 6-5 2-7 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-page" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6V3Zm8 0v5h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.7.3-1 .8-1 1.6M12 16.5h.01" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  </svg>
+
+  <header id="toolbar">
+    <button class="brand-btn" id="brand-button" title="Cite" aria-label="Cite"><img src="./assets/cite-icon.png" alt=""></button>
+    <button class="tool-btn" id="comment-tool" title="Comentários" aria-label="Comentários"><svg class="icon"><use href="#i-message"/></svg></button>
+    <div class="tb-sep"></div>
+
+    <div class="tool-group">
+      <button class="tool-btn active" id="highlight-tool" title="Marcar texto" aria-label="Marcar texto"><svg class="icon"><use href="#i-pen"/></svg></button>
+      <button class="caret-btn" id="highlight-caret" aria-label="Opções de marcação"><svg class="icon"><use href="#i-chevron"/></svg></button>
+      <div class="menu" id="highlight-menu" hidden>
+        <button class="menu-item active" data-highlight-mode="highlight"><svg class="icon mi-icon"><use href="#i-highlighter"/></svg><span class="mi-label">Destacar</span><span class="shortcut">H</span></button>
+        <button class="menu-item" data-highlight-mode="underline"><svg class="icon mi-icon"><use href="#i-underline"/></svg><span class="mi-label">Sublinhar</span><span class="shortcut">U</span></button>
+        <button class="menu-item" data-highlight-mode="strikethrough"><svg class="icon mi-icon"><use href="#i-strike"/></svg><span class="mi-label">Tachar</span><span class="shortcut">T</span></button>
+        <div class="menu-sep"></div>
+        <button class="menu-item" id="annotations-off"><svg class="icon mi-icon"><use href="#i-x"/></svg><span class="mi-label">Desativar anotações</span><span class="shortcut">O</span></button>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn shape-tool-btn" id="shape-tool" title="Formas" aria-label="Formas"><svg class="icon"><use href="#i-square"/></svg></button>
+      <button class="caret-btn" id="shape-caret" aria-label="Opções de formas"><svg class="icon"><use href="#i-chevron"/></svg></button>
+      <div class="menu" id="shape-menu" hidden>
+        <button class="menu-item" data-shape="rectangle"><svg class="icon mi-icon"><use href="#i-rect"/></svg><span class="mi-label">Retângulo</span><span class="shortcut">R</span></button>
+        <button class="menu-item" data-shape="oval"><svg class="icon mi-icon"><use href="#i-oval"/></svg><span class="mi-label">Oval</span><span class="shortcut">O</span></button>
+        <button class="menu-item" data-shape="arrow"><svg class="icon mi-icon"><use href="#i-arrow"/></svg><span class="mi-label">Seta</span><span class="shortcut">A</span></button>
+        <button class="menu-item" data-shape="pencil"><svg class="icon mi-icon"><use href="#i-pencil"/></svg><span class="mi-label">Lápis</span><span class="shortcut">P</span></button>
+      </div>
+    </div>
+
+    <div class="tool-group text-tool">
+      <button class="tool-btn text-tool-btn" id="text-tool" title="Texto" aria-label="Texto">T</button>
+      <button class="caret-btn" id="text-caret" aria-label="Opções de texto"><svg class="icon"><use href="#i-chevron"/></svg></button>
+      <div class="menu" id="text-menu" hidden>
+        <div class="menu-title">Fonte</div>
+        <div class="font-row">
+          <select id="font-family" aria-label="Fonte">
+            <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+            <option value="Times New Roman, serif">Times New Roman</option>
+            <option value="Courier New, monospace">Courier</option>
+          </select>
+          <select id="font-size" aria-label="Tamanho da fonte">
+            <option>10</option><option>11</option><option>12</option><option selected>14</option><option>16</option><option>18</option><option>20</option><option>24</option>
+          </select>
+          <button class="font-toggle" id="font-bold" title="Negrito" aria-label="Negrito">B</button>
+          <button class="font-toggle" id="font-italic" title="Itálico" aria-label="Itálico"><i>I</i></button>
+        </div>
+        <div class="menu-sep"></div>
+        <button class="menu-item" id="text-place"><svg class="icon mi-icon"><use href="#i-text"/></svg><span class="mi-label">Inserir texto no PDF</span><span class="shortcut">T</span></button>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <button class="color-button" id="color-button" title="Cor da anotação" aria-label="Cor da anotação"><span id="color-swatch"></span></button>
+      <div class="menu" id="color-menu" hidden>
+        <div class="swatches">
+          <button class="swatch selected" data-color="#ffe268" style="background:#ffe268" aria-label="Amarelo"></button>
+          <button class="swatch" data-color="#a7e8a7" style="background:#a7e8a7" aria-label="Verde"></button>
+          <button class="swatch" data-color="#9ed7f7" style="background:#9ed7f7" aria-label="Azul"></button>
+          <button class="swatch" data-color="#f7b6d2" style="background:#f7b6d2" aria-label="Rosa"></button>
+          <button class="swatch" data-color="#f6b26b" style="background:#f6b26b" aria-label="Laranja"></button>
+          <button class="swatch" data-color="#d9c2f0" style="background:#d9c2f0" aria-label="Roxo"></button>
+          <button class="swatch" data-color="#ff9b9b" style="background:#ff9b9b" aria-label="Vermelho"></button>
+          <button class="swatch" data-color="#b9e4d0" style="background:#b9e4d0" aria-label="Menta"></button>
+          <button class="swatch" data-color="#d7dde5" style="background:#d7dde5" aria-label="Cinza"></button>
+          <button class="swatch" data-color="#ffffff" style="background:#fff" aria-label="Branco"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tb-sep"></div>
+    <div id="findbar">
+      <svg class="icon sm"><use href="#i-search"/></svg>
+      <input id="find-input" placeholder="Buscar no PDF" aria-label="Buscar no PDF">
+      <span id="find-count">0 resultados</span>
+      <button id="find-prev" title="Ocorrência anterior" aria-label="Ocorrência anterior"><svg class="icon sm"><use href="#i-prev"/></svg></button>
+      <button id="find-next" title="Próxima ocorrência" aria-label="Próxima ocorrência"><svg class="icon sm"><use href="#i-next"/></svg></button>
+    </div>
+
+    <div class="tb-spacer"></div>
+    <button class="tb-btn" id="back-home" title="Voltar à biblioteca" aria-label="Voltar à biblioteca"><svg class="icon"><use href="#i-back"/></svg><span>Biblioteca</span></button>
+    <button class="tb-btn" id="show-annotations" title="Painel de anotações" aria-label="Painel de anotações"><svg class="icon"><use href="#i-panel"/></svg></button>
+    <button class="tb-btn" id="download-button" title="Abrir no visualizador padrão" aria-label="Abrir no visualizador padrão"><svg class="icon"><use href="#i-download"/></svg></button>
+    <button class="tb-btn" id="settings-button" title="Configurações" aria-label="Configurações"><svg class="icon"><use href="#i-settings"/></svg></button>
+    <button class="tb-btn" id="more-button" title="Mais opções" aria-label="Mais opções"><svg class="icon"><use href="#i-dots"/></svg></button>
+
+    <div class="menu right" id="settings-menu" hidden>
+      <div class="menu-title">Arquivo</div>
+      <button class="menu-item" id="show-in-cite"><svg class="icon mi-icon"><use href="#i-page"/></svg><span class="mi-label">Mostrar no Cite</span></button>
+      <button class="menu-item" id="open-external"><svg class="icon mi-icon"><use href="#i-download"/></svg><span class="mi-label">Abrir no visualizador padrão</span><span class="shortcut">⌘D</span></button>
+      <div class="menu-sep"></div>
+      <div class="menu-title">Configurações</div>
+      <button class="menu-item active" id="light-theme"><svg class="icon mi-icon"><use href="#i-sun"/></svg><span class="mi-label">Tema claro</span></button>
+      <button class="menu-item" id="dark-theme"><svg class="icon mi-icon"><use href="#i-moon"/></svg><span class="mi-label">Tema escuro</span></button>
+      <button class="menu-item" id="viewer-settings"><svg class="icon mi-icon"><use href="#i-panel"/></svg><span class="mi-label">Alterar visualizador padrão</span></button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" id="help-item"><svg class="icon mi-icon"><use href="#i-help"/></svg><span class="mi-label">Ajuda</span><span class="shortcut">?</span></button>
+      <button class="menu-item" id="shortcuts-item"><span class="mi-label">Atalhos do teclado</span><span class="shortcut">?</span></button>
+    </div>
+
+    <div class="menu right" id="more-menu" hidden>
+      <button class="menu-item" id="export-annotations"><svg class="icon mi-icon"><use href="#i-download"/></svg><span class="mi-label">Exportar anotações</span></button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" id="menu-find"><svg class="icon mi-icon"><use href="#i-search"/></svg><span class="mi-label">Buscar no documento</span><span class="shortcut">⌘F</span></button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" id="zoom-in"><span class="mi-label">Aumentar zoom</span><span class="shortcut">+</span></button>
+      <button class="menu-item" id="zoom-out"><span class="mi-label">Diminuir zoom</span><span class="shortcut">−</span></button>
+      <button class="menu-item" id="zoom-auto"><span class="mi-label">Automático</span><span class="shortcut">⌘0</span></button>
+      <button class="menu-item" id="page-fit"><span class="mi-label">Ajustar à página</span><span class="shortcut">⌘1</span></button>
+      <button class="menu-item" id="page-width"><span class="mi-label">Largura da página</span><span class="shortcut">⌘2</span></button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" id="rotate-right"><svg class="icon mi-icon"><use href="#i-rotate"/></svg><span class="mi-label">Girar para a direita</span><span class="shortcut">⌘R</span></button>
+      <button class="menu-item" id="rotate-left"><svg class="icon mi-icon"><use href="#i-rotate"/></svg><span class="mi-label">Girar para a esquerda</span><span class="shortcut">⌘⇧R</span></button>
+      <div class="menu-sep"></div>
+      <button class="menu-item" id="go-page"><span class="mi-label">Ir para página</span><span class="shortcut">⌘G</span></button>
+    </div>
+  </header>
+
+  <div id="app">
+    <aside id="annotations" aria-label="Anotações">
+      <div class="panel-tools">
+        <button class="active" title="Lista de anotações" aria-label="Lista de anotações"><svg class="icon sm"><use href="#i-list"/></svg></button>
+        <button title="Miniaturas" aria-label="Miniaturas"><svg class="icon sm"><use href="#i-grid"/></svg></button>
+        <span class="grow"></span>
+        <button id="hide-annotations" title="Recolher painel" aria-label="Recolher anotações"><svg class="icon sm"><use href="#i-collapse"/></svg></button>
+      </div>
+      <div class="ann-head">
+        <strong>Anotações</strong><span class="count" id="ann-count"></span>
+        <div class="head-actions">
+          <button id="export-annotations-button" title="Exportar anotações" aria-label="Exportar anotações"><svg class="icon sm"><use href="#i-download"/></svg></button>
+          <button id="ann-search-toggle" title="Buscar anotações" aria-label="Buscar anotações"><svg class="icon sm"><use href="#i-search"/></svg></button>
+        </div>
+      </div>
+      <input id="ann-search" placeholder="Buscar anotações" aria-label="Buscar anotações">
+      <div id="ann-list"></div>
+    </aside>
+    <main id="main">
+      <div id="pages"></div>
+    </main>
+    <aside id="comments-panel" aria-label="Comentários">
+      <div class="comments-head">
+        <strong>Comentários</strong><span id="comments-count"></span>
+        <button id="collapse-comments" title="Recolher comentários" aria-label="Recolher comentários"><svg class="icon sm"><use href="#i-collapse-right"/></svg></button>
+      </div>
+      <div id="comment-cards"></div>
+    </aside>
+  </div>
+
+  <div id="selection-actions">
+    <button id="hl-button" type="button">Destacar</button>
+    <button id="underline-button" type="button">Sublinhar</button>
+    <button id="strike-button" type="button">Tachar</button>
+    <button id="comment-button" type="button">Comentar</button>
+    <button id="translate-selection" type="button" title="Traduzir trecho" aria-label="Traduzir trecho">Traduzir</button>
+    <button id="copy-selection" type="button" title="Copiar com página" aria-label="Copiar com página">Copiar</button>
+  </div>
+
+  <div id="translation-panel" hidden>
+    <div class="tr-head">
+      <strong>Tradução</strong>
+      <select id="translation-target" aria-label="Idioma de destino">
+        <option value="pt">Português</option>
+        <option value="tet">Tetum Dili</option>
+        <option value="en">English</option>
+        <option value="es">Español</option>
+      </select>
+      <button id="close-translation" type="button" title="Fechar tradução" aria-label="Fechar tradução">×</button>
+    </div>
+    <p id="translation-source" class="tr-source"></p>
+    <p id="translation-result" class="tr-result" aria-live="polite"></p>
+    <div class="tr-actions">
+      <button id="copy-translation" type="button">Copiar tradução</button>
+    </div>
+  </div>
+
+  <div id="comment-editor" tabindex="-1" hidden>
+    <button id="comment-menu-button" type="button" title="Opções do comentário" aria-label="Opções do comentário"><svg class="icon sm"><use href="#i-dots"/></svg></button>
+    <p class="editor-title">Comentário</p>
+    <textarea id="comment-text" placeholder="Adicionar comentário"></textarea>
+    <div class="editor-actions">
+      <button id="comment-cancel" type="button">Cancelar</button>
+      <button id="comment-save" type="button">Salvar</button>
+    </div>
+    <div id="comment-menu" hidden>
+      <button type="button" class="comment-menu-item" id="comment-reply"><svg class="icon sm"><use href="#i-message"/></svg><span>Responder</span></button>
+      <div class="comment-menu-sep"></div>
+      <button type="button" class="comment-menu-item comment-color" data-color="#ffe268"><span class="color-dot" style="background:#ffe268"></span><span>Amarelo</span><span class="shortcut">1</span><span class="check">✓</span></button>
+      <button type="button" class="comment-menu-item comment-color" data-color="#f7b6d2"><span class="color-dot" style="background:#f7b6d2"></span><span>Rosa</span><span class="shortcut">2</span><span class="check">✓</span></button>
+      <button type="button" class="comment-menu-item comment-color" data-color="#9ed7f7"><span class="color-dot" style="background:#9ed7f7"></span><span>Azul</span><span class="shortcut">3</span><span class="check">✓</span></button>
+      <button type="button" class="comment-menu-item comment-color" data-color="#a7e8a7"><span class="color-dot" style="background:#a7e8a7"></span><span>Verde</span><span class="shortcut">4</span><span class="check">✓</span></button>
+      <div class="comment-menu-sep"></div>
+      <button type="button" class="comment-menu-item danger" id="comment-delete" hidden><svg class="icon sm"><use href="#i-x"/></svg><span>Remover</span></button>
+    </div>
+  </div>
+
+  <div id="text-editor" hidden>
+    <p class="editor-title">Inserir texto</p>
+    <textarea id="text-editor-input" placeholder="Digite o texto…"></textarea>
+    <div class="editor-actions">
+      <button id="text-cancel" type="button">Cancelar</button>
+      <button id="text-save" type="button">Adicionar</button>
+    </div>
+  </div>
+
+  <div id="status-toast"></div>
+  <script src="./i18n.js"></script>
+  <script src="./pdf-viewer.bundle.js"></script>
+</body>
+</html>
