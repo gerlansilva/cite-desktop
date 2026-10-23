@@ -2,21 +2,59 @@
   let bibliography = null;
   let selected = null;
   let style = 'ABNT';
+  let initialized = false;
 
   const $ = (id) => document.getElementById(id);
+  const demoUrl = 'demo-bibliography.json';
 
   function setStatus(message, error = false) {
     const status = $('status');
     status.textContent = message || '';
-    status.style.color = error ? '#b42318' : '';
+    status.classList.toggle('error', Boolean(error));
   }
 
-  function itemText(item) {
-    return (
-      item.citations?.[style] ||
-      item.citations?.ABNT ||
-      [item.authors?.join('; '), item.title, item.year].filter(Boolean).join('. ')
-    );
+  function setBusy(busy) {
+    $('load').disabled = busy;
+    $('load-demo').disabled = busy;
+  }
+
+  function referenceText(item) {
+    return item?.citations?.[style] || item?.citations?.ABNT || [
+      item?.authors?.join('; '),
+      item?.title,
+      item?.year
+    ].filter(Boolean).join('. ');
+  }
+
+  function surname(author) {
+    const raw = String(author || '').trim().replace(/\s+/g, ' ');
+    if (!raw) return '';
+    if (raw.includes(',')) return raw.slice(0, raw.indexOf(',')).trim();
+    if (raw.includes('.')) return raw.slice(0, raw.indexOf('.')).trim();
+    const parts = raw.split(' ');
+    return parts[parts.length - 1];
+  }
+
+  function inTextCitation(item) {
+    const names = (item?.authors || []).map(surname).filter(Boolean);
+    const year = item?.year || 's.d.';
+    if (!names.length) return `(${String(item?.title || 'sem título').slice(0, 35)}, ${year})`;
+    if (style === 'ABNT') {
+      const upper = names.map((name) => name.toUpperCase());
+      if (upper.length > 3) return `(${upper[0]} et al., ${year})`;
+      return `(${upper.join('; ')}, ${year})`;
+    }
+    if (style === 'APA' || style === 'Vancouver') {
+      if (names.length > 2) return `(${names[0]} et al., ${year})`;
+      if (names.length === 2) return `(${names[0]} & ${names[1]}, ${year})`;
+      return `(${names[0]}, ${year})`;
+    }
+    if (style === 'MLA' || style === 'Chicago') {
+      if (names.length > 2) return `(${names[0]} et al. ${year})`;
+      if (names.length === 2) return `(${names[0]} and ${names[1]} ${year})`;
+      return `(${names[0]} ${year})`;
+    }
+    return `(${names.join(', ')}, ${year})`;
   }
 
   function renderStyles() {
@@ -35,77 +73,97 @@
     style = select.value;
   }
 
+  function filteredItems() {
+    const query = $('search').value.trim().toLowerCase();
+    const items = bibliography?.items || [];
+    if (!query) return items;
+    return items.filter((item) => [item.title, item.authors?.join(' '), item.year, item.journal, item.doi, referenceText(item)]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(query));
+  }
+
   function renderList() {
     const list = $('list');
+    const items = filteredItems();
     list.innerHTML = '';
-    const query = $('search').value.trim().toLowerCase();
-    const items = (bibliography?.items || []).filter((item) => {
-      if (!query) return true;
-      return [item.title, item.authors?.join(' '), item.year, item.journal, item.doi, itemText(item)]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-        .includes(query);
-    });
+    $('count').textContent = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
+
     if (!items.length) {
       const empty = document.createElement('div');
-      empty.className = 'muted';
+      empty.className = 'empty';
       empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Carregue uma bibliografia para começar.';
       list.appendChild(empty);
       selected = null;
       renderPreview();
       return;
     }
+
     for (const item of items) {
-      const row = document.createElement('div');
+      const row = document.createElement('button');
+      row.type = 'button';
       row.className = 'item' + (selected?.id === item.id ? ' selected' : '');
+      row.setAttribute('aria-pressed', String(selected?.id === item.id));
       const title = document.createElement('strong');
       title.textContent = item.title || '(sem título)';
       const meta = document.createElement('span');
       meta.textContent = [item.authors?.join(', '), item.year, item.journal].filter(Boolean).join(' · ');
       row.append(title, meta);
-      row.onclick = () => {
+      row.addEventListener('click', () => {
         selected = item;
         renderList();
         renderPreview();
-      };
+      });
       list.appendChild(row);
     }
   }
 
   function renderPreview() {
-    $('preview').textContent = selected ? itemText(selected) : 'Nenhuma referência selecionada.';
+    $('preview-citation').textContent = selected ? inTextCitation(selected) : 'Nenhuma referência selecionada.';
+    $('preview-reference').textContent = selected ? referenceText(selected) : 'Selecione uma referência na lista.';
     $('insert-citation').disabled = !selected;
+    $('insert-reference').disabled = !selected;
     $('insert-bibliography').disabled = !bibliography?.items?.length;
   }
 
-  async function loadBibliography() {
-    const url = $('bibliography-url').value.trim();
+  async function loadBibliography(url = $('bibliography-url').value.trim()) {
     if (!url) {
       setStatus('Informe a URL do bibliography.json.', true);
       return;
     }
-    localStorage.setItem('cite-bibliography-url', url);
-    setStatus('carregando…');
+    $('bibliography-url').value = url;
+    setBusy(true);
+    setStatus('Carregando…');
     try {
       const response = await fetch(url, { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      if (!Array.isArray(data.items)) throw new Error('formato inválido');
+      if (!Array.isArray(data?.items)) throw new Error('formato inválido');
       bibliography = data;
       selected = null;
+      try {
+        localStorage.setItem('cite-bibliography-url', url);
+      } catch {}
       renderStyles();
       renderList();
       renderPreview();
-      setStatus(`${data.items.length} referência(s) carregada(s).`);
+      setStatus(`${data.items.length} ${data.items.length === 1 ? 'referência carregada' : 'referências carregadas'}.`);
     } catch (err) {
       bibliography = null;
+      selected = null;
       renderList();
-      setStatus(`não foi possível carregar: ${err.message}`, true);
+      renderPreview();
+      setStatus(`Não foi possível carregar: ${err.message}`, true);
+    } finally {
+      setBusy(false);
     }
   }
 
   async function insertText(text) {
+    if (typeof Word === 'undefined' || !Word.run) {
+      throw new Error('Abra este painel dentro do Word para inserir conteúdo.');
+    }
     await Word.run(async (context) => {
       const range = context.document.getSelection();
       range.insertText(text, Word.InsertLocation.replace);
@@ -116,42 +174,84 @@
   async function insertCitation() {
     if (!selected) return;
     try {
-      await insertText(itemText(selected));
-      setStatus('citação inserida.');
+      await insertText(inTextCitation(selected));
+      setStatus('Citação inserida.');
     } catch (err) {
-      setStatus(`não foi possível inserir: ${err.message}`, true);
+      setStatus(`Não foi possível inserir: ${err.message}`, true);
+    }
+  }
+
+  async function insertReference() {
+    if (!selected) return;
+    try {
+      await insertText(referenceText(selected));
+      setStatus('Referência inserida.');
+    } catch (err) {
+      setStatus(`Não foi possível inserir: ${err.message}`, true);
     }
   }
 
   async function insertBibliography() {
     if (!bibliography?.items?.length) return;
     try {
-      const text = bibliography.items.map((item) => itemText(item)).join('\n\n');
-      await insertText(text);
-      setStatus('bibliografia inserida.');
+      const list = [...bibliography.items].sort((a, b) =>
+        String(surname(a.authors?.[0]) || a.title || '').localeCompare(String(surname(b.authors?.[0]) || b.title || ''), 'pt-BR')
+      );
+      if (typeof Word === 'undefined' || !Word.run) {
+        throw new Error('Abra este painel dentro do Word para inserir conteúdo.');
+      }
+      await Word.run(async (context) => {
+        const body = context.document.body;
+        body.insertText(`\n\n${list.map(referenceText).join('\n\n')}`, Word.InsertLocation.end);
+        await context.sync();
+      });
+      setStatus('Bibliografia inserida ao final do documento.');
     } catch (err) {
-      setStatus(`não foi possível inserir: ${err.message}`, true);
+      setStatus(`Não foi possível inserir: ${err.message}`, true);
     }
   }
 
-  function init() {
-    const savedUrl = localStorage.getItem('cite-bibliography-url') || '';
-    $('bibliography-url').value = savedUrl;
-    style = localStorage.getItem('cite-citation-style') || 'ABNT';
-    renderStyles();
-    $('load').onclick = loadBibliography;
-    $('search').oninput = renderList;
-    $('style').onchange = () => {
+  function bindEvents() {
+    $('load').addEventListener('click', () => loadBibliography());
+    $('load-demo').addEventListener('click', () => loadBibliography(demoUrl));
+    $('bibliography-url').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') loadBibliography();
+    });
+    $('search').addEventListener('input', renderList);
+    $('style').addEventListener('change', () => {
       style = $('style').value;
-      localStorage.setItem('cite-citation-style', style);
+      try {
+        localStorage.setItem('cite-citation-style', style);
+      } catch {}
       renderList();
       renderPreview();
-    };
-    $('insert-citation').onclick = insertCitation;
-    $('insert-bibliography').onclick = insertBibliography;
-    if (savedUrl) loadBibliography();
+    });
+    $('insert-citation').addEventListener('click', insertCitation);
+    $('insert-reference').addEventListener('click', insertReference);
+    $('insert-bibliography').addEventListener('click', insertBibliography);
   }
 
-  if (typeof Office !== 'undefined') Office.onReady(init);
-  else window.addEventListener('DOMContentLoaded', init);
+  function init() {
+    if (initialized) return;
+    initialized = true;
+    bindEvents();
+    try {
+      $('bibliography-url').value = localStorage.getItem('cite-bibliography-url') || '';
+      style = localStorage.getItem('cite-citation-style') || 'ABNT';
+    } catch {}
+    renderStyles();
+    renderPreview();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === '1') {
+      loadBibliography(demoUrl);
+    } else if ($('bibliography-url').value) {
+      loadBibliography();
+    }
+  }
+
+  if (typeof Office !== 'undefined' && typeof Office.onReady === 'function') {
+    Office.onReady(() => init());
+  } else {
+    window.addEventListener('DOMContentLoaded', init);
+  }
 })();

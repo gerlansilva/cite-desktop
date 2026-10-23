@@ -70,6 +70,25 @@ O visualizador roda em um iframe e usa:
 
 A seleção de texto gera um menu flutuante com destaque, sublinhado, tachado, comentário, tradução e cópia com número da página.
 
+## Add-in do Word
+
+O add-in fica em `integrations/word` e usa o manifesto XML de task pane com `VersionOverrides` para criar a aba **Cite**. Os botões da faixa de opções usam `ShowTaskpane`; o `commands.html` funciona como `FunctionFile` e deixa espaço para futuros comandos `ExecuteFunction`.
+
+- `manifest.xml`: produção, com placeholders de usuário/repositório.
+- `manifest.localhost.xml`: desenvolvimento local em `https://localhost:3000`.
+- `taskpane.html/js`: busca, prévia, estilos e inserção no documento.
+- `demo-bibliography.json`: bibliografia fictícia para demonstração.
+- `scripts/serve-word-addin.js`: servidor HTTPS local usando o certificado do `office-addin-dev-certs`.
+
+Para executar:
+
+```bash
+npx office-addin-dev-certs install
+npm run word:serve
+```
+
+O painel usa `Word.run` e `context.document.getSelection()` para inserir citações e `context.document.body.insertText(..., Word.InsertLocation.end)` para acrescentar a bibliografia ao final do documento.
+
 ## Tradução
 
 O trecho selecionado é normalizado, enviado pelo renderer ao processo principal e traduzido por um endpoint configurável. O padrão é o endpoint web do Google Translate. O limite é de 5.000 caracteres por trecho.

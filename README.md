@@ -14,6 +14,21 @@ Versão atual: **0.2.0**.
 
 ![Tradução de um trecho do PDF para Tetum](docs/images/pdf-traducao.png)
 
+## Integração com Word
+
+![Cite no Word, com aba própria e painel de citações](docs/images/word.png)
+
+O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do Zotero, com comandos para inserir citações, inserir a bibliografia, abrir o painel e configurar o estilo. O painel lê o `bibliography.json` publicado pelo Cite e permite buscar referências sem sair do documento.
+
+Para testar localmente:
+
+```bash
+npx office-addin-dev-certs install
+npm run word:serve
+```
+
+Depois copie `integrations/word/manifest.localhost.xml` para a pasta `wef` do Word e reinicie o aplicativo. O modo de demonstração carrega oito referências fictícias. As instruções completas estão em [integrations/word/README.md](integrations/word/README.md).
+
 ## Recursos
 
 - Biblioteca local com favoritos, lixeira, coleções, etiquetas e busca.

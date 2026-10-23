@@ -6,57 +6,115 @@
   <title>Cite</title>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   <style>
-    :root { color-scheme: light; --accent: #1f6f5c; --line: #d9dee5; --muted: #68727f; --text: #222a33; }
+    :root { color-scheme: light; --accent: #1f6f5c; --accent-dark: #175546; --accent-soft: #eef7f3; --line: #d9e1e6; --muted: #68727f; --text: #202a33; --paper: #ffffff; --surface: #f7f9fa; --danger: #b42318; }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: #fff; }
-    h1 { font-size: 16px; margin: 0 0 2px; }
-    .muted { color: var(--muted); font-size: 11px; }
-    .row { display: flex; gap: 6px; margin-top: 9px; }
+    html, body { margin: 0; min-width: 0; }
+    body { padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--paper); }
+    .brand { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+    .brand img { width: 30px; height: 30px; border-radius: 7px; }
+    .brand h1 { font-size: 18px; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+    .card { border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin-top: 10px; background: var(--paper); }
+    .source { background: linear-gradient(180deg, #fbfdfc 0%, #f4f8f6 100%); }
+    .label { display: block; color: var(--muted); font-size: 10.5px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; margin-bottom: 5px; }
     input, select, button { font: inherit; }
-    input, select { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
-    button { border: 1px solid var(--line); border-radius: 5px; background: #fff; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+    input, select { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--text); }
+    input:focus, select:focus { outline: 2px solid #c7e5db; outline-offset: 0; border-color: var(--accent); }
+    button { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--text); padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+    button:hover:not(:disabled) { border-color: #b8c7c2; background: #fbfdfc; }
     button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    button:disabled { opacity: .5; cursor: default; }
-    .card { border: 1px solid var(--line); border-radius: 7px; padding: 10px; margin-top: 10px; }
-    .item { border-bottom: 1px solid #eef1f4; padding: 8px 0; cursor: pointer; }
+    button.primary:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+    button:disabled { opacity: .45; cursor: default; }
+    .row { display: flex; gap: 6px; margin-top: 7px; }
+    .row > input { flex: 1; }
+    .style-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: end; }
+    .status { min-height: 16px; margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .status.error { color: var(--danger); }
+    .search-wrap { margin-top: 12px; }
+    .list-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 5px; }
+    .list-head .label { margin: 0; }
+    .count { color: var(--muted); font-size: 10.5px; }
+    #list { max-height: 39vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+    .item { display: block; width: 100%; border: 0; border-bottom: 1px solid #eef2f3; border-radius: 0; padding: 9px 10px; text-align: left; background: transparent; white-space: normal; }
     .item:last-child { border-bottom: 0; }
-    .item:hover, .item.selected { background: #f3f8f6; }
-    .item strong { display: block; font-size: 12.5px; }
-    .item span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
-    #list { max-height: 46vh; overflow: auto; }
-    #preview { min-height: 54px; }
-    .actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-    #status { min-height: 17px; margin-top: 8px; color: var(--muted); font-size: 11px; }
-    code { font-size: 10.5px; }
+    .item:hover { background: var(--surface); }
+    .item.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+    .item strong { display: block; font-size: 12px; line-height: 1.35; font-weight: 650; }
+    .item span { display: block; color: var(--muted); font-size: 10.5px; margin-top: 3px; }
+    .empty { padding: 14px 10px; color: var(--muted); font-size: 11.5px; text-align: center; }
+    .preview-card { background: var(--surface); }
+    .preview-block + .preview-block { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line); }
+    .preview-text { min-height: 20px; font-size: 11.5px; line-height: 1.5; }
+    .preview-text.reference { color: #3c4852; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+    .actions .wide { grid-column: 1 / -1; }
+    .hint { margin: 8px 0 0; color: var(--muted); font-size: 10.5px; }
+    .hint code { font-size: 10px; }
+    details { margin-top: 10px; color: var(--muted); font-size: 11px; }
+    summary { cursor: pointer; }
+    details p { margin: 6px 0 0; }
+    @media (max-height: 620px) { #list { max-height: 30vh; } }
   </style>
 </head>
 <body>
-  <h1>Cite</h1>
-  <div class="muted">Citações da sua biblioteca no Word.</div>
-
-  <div class="card">
-    <label class="muted" for="bibliography-url">URL do bibliography.json</label>
-    <input id="bibliography-url" placeholder="https://raw.githubusercontent.com/.../bibliography.json">
-    <div class="row">
-      <select id="style" aria-label="Estilo"></select>
-      <button id="load">Carregar</button>
+  <div class="brand">
+    <img src="./assets/icon-32.png" alt="">
+    <div>
+      <h1>Cite</h1>
+      <p>Sua biblioteca no Word</p>
     </div>
-    <div id="status"></div>
   </div>
 
-  <div class="row">
-    <input id="search" placeholder="Buscar por título, autor ou ano" autocomplete="off">
-  </div>
-  <div id="list" class="card"><div class="muted">Carregue uma bibliografia para começar.</div></div>
+  <section class="card source" aria-labelledby="source-label">
+    <label class="label" id="source-label" for="bibliography-url">Bibliografia publicada</label>
+    <input id="bibliography-url" placeholder="https://raw.githubusercontent.com/.../bibliography.json" autocomplete="off" spellcheck="false">
+    <div class="row">
+      <button id="load" class="primary">Carregar</button>
+      <button id="load-demo">Usar exemplo</button>
+    </div>
+    <div class="style-row" style="margin-top:7px">
+      <div>
+        <label class="label" for="style">Estilo</label>
+        <select id="style" aria-label="Estilo de citação"></select>
+      </div>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+  </section>
 
-  <div class="card">
-    <div class="muted">Citação selecionada</div>
-    <div id="preview">Nenhuma referência selecionada.</div>
+  <div class="search-wrap">
+    <label class="label" for="search">Buscar referência</label>
+    <input id="search" placeholder="Título, autor, ano ou periódico" autocomplete="off">
+  </div>
+
+  <section class="card">
+    <div class="list-head">
+      <span class="label">Referências</span>
+      <span id="count" class="count">0 itens</span>
+    </div>
+    <div id="list"><div class="empty">Carregue uma bibliografia para começar.</div></div>
+  </section>
+
+  <section class="card preview-card">
+    <div class="preview-block">
+      <div class="label">Citação no texto</div>
+      <div id="preview-citation" class="preview-text">Nenhuma referência selecionada.</div>
+    </div>
+    <div class="preview-block">
+      <div class="label">Referência completa</div>
+      <div id="preview-reference" class="preview-text reference">Selecione uma referência na lista.</div>
+    </div>
     <div class="actions">
       <button id="insert-citation" class="primary" disabled>Inserir citação</button>
-      <button id="insert-bibliography" disabled>Inserir bibliografia</button>
+      <button id="insert-reference" disabled>Inserir referência</button>
+      <button id="insert-bibliography" class="wide" disabled>Inserir bibliografia</button>
     </div>
-  </div>
+    <p class="hint">A citação é inserida no cursor. A bibliografia insere todas as referências carregadas.</p>
+  </section>
+
+  <details>
+    <summary>Como conectar sua biblioteca</summary>
+    <p>No Cite, abra <strong>Ferramentas → Integrações</strong>, publique a bibliografia no GitHub e cole aqui a URL pública do <code>bibliography.json</code>.</p>
+  </details>
 
   <script src="./taskpane.js"></script>
 </body>

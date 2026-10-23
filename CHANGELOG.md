@@ -12,6 +12,7 @@
 - Instalador NSIS, ícone próprio, atalhos e desinstalador.
 - Documentação de instalação, desenvolvimento, publicação e release.
 - Capturas de tela da biblioteca e da tradução no PDF.
+- Integração com o Word: aba **Cite** na faixa de opções, painel de biblioteca, citações autor-data, inserção de bibliografia, modo de demonstração e servidor HTTPS local.
 
 ### Corrigido
 

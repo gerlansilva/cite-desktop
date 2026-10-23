@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "generator": "Cite",
+  "generatedAt": "2026-10-23T15:48:09.118Z",
+  "styles": [
+    "ABNT",
+    "APA",
+    "MLA",
+    "Harvard",
+    "Vancouver",
+    "Chicago"
+  ],
+  "items": [
+    {
+      "id": "demo-1",
+      "type": "article",
+      "title": "Educação estatística e formação de professores: uma perspectiva crítica",
+      "authors": [
+        "Silva, Gerlan",
+        "Souza, Ana",
+        "Oliveira, Mariana"
+      ],
+      "year": "2026",
+      "journal": "Revista Brasileira de Educação Estatística",
+      "volume": "14",
+      "issue": "2",
+      "pages": "45-68",
+      "doi": "10.0000/cite.demo1",
+      "language": "pt-BR",
+      "tags": [
+        "educação estatística",
+        "formação docente"
+      ],
+      "abstract": "Discussão sobre letramento estatístico, prática docente e formação crítica na educação básica.",
+      "citations": {
+        "ABNT": "SILVA, Gerlan; SOUZA, Ana; OLIVEIRA, Mariana. Educação estatística e formação de professores: uma perspectiva crítica. Revista Brasileira de Educação Estatística, v. 14, n. 2, p. 45-68, 2026. DOI: 10.0000/cite.demo1.",
+        "APA": "Silva, Gerlan, Souza, Ana, & Oliveira, Mariana (2026). Educação estatística e formação de professores: uma perspectiva crítica. Revista Brasileira de Educação Estatística, 14(2), 45-68. https://doi.org/10.0000/cite.demo1",
+        "MLA": "Silva, Gerlan, Souza, Ana, & Oliveira, Mariana \"Educação estatística e formação de professores: uma perspectiva crítica.\" Revista Brasileira de Educação Estatística, vol. 14, no. 2, 2026, pp. 45-68. https://doi.org/10.0000/cite.demo1",
+        "Harvard": "Silva, Gerlan, Souza, Ana, & Oliveira, Mariana (2026) 'Educação estatística e formação de professores: uma perspectiva crítica' Revista Brasileira de Educação Estatística, 14(2), pp. 45-68. doi: 10.0000/cite.demo1.",
+        "Vancouver": "Silva Gerlan, Souza Ana, Oliveira Mariana. Educação estatística e formação de professores: uma perspectiva crítica. Revista Brasileira de Educação Estatística. 2026;14(2):45-68. doi:10.0000/cite.demo1",
+        "Chicago": "Silva, Gerlan, Souza, Ana, & Oliveira, Mariana \"Educação estatística e formação de professores: uma perspectiva crítica.\" Revista Brasileira de Educação Estatística 14, no. 2 (2026): 45-68. https://doi.org/10.0000/cite.demo1"
+      }
+    },
+    {
+      "id": "demo-2",
+      "type": "article",
+      "title": "Letramento estatístico na escola: dados, contextos e cidadania",
+      "authors": [
+        "Costa, Paulo",
+        "Lima, Renata"
+      ],
+      "year": "2025",
+      "journal": "Educação Matemática em Revista",
+      "volume": "30",
+      "issue": "1",
+      "pages": "12-31",
+      "doi": "10.0000/cite.demo2",
+      "language": "pt-BR",
+      "tags": [
+        "letramento estatístico"
+      ],
+      "abstract": "Proposta de atividades investigativas para leitura crítica de dados em sala de aula.",
+      "citations": {
+        "ABNT": "COSTA, Paulo; LIMA, Renata. Letramento estatístico na escola: dados, contextos e cidadania. Educação Matemática em Revista, v. 30, n. 1, p. 12-31, 2025. DOI: 10.0000/cite.demo2.",
+        "APA": "Costa, Paulo, & Lima, Renata (2025). Letramento estatístico na escola: dados, contextos e cidadania. Educação Matemática em Revista, 30(1), 12-31. https://doi.org/10.0000/cite.demo2",
+        "MLA": "Costa, Paulo, and Lima, Renata \"Letramento estatístico na escola: dados, contextos e cidadania.\" Educação Matemática em Revista, vol. 30, no. 1, 2025, pp. 12-31. https://doi.org/10.0000/cite.demo2",
+        "Harvard": "Costa, Paulo and Lima, Renata (2025) 'Letramento estatístico na escola: dados, contextos e cidadania' Educação Matemática em Revista, 30(1), pp. 12-31. doi: 10.0000/cite.demo2.",
+        "Vancouver": "Costa Paulo, Lima Renata. Letramento estatístico na escola: dados, contextos e cidadania. Educação Matemática em Revista. 2025;30(1):12-31. doi:10.0000/cite.demo2",
+        "Chicago": "Costa, Paulo, and Lima, Renata \"Letramento estatístico na escola: dados, contextos e cidadania.\" Educação Matemática em Revista 30, no. 1 (2025): 12-31. https://doi.org/10.0000/cite.demo2"
+      }
+    },
+    {
+      "id": "demo-3",
+      "type": "article",
+      "title": "Pesquisa qualitativa e análise de dados na educação matemática",
+      "authors": [
+        "Almeida, Helena",
+        "Rocha, Bruno"
+      ],
+      "year": "2024",
+      "journal": "Perspectivas da Educação Matemática",
+      "volume": "17",
+      "issue": "3",
+      "pages": "101-122",
+      "doi": "10.0000/cite.demo3",
+      "language": "pt-BR",
+      "tags": [
+        "metodologia"
+      ],
+      "abstract": "Reflexões metodológicas sobre pesquisa qualitativa e análise de dados.",
+      "citations": {
+        "ABNT": "ALMEIDA, Helena; ROCHA, Bruno. Pesquisa qualitativa e análise de dados na educação matemática. Perspectivas da Educação Matemática, v. 17, n. 3, p. 101-122, 2024. DOI: 10.0000/cite.demo3.",
+        "APA": "Almeida, Helena, & Rocha, Bruno (2024). Pesquisa qualitativa e análise de dados na educação matemática. Perspectivas da Educação Matemática, 17(3), 101-122. https://doi.org/10.0000/cite.demo3",
+        "MLA": "Almeida, Helena, and Rocha, Bruno \"Pesquisa qualitativa e análise de dados na educação matemática.\" Perspectivas da Educação Matemática, vol. 17, no. 3, 2024, pp. 101-122. https://doi.org/10.0000/cite.demo3",
+        "Harvard": "Almeida, Helena and Rocha, Bruno (2024) 'Pesquisa qualitativa e análise de dados na educação matemática' Perspectivas da Educação Matemática, 17(3), pp. 101-122. doi: 10.0000/cite.demo3.",
+        "Vancouver": "Almeida Helena, Rocha Bruno. Pesquisa qualitativa e análise de dados na educação matemática. Perspectivas da Educação Matemática. 2024;17(3):101-122. doi:10.0000/cite.demo3",
+        "Chicago": "Almeida, Helena, and Rocha, Bruno \"Pesquisa qualitativa e análise de dados na educação matemática.\" Perspectivas da Educação Matemática 17, no. 3 (2024): 101-122. https://doi.org/10.0000/cite.demo3"
+      }
+    },
+    {
+      "id": "demo-4",
+      "type": "article",
+      "title": "Tecnologias digitais e ensino de estatística na educação básica",
+      "authors": [
+        "Ferreira, Luiza",
+        "Santos, Rafael"
+      ],
+      "year": "2024",
+      "journal": "Revista de Educação e Tecnologia",
+      "volume": "9",
+      "issue": "2",
+      "pages": "77-96",
+      "doi": "10.0000/cite.demo4",
+      "language": "pt-BR",
+      "tags": [
+        "tecnologias digitais"
+      ],
+      "abstract": "Usos de tecnologias digitais para o ensino de estatística e probabilidade.",
+      "citations": {
+        "ABNT": "FERREIRA, Luiza; SANTOS, Rafael. Tecnologias digitais e ensino de estatística na educação básica. Revista de Educação e Tecnologia, v. 9, n. 2, p. 77-96, 2024. DOI: 10.0000/cite.demo4.",
+        "APA": "Ferreira, Luiza, & Santos, Rafael (2024). Tecnologias digitais e ensino de estatística na educação básica. Revista de Educação e Tecnologia, 9(2), 77-96. https://doi.org/10.0000/cite.demo4",
+        "MLA": "Ferreira, Luiza, and Santos, Rafael \"Tecnologias digitais e ensino de estatística na educação básica.\" Revista de Educação e Tecnologia, vol. 9, no. 2, 2024, pp. 77-96. https://doi.org/10.0000/cite.demo4",
+        "Harvard": "Ferreira, Luiza and Santos, Rafael (2024) 'Tecnologias digitais e ensino de estatística na educação básica' Revista de Educação e Tecnologia, 9(2), pp. 77-96. doi: 10.0000/cite.demo4.",
+        "Vancouver": "Ferreira Luiza, Santos Rafael. Tecnologias digitais e ensino de estatística na educação básica. Revista de Educação e Tecnologia. 2024;9(2):77-96. doi:10.0000/cite.demo4",
+        "Chicago": "Ferreira, Luiza, and Santos, Rafael \"Tecnologias digitais e ensino de estatística na educação básica.\" Revista de Educação e Tecnologia 9, no. 2 (2024): 77-96. https://doi.org/10.0000/cite.demo4"
+      }
+    },
+    {
+      "id": "demo-5",
+      "type": "article",
+      "title": "Formação continuada de professores que ensinam matemática",
+      "authors": [
+        "Martins, Clara",
+        "Pereira, João"
+      ],
+      "year": "2023",
+      "journal": "Cadernos de Formação Docente",
+      "volume": "12",
+      "issue": "1",
+      "pages": "18-37",
+      "doi": "10.0000/cite.demo5",
+      "language": "pt-BR",
+      "tags": [
+        "formação docente"
+      ],
+      "abstract": "Estudo sobre percursos formativos e práticas colaborativas entre professores.",
+      "citations": {
+        "ABNT": "MARTINS, Clara; PEREIRA, João. Formação continuada de professores que ensinam matemática. Cadernos de Formação Docente, v. 12, n. 1, p. 18-37, 2023. DOI: 10.0000/cite.demo5.",
+        "APA": "Martins, Clara, & Pereira, João (2023). Formação continuada de professores que ensinam matemática. Cadernos de Formação Docente, 12(1), 18-37. https://doi.org/10.0000/cite.demo5",
+        "MLA": "Martins, Clara, and Pereira, João \"Formação continuada de professores que ensinam matemática.\" Cadernos de Formação Docente, vol. 12, no. 1, 2023, pp. 18-37. https://doi.org/10.0000/cite.demo5",
+        "Harvard": "Martins, Clara and Pereira, João (2023) 'Formação continuada de professores que ensinam matemática' Cadernos de Formação Docente, 12(1), pp. 18-37. doi: 10.0000/cite.demo5.",
+        "Vancouver": "Martins Clara, Pereira João. Formação continuada de professores que ensinam matemática. Cadernos de Formação Docente. 2023;12(1):18-37. doi:10.0000/cite.demo5",
+        "Chicago": "Martins, Clara, and Pereira, João \"Formação continuada de professores que ensinam matemática.\" Cadernos de Formação Docente 12, no. 1 (2023): 18-37. https://doi.org/10.0000/cite.demo5"
+      }
+    },
+    {
+      "id": "demo-6",
+      "type": "book",
+      "title": "Educação estatística: teoria e prática em sala de aula",
+      "authors": [
+        "Mendes, Carlos"
+      ],
+      "year": "2022",
+      "publisher": "Editora Horizonte",
+      "place": "São Paulo",
+      "isbn": "978-85-0000-000-0",
+      "language": "pt-BR",
+      "tags": [
+        "livro",
+        "educação estatística"
+      ],
+      "abstract": "Livro de referência sobre o ensino de estatística na educação básica.",
+      "citations": {
+        "ABNT": "MENDES, Carlos. Educação estatística: teoria e prática em sala de aula. 2. ed. São Paulo: Editora Horizonte, 2022.",
+        "APA": "Mendes, Carlos (2022). Educação estatística: teoria e prática em sala de aula.",
+        "MLA": "Mendes, Carlos \"Educação estatística: teoria e prática em sala de aula.\"",
+        "Harvard": "Mendes, Carlos (2022) 'Educação estatística: teoria e prática em sala de aula'",
+        "Vancouver": "Mendes Carlos. Educação estatística: teoria e prática em sala de aula. 2022.",
+        "Chicago": "Mendes, Carlos \"Educação estatística: teoria e prática em sala de aula.\" (2022)."
+      }
+    },
+    {
+      "id": "demo-7",
+      "type": "chapter",
+      "title": "Leitura de gráficos e formação cidadã",
+      "authors": [
+        "Nunes, Beatriz"
+      ],
+      "year": "2023",
+      "pages": "89-108",
+      "publisher": "Editora Horizonte",
+      "place": "São Paulo",
+      "language": "pt-BR",
+      "tags": [
+        "educação matemática"
+      ],
+      "abstract": "Capítulo sobre leitura crítica de gráficos e formação para a cidadania.",
+      "citations": {
+        "ABNT": "NUNES, Beatriz. Leitura de gráficos e formação cidadã. In: SILVA, Gerlan; SOUZA, Ana. Educação matemática e justiça social. São Paulo: Editora Horizonte, 2023. p. 89-108.",
+        "APA": "Nunes, Beatriz (2023). Leitura de gráficos e formação cidadã.",
+        "MLA": "Nunes, Beatriz \"Leitura de gráficos e formação cidadã.\"",
+        "Harvard": "Nunes, Beatriz (2023) 'Leitura de gráficos e formação cidadã'",
+        "Vancouver": "Nunes Beatriz. Leitura de gráficos e formação cidadã. 2023.",
+        "Chicago": "Nunes, Beatriz \"Leitura de gráficos e formação cidadã.\" (2023)."
+      }
+    },
+    {
+      "id": "demo-8",
+      "type": "webpage",
+      "title": "Base Nacional Comum Curricular: educação matemática",
+      "authors": [
+        "Brasil"
+      ],
+      "year": "2018",
+      "url": "https://basenacionalcomum.mec.gov.br/",
+      "accessed": "2026-10-20",
+      "language": "pt-BR",
+      "tags": [
+        "documento oficial"
+      ],
+      "abstract": "Documento curricular oficial com competências de matemática.",
+      "citations": {
+        "ABNT": "BRASIL. Base Nacional Comum Curricular: educação matemática. 2018. Disponível em: https://basenacionalcomum.mec.gov.br/. Acesso em: 20 out. 2026.",
+        "APA": "Brasil (2018). Base Nacional Comum Curricular: educação matemática. https://basenacionalcomum.mec.gov.br/",
+        "MLA": "Brasil \"Base Nacional Comum Curricular: educação matemática.\"",
+        "Harvard": "Brasil (2018) 'Base Nacional Comum Curricular: educação matemática'",
+        "Vancouver": "Brasil. Base Nacional Comum Curricular: educação matemática. 2018.",
+        "Chicago": "Brasil \"Base Nacional Comum Curricular: educação matemática.\" (2018)."
+      }
+    }
+  ]
+}

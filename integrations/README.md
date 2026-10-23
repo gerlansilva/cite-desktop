@@ -18,7 +18,7 @@ O token fica criptografado no armazenamento local do Cite e não é enviado aos 
 
 ## Word
 
-Siga [word/README.md](word/README.md).
+O add-in cria uma aba **Cite** no Word e pode ser testado localmente com `npm run word:serve`. Siga [word/README.md](word/README.md).
 
 ## Google Docs
 
