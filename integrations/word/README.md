@@ -26,6 +26,13 @@ O add-in adiciona uma aba **Cite** à faixa de opções do Word, ao lado de abas
 - Busca por título, autor, ano, periódico, DOI ou citação formatada.
 - Atualização automática da lista enquanto o Cite está aberto.
 - Modo alternativo com `bibliography.json` publicado, para quando o aplicativo estiver fechado.
+- Interface em português ou Tetun Dili, acompanhando o idioma do aplicativo.
+
+## Idioma
+
+O painel segue o idioma escolhido no aplicativo Cite (português ou Tetun Dili). Ao trocar o idioma no Cite, o painel atualiza ao ganhar foco, na próxima sincronização de 15 segundos ou ao reconectar. Com o aplicativo fechado, o seletor no cabeçalho fica disponível e a escolha é guardada em `localStorage`; ao reconectar, o idioma do aplicativo volta a prevalecer.
+
+As traduções ficam em `strings.js`, servido pelo conector em `/strings.js`. O `/ping` informa o idioma atual do aplicativo e o painel o aplica sem recarregar a página. Títulos, citações e referências não são traduzidos.
 
 ## Como funciona
 
@@ -168,6 +175,7 @@ manifest.local-server.xml  manifesto local com __PORT__, usado na instalação
 manifest.localhost.xml     manifesto de desenvolvimento na porta 3000
 taskpane.html/js           painel do Word
 fields.js                  formatação, opções, metadados e content controls de citação e bibliografia
+strings.js                 traduções do painel (português e Tetun Dili), com localização reversível
 commands.html/js           FunctionFile dos comandos Atualizar e Desvincular
 demo-bibliography.json     bibliografia fictícia para demonstração
 assets/                    ícones do add-in (16, 32 e 80 px)

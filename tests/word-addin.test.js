@@ -30,11 +30,13 @@ test('installs the local Word add-in and serves the pane over HTTPS', async (t) 
   process.env.CITE_WORD_TRUST = 'skip';
   process.env.CITE_WORD_PORT = '23210';
 
+  let language = 'pt';
   const addin = createWordAddin({
     appDataDir: root,
     wordDir: path.join(__dirname, '..', 'integrations', 'word'),
     getVersion: () => '0.2.0',
     getLibraryPath: () => '/tmp/Cite',
+    getLanguage: () => language,
     getPayload: async () => ({
       version: 1,
       generator: 'Cite',
@@ -68,6 +70,11 @@ test('installs the local Word add-in and serves the pane over HTTPS', async (t) 
   assert.equal(ping.status, 200);
   assert.equal(JSON.parse(ping.body).app, 'Cite');
   assert.equal(JSON.parse(ping.body).libraryPath, '/tmp/Cite');
+  assert.equal(JSON.parse(ping.body).language, 'pt');
+
+  language = 'tet';
+  const pingTetun = await get('https://localhost:23210/ping');
+  assert.equal(JSON.parse(pingTetun.body).language, 'tet');
 
   const lib = await get('https://localhost:23210/library');
   assert.equal(lib.status, 200);
@@ -85,6 +92,10 @@ test('installs the local Word add-in and serves the pane over HTTPS', async (t) 
   const icon = await get('https://localhost:23210/assets/icon-32.png');
   assert.equal(icon.status, 200);
   assert.equal(icon.headers['content-type'], 'image/png');
+
+  const strings = await get('https://localhost:23210/strings.js');
+  assert.equal(strings.status, 200);
+  assert.match(strings.body, /CiteStrings = api/);
 
   const fields = await get('https://localhost:23210/fields.js');
   assert.equal(fields.status, 200);

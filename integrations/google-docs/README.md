@@ -33,6 +33,10 @@ Na primeira vez:
 
 A URL fica salva nas propriedades daquele documento.
 
+## Idioma
+
+O painel tem um seletor **Português / Tetun Dili** no cabeçalho. A escolha fica salva em `CITE_LANGUAGE` nas propriedades do documento, então cada documento pode usar um idioma diferente. Como o add-in não se conecta ao aplicativo local, ele não acompanha automaticamente o idioma do Cite.
+
 ## 4. Vários documentos
 
 Este projeto é um complemento **container-bound**, ou seja, fica ligado ao documento onde o Apps Script foi criado. Para usar em outro documento, crie uma cópia do projeto ou mantenha um documento-modelo com o add-in instalado.

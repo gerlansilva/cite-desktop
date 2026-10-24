@@ -3,6 +3,18 @@
   const DEMO_URL = 'demo-bibliography.json';
   const REFRESH_MS = 15000;
   const F = window.CiteFields;
+  const I = window.CiteStrings;
+  const t = (text, variables) => (I ? I.t(text, variables) : interpolate(text, variables));
+
+  function interpolate(text, variables) {
+    let value = text;
+    if (variables) {
+      for (const [key, replacement] of Object.entries(variables)) {
+        value = value.split(`{${key}}`).join(String(replacement));
+      }
+    }
+    return value;
+  }
 
   let bibliography = null;
   let selection = [];
@@ -15,18 +27,21 @@
   let refreshing = false;
   let focusTimer = null;
   let syncTimer = null;
+  let language = 'pt';
+  let lastStatus = { template: '', vars: null, error: false };
 
   const $ = (id) => document.getElementById(id);
 
-  function setStatus(message, error = false) {
+  function setStatus(template = '', error = false, vars = null) {
+    lastStatus = { template, vars, error: Boolean(error) };
     const status = $('status');
-    status.textContent = message || '';
+    status.textContent = t(template, vars);
     status.classList.toggle('error', Boolean(error));
   }
 
   function setLocalState(message, kind = '') {
     const state = $('local-state');
-    state.textContent = message;
+    state.textContent = t(message);
     state.classList.toggle('on', kind === 'on');
     state.classList.toggle('off', kind === 'off');
   }
@@ -45,16 +60,44 @@
       localPort = null;
       localPath = '';
     }
-    $('connect').textContent = value ? 'Reconectar' : 'Conectar';
+    $('connect').textContent = t(value ? 'Reconectar' : 'Conectar');
     $('refresh').disabled = !value;
+    $('language').disabled = value;
+    $('language').title = value
+      ? t('O idioma do painel segue o aplicativo Cite.')
+      : t('Idioma do painel');
     if (value) {
       setLocalState('Conectado', 'on');
-      const suffix = localPort ? ` · porta ${localPort}` : '';
-      $('local-note').textContent = `${localPath || 'Biblioteca do Cite'}${suffix}`;
+      const suffix = localPort ? ` · ${t('porta')} ${localPort}` : '';
+      $('local-note').textContent = `${localPath || t('Biblioteca do Cite')}${suffix}`;
     } else {
       setLocalState('Desconectado', 'off');
-      $('local-note').textContent = 'Abra o aplicativo Cite neste computador e clique em Conectar.';
+      $('local-note').textContent = t('Abra o aplicativo Cite neste computador e clique em Conectar.');
     }
+  }
+
+  function applyLanguage(next, { persist = true, quiet = false } = {}) {
+    language = next === 'tet' ? 'tet' : 'pt';
+    if (I) I.setLanguage(language);
+    if (persist) {
+      try {
+        localStorage.setItem('cite-language', language);
+      } catch {}
+    }
+    $('language').value = language;
+    if (I) I.localize(document.body);
+    if (quiet) return;
+    renderList();
+    renderPreview();
+    setConnected(connected);
+    setStatus(lastStatus.template, lastStatus.error, lastStatus.vars);
+    updateFieldCount();
+  }
+
+  function adoptLanguage(value) {
+    if (value !== 'pt' && value !== 'tet') return;
+    if (value === language) return;
+    applyLanguage(value);
   }
 
   function referenceText(item) {
@@ -152,20 +195,20 @@
   function renderSelectionBar() {
     const count = selectedItems().length;
     $('selection-bar').hidden = count === 0;
-    $('selection-count').textContent = `${count} ${count === 1 ? 'selecionada' : 'selecionadas'}`;
+    $('selection-count').textContent = t('{n} selecionadas', { n: count });
   }
 
   function renderList() {
     const list = $('list');
     const items = filteredItems();
     list.innerHTML = '';
-    $('count').textContent = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
+    $('count').textContent = t('{n} itens', { n: items.length });
     renderSelectionBar();
 
     if (!items.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Conecte o Cite ou carregue uma bibliografia para começar.';
+      empty.textContent = t(bibliography ? 'Nenhuma referência encontrada.' : 'Conecte o Cite ou carregue uma bibliografia para começar.');
       list.appendChild(empty);
       return;
     }
@@ -185,7 +228,7 @@
       const body = document.createElement('span');
       body.className = 'item-body';
       const title = document.createElement('strong');
-      title.textContent = item.title || '(sem título)';
+      title.textContent = item.title || t('(sem título)');
       const meta = document.createElement('span');
       meta.textContent = [item.authors?.join(', '), item.year, item.journal].filter(Boolean).join(' · ');
       body.append(title, meta);
@@ -201,10 +244,10 @@
     const options = citationOptions();
     $('preview-citation').textContent = items.length
       ? F.citationText(items, style, options)
-      : 'Nenhuma referência selecionada.';
+      : t('Nenhuma referência selecionada.');
     $('preview-reference').textContent = items.length
       ? items.map((item) => referenceText(item)).join('\n\n')
-      : 'Selecione uma ou mais referências na lista.';
+      : t('Selecione uma ou mais referências na lista.');
     $('insert-citation').disabled = !items.length;
     $('insert-reference').disabled = !items.length;
     $('insert-bibliography').disabled = !bibliography?.items?.length;
@@ -264,18 +307,19 @@
       if (!Array.isArray(data?.items)) throw new Error('biblioteca indisponível');
       localPort = found.port;
       localPath = found.ping?.libraryPath || '';
+      adoptLanguage(found.ping?.language);
       applyBibliography(data, true);
       setConnected(true);
       if (!silent) {
         const total = data.items.length;
-        setStatus(`${total} ${total === 1 ? 'referência' : 'referências'} da biblioteca local.`);
+        setStatus(total === 1 ? '{n} referência da biblioteca local.' : '{n} referências da biblioteca local.', false, { n: total });
       }
       return true;
     } catch (err) {
       const wasConnected = connected;
       setConnected(false);
       if (!silent || wasConnected) {
-        setStatus(`Não foi possível conectar: ${err.message}. Abra o aplicativo ou use a bibliografia publicada.`, true);
+        setStatus('Não foi possível conectar: {msg}. Abra o aplicativo ou use a bibliografia publicada.', true, { msg: t(err.message) });
       }
       return false;
     } finally {
@@ -294,8 +338,12 @@
       const base = window.location.port === String(localPort) ? '' : `https://localhost:${localPort}`;
       const data = await fetchJson(`${base}/library`, 15000);
       if (!Array.isArray(data?.items)) throw new Error('biblioteca indisponível');
+      try {
+        const ping = await fetchJson(`${base}/ping`, 1500);
+        adoptLanguage(ping?.language);
+      } catch {}
       applyBibliography(data, true);
-      setStatus(`${data.items.length} ${data.items.length === 1 ? 'referência atualizada' : 'referências atualizadas'}.`);
+      setStatus(data.items.length === 1 ? '{n} referência atualizada.' : '{n} referências atualizadas.', false, { n: data.items.length });
     } catch {
       const recovered = await connectLocal({ silent: true });
       if (!recovered) {
@@ -324,14 +372,14 @@
       try {
         localStorage.setItem('cite-bibliography-url', url);
       } catch {}
-      setStatus(`${data.items.length} ${data.items.length === 1 ? 'referência carregada' : 'referências carregadas'}.`);
+      setStatus(data.items.length === 1 ? '{n} referência carregada.' : '{n} referências carregadas.', false, { n: data.items.length });
       return true;
     } catch (err) {
       bibliography = null;
       selection = [];
       renderList();
       renderPreview();
-      setStatus(`Não foi possível carregar: ${err.message}`, true);
+      setStatus('Não foi possível carregar: {msg}', true, { msg: t(err.message) });
       return false;
     } finally {
       setBusy(false);
@@ -342,8 +390,8 @@
     try {
       const counts = await F.countFields();
       const parts = [];
-      if (counts.citations) parts.push(`${counts.citations} ${counts.citations === 1 ? 'citação' : 'citações'}`);
-      if (counts.bibliographies) parts.push(`${counts.bibliographies} ${counts.bibliographies === 1 ? 'bibliografia' : 'bibliografias'}`);
+      if (counts.citations) parts.push(t('{n} citações', { n: counts.citations }));
+      if (counts.bibliographies) parts.push(t('{n} bibliografias', { n: counts.bibliographies }));
       $('field-count').textContent = parts.join(' · ');
     } catch {
       $('field-count').textContent = '';
@@ -358,22 +406,22 @@
     try {
       const result = await F.refreshDocument(bibliography.items, style);
       if (!silent) {
-        const citations = `${result.citations} ${result.citations === 1 ? 'citação atualizada' : 'citações atualizadas'}`;
-        const bibs = result.bibliographies
-          ? ` e ${result.bibliographies} ${result.bibliographies === 1 ? 'bibliografia' : 'bibliografias'}`
-          : '';
-        setStatus(`${citations}${bibs}.`);
+        const citations = result.citations === 1 ? '{c} citação atualizada' : '{c} citações atualizadas';
+        const template = result.bibliographies
+          ? `${citations} e {b} ${result.bibliographies === 1 ? 'bibliografia' : 'bibliografias'}.`
+          : `${citations}.`;
+        setStatus(template, false, { c: result.citations, b: result.bibliographies });
       }
       await updateFieldCount();
       await F.watchCitations(scheduleSync);
     } catch (err) {
-      if (!silent) setStatus(`Não foi possível atualizar: ${err.message}`, true);
+      if (!silent) setStatus('Não foi possível atualizar: {msg}', true, { msg: t(err.message) });
     }
   }
 
   async function insertText(text) {
     if (typeof Word === 'undefined' || !Word.run) {
-      throw new Error('Abra este painel dentro do Word para inserir conteúdo.');
+      throw new Error(t('Abra este painel dentro do Word para inserir conteúdo.'));
     }
     await Word.run(async (context) => {
       const range = context.document.getSelection();
@@ -401,9 +449,9 @@
     } catch (err) {
       try {
         await insertText(F.citationText(items, style, options));
-        setStatus(`Citação inserida como texto; não foi possível vinculá-la: ${err.message}`, true);
+        setStatus('Citação inserida como texto; não foi possível vinculá-la: {msg}', true, { msg: t(err.message) });
       } catch (fallbackError) {
-        setStatus(`Não foi possível inserir: ${fallbackError.message}`, true);
+        setStatus('Não foi possível inserir: {msg}', true, { msg: t(fallbackError.message) });
       }
     }
   }
@@ -431,7 +479,7 @@
       await insertText(items.map((item) => referenceText(item)).join('\n\n'));
       setStatus(items.length === 1 ? 'Referência inserida como texto.' : 'Referências inseridas como texto.');
     } catch (err) {
-      setStatus(`Não foi possível inserir: ${err.message}`, true);
+      setStatus('Não foi possível inserir: {msg}', true, { msg: t(err.message) });
     }
   }
 
@@ -454,22 +502,22 @@
           context.document.body.insertText(`\n\n${text}`, Word.InsertLocation.end);
           await context.sync();
         });
-        setStatus(`Bibliografia inserida como texto; não foi possível vinculá-la: ${err.message}`, true);
+        setStatus('Bibliografia inserida como texto; não foi possível vinculá-la: {msg}', true, { msg: t(err.message) });
       } catch (fallbackError) {
-        setStatus(`Não foi possível inserir: ${fallbackError.message}`, true);
+        setStatus('Não foi possível inserir: {msg}', true, { msg: t(fallbackError.message) });
       }
     }
   }
 
   async function unlinkFields() {
-    const ok = window.confirm('Desvincular todas as citações e a bibliografia? Elas passam a ser texto comum e não poderão ser atualizadas.');
+    const ok = window.confirm(t('Desvincular todas as citações e a bibliografia? Elas passam a ser texto comum e não poderão ser atualizadas.'));
     if (!ok) return;
     try {
       const count = await F.unlinkDocument();
-      setStatus(`${count} ${count === 1 ? 'vínculo removido' : 'vínculos removidos'}.`);
+      setStatus(count === 1 ? '{n} vínculo removido.' : '{n} vínculos removidos.', false, { n: count });
       await updateFieldCount();
     } catch (err) {
-      setStatus(`Não foi possível desvincular: ${err.message}`, true);
+      setStatus('Não foi possível desvincular: {msg}', true, { msg: t(err.message) });
     }
   }
 
@@ -505,6 +553,7 @@
   function bindEvents() {
     $('connect').addEventListener('click', () => connectLocal());
     $('refresh').addEventListener('click', refreshLocal);
+    $('language').addEventListener('change', () => applyLanguage($('language').value));
     $('load').addEventListener('click', () => loadBibliography());
     $('load-demo').addEventListener('click', () => loadBibliography(DEMO_URL));
     $('bibliography-url').addEventListener('keydown', (event) => {
@@ -584,6 +633,14 @@
       autoRefresh = localStorage.getItem('cite-auto-refresh') !== '0';
     } catch {}
     $('auto-refresh').checked = autoRefresh;
+
+    let initialLanguage = 'pt';
+    try {
+      initialLanguage = localStorage.getItem('cite-language') || 'pt';
+    } catch {}
+    initialLanguage = new URLSearchParams(window.location.search).get('lang') || initialLanguage;
+    applyLanguage(initialLanguage, { persist: false, quiet: true });
+
     renderStyles();
     renderList();
     renderPreview();

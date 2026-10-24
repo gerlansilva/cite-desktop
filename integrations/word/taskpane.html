@@ -14,6 +14,9 @@
     .brand img { width: 30px; height: 30px; border-radius: 7px; }
     .brand h1 { font-size: 18px; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
     .brand p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+    .brand .lang { margin-left: auto; }
+    .brand .lang select { width: auto; max-width: 108px; padding: 4px 6px; font-size: 10.5px; color: var(--muted); }
+    .brand .lang select:disabled { background: var(--surface); opacity: .8; }
     .card { border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin-top: 10px; background: var(--paper); }
     .source { background: linear-gradient(180deg, #fbfcff 0%, #f2f6ff 100%); }
     .label { display: block; color: var(--muted); font-size: 10.5px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; margin-bottom: 5px; }
@@ -95,16 +98,22 @@
       <h1>Cite</h1>
       <p>Sua biblioteca no Word</p>
     </div>
+    <label class="lang">
+      <select id="language" aria-label="Idioma do painel" title="O idioma do painel segue o aplicativo Cite.">
+        <option value="pt">Português</option>
+        <option value="tet">Tetun Dili</option>
+      </select>
+    </label>
   </div>
 
   <section class="card local" aria-labelledby="local-label">
     <div class="local-head">
       <span class="label" id="local-label">Biblioteca do Cite</span>
-      <span id="local-state" class="state">Verificando…</span>
+      <span id="local-state" class="state" data-no-i18n>Verificando…</span>
     </div>
-    <p id="local-note" class="local-note">Procurando o aplicativo neste computador…</p>
+    <p id="local-note" class="local-note" data-no-i18n>Procurando o aplicativo neste computador…</p>
     <div class="row">
-      <button id="connect" class="primary">Conectar</button>
+      <button id="connect" class="primary" data-no-i18n>Conectar</button>
       <button id="refresh" disabled>Atualizar</button>
     </div>
     <div class="style-row" style="margin-top:8px">
@@ -113,7 +122,7 @@
         <select id="style" aria-label="Estilo de citação"></select>
       </div>
     </div>
-    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div id="status" class="status" data-no-i18n role="status" aria-live="polite"></div>
   </section>
 
   <details class="source-details">
@@ -137,23 +146,23 @@
   <section class="card">
     <div class="list-head">
       <span class="label">Referências</span>
-      <span id="count" class="count">0 itens</span>
+      <span id="count" class="count" data-no-i18n>0 itens</span>
     </div>
     <div id="selection-bar" class="selection-bar" hidden>
-      <span id="selection-count"></span>
+      <span id="selection-count" data-no-i18n></span>
       <button id="clear-selection" class="link" type="button">Limpar seleção</button>
     </div>
-    <div id="list"><div class="empty">Carregue uma bibliografia para começar.</div></div>
+    <div id="list" data-no-i18n><div class="empty">Carregue uma bibliografia para começar.</div></div>
   </section>
 
   <section class="card preview-card" id="bibliography-card">
     <div class="preview-block">
       <div class="label">Citação no texto</div>
-      <div id="preview-citation" class="preview-text">Nenhuma referência selecionada.</div>
+      <div id="preview-citation" class="preview-text" data-no-i18n>Nenhuma referência selecionada.</div>
     </div>
     <div class="preview-block">
       <div class="label">Referência completa</div>
-      <div id="preview-reference" class="preview-text reference">Selecione uma referência na lista.</div>
+      <div id="preview-reference" class="preview-text reference" data-no-i18n>Selecione uma referência na lista.</div>
     </div>
     <div class="actions">
       <button id="insert-citation" class="primary" disabled>Inserir citação</button>
@@ -189,7 +198,7 @@
   <section class="card" id="document-card">
     <div class="list-head">
       <span class="label">Documento</span>
-      <span id="field-count" class="count"></span>
+      <span id="field-count" class="count" data-no-i18n></span>
     </div>
     <label class="check-line" for="auto-refresh">
       <input type="checkbox" id="auto-refresh" checked>
@@ -205,9 +214,10 @@
 
   <details>
     <summary>Como conectar sua biblioteca</summary>
-    <p>Com o Cite aberto neste computador, o painel se conecta sozinho à sua biblioteca. Se o aplicativo estiver fechado, publique a bibliografia em <strong>Ferramentas → Integrações</strong> e informe a URL pública do <code>bibliography.json</code>.</p>
+    <p>Com o Cite aberto neste computador, o painel se conecta sozinho à sua biblioteca. Se o aplicativo estiver fechado, publique a bibliografia em Ferramentas → Integrações e informe a URL pública do bibliography.json.</p>
   </details>
 
+  <script src="./strings.js"></script>
   <script src="./fields.js"></script>
   <script src="./taskpane.js"></script>
 </body>

@@ -11,6 +11,7 @@ const STATIC_FILES = new Map([
   ['/taskpane.html', { file: 'taskpane.html', type: 'text/html; charset=utf-8' }],
   ['/taskpane.js', { file: 'taskpane.js', type: 'text/javascript; charset=utf-8' }],
   ['/fields.js', { file: 'fields.js', type: 'text/javascript; charset=utf-8' }],
+  ['/strings.js', { file: 'strings.js', type: 'text/javascript; charset=utf-8' }],
   ['/commands.html', { file: 'commands.html', type: 'text/html; charset=utf-8' }],
   ['/commands.js', { file: 'commands.js', type: 'text/javascript; charset=utf-8' }],
   ['/demo-bibliography.json', { file: 'demo-bibliography.json', type: 'application/json; charset=utf-8' }]
@@ -60,6 +61,7 @@ function createConnector({
   getVersion,
   getLibraryPath,
   getPayload,
+  getLanguage,
   port = DEFAULT_PORT
 } = {}) {
   let server = null;
@@ -89,7 +91,8 @@ function createConnector({
       sendJson(res, 200, {
         app: 'Cite',
         version: getVersion?.() || '',
-        libraryPath: getLibraryPath?.() || ''
+        libraryPath: getLibraryPath?.() || '',
+        language: getLanguage?.() === 'tet' ? 'tet' : 'pt'
       });
       return;
     }

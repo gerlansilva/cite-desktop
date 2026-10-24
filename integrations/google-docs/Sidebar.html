@@ -7,7 +7,9 @@
     :root { --accent: #0052cc; --accent-dark: #0043a8; --accent-soft: #eaf1ff; --line: #e4e9f0; --muted: #667085; --text: #172033; --surface: #f7f9fc; }
     * { box-sizing: border-box; }
     body { margin: 0; padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: #fff; }
+    .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
     h1 { font-size: 17px; margin: 0 0 2px; }
+    .head select { width: auto; max-width: 112px; padding: 4px 6px; font-size: 10.5px; color: var(--muted); }
     .muted { color: var(--muted); font-size: 11px; }
     .row { display: flex; gap: 6px; margin-top: 8px; }
     input, select, button { font: inherit; }
@@ -32,43 +34,105 @@
   </style>
 </head>
 <body>
-  <h1>Cite</h1>
-  <div class="muted">Citações da sua biblioteca no Google Docs.</div>
+  <div class="head">
+    <div>
+      <h1>Cite</h1>
+      <div class="muted" data-i18n="Citações da sua biblioteca no Google Docs.">Citações da sua biblioteca no Google Docs.</div>
+    </div>
+    <select id="language" aria-label="Idioma" title="O idioma fica salvo neste documento.">
+      <option value="pt">Português</option>
+      <option value="tet">Tetun Dili</option>
+    </select>
+  </div>
 
   <div class="card">
-    <label class="muted" for="bibliography-url">URL do bibliography.json</label>
+    <label class="muted" for="bibliography-url" data-i18n="URL do bibliography.json">URL do bibliography.json</label>
     <input id="bibliography-url" placeholder="https://raw.githubusercontent.com/.../bibliography.json">
     <div class="row">
       <select id="style" aria-label="Estilo"></select>
-      <button id="load">Carregar</button>
+      <button id="load" data-i18n="Carregar">Carregar</button>
     </div>
-    <div id="status"></div>
+    <div id="status" data-no-i18n></div>
   </div>
 
   <div class="row">
-    <input id="search" placeholder="Buscar por título, autor ou ano" autocomplete="off">
+    <input id="search" placeholder="Buscar por título, autor ou ano" data-i18n-placeholder="Buscar por título, autor ou ano" autocomplete="off">
   </div>
-  <div id="list" class="card"><div class="muted">Carregue uma bibliografia para começar.</div></div>
+  <div id="list" class="card" data-no-i18n><div class="muted">Carregue uma bibliografia para começar.</div></div>
 
   <div class="card">
-    <div class="muted">Citação selecionada</div>
-    <div id="preview">Nenhuma referência selecionada.</div>
+    <div class="muted" data-i18n="Citação selecionada">Citação selecionada</div>
+    <div id="preview" data-no-i18n>Nenhuma referência selecionada.</div>
     <div class="actions">
-      <button id="insert-citation" class="primary" disabled>Inserir citação</button>
-      <button id="insert-bibliography" disabled>Inserir bibliografia</button>
+      <button id="insert-citation" class="primary" data-i18n="Inserir citação" disabled>Inserir citação</button>
+      <button id="insert-bibliography" data-i18n="Inserir bibliografia" disabled>Inserir bibliografia</button>
     </div>
   </div>
 
   <script>
+    const TETUN = {
+      'Citações da sua biblioteca no Google Docs.': 'Sitasaun husi ita-nia biblioteka iha Google Docs.',
+      'URL do bibliography.json': 'URL bibliography.json nian',
+      'Estilo': 'Estilu',
+      'Carregar': 'Karrega',
+      'Buscar por título, autor ou ano': 'Buka tuir títulu, autor ka tinan',
+      'Carregue uma bibliografia para começar.': 'Karrega bibliografia ida atu hahú.',
+      'Citação selecionada': "Sitasaun ne'ebé hili",
+      'Nenhuma referência selecionada.': "La iha referénsia ne'ebé hili.",
+      'Inserir citação': 'Hatama sitasaun',
+      'Inserir bibliografia': 'Hatama bibliografia',
+      'Nenhuma referência encontrada.': 'La hetan referénsia ida.',
+      '(sem título)': '(la iha títulu)',
+      'Idioma': 'Lian',
+      'Informe a URL do bibliography.json.': 'Informa URL bibliography.json nian.',
+      'carregando…': 'karrega hela…',
+      '{n} referência(s) carregada(s).': '{n} referénsia karregadu ona.',
+      'não foi possível carregar: {msg}': 'la konsege karrega: {msg}',
+      'citação inserida.': 'sitasaun hatama ona.',
+      'não foi possível inserir: {msg}': 'la konsege hatama: {msg}',
+      'bibliografia inserida.': 'bibliografia hatama ona.'
+    };
+
     let bibliography = null;
     let selected = null;
     let style = 'ABNT';
+    let language = 'pt';
+    let lastStatus = { template: '', vars: null, error: false };
 
     const $ = (id) => document.getElementById(id);
-    function setStatus(message, error) {
-      $('status').textContent = message || '';
+
+    function t(text, variables) {
+      let value = language === 'tet' ? (TETUN[text] || text) : text;
+      if (variables) {
+        for (const [key, replacement] of Object.entries(variables)) {
+          value = value.split(`{${key}}`).join(String(replacement));
+        }
+      }
+      return value;
+    }
+
+    function setStatus(template, error, vars) {
+      lastStatus = { template: template || '', vars: vars || null, error: Boolean(error) };
+      $('status').textContent = t(lastStatus.template, lastStatus.vars);
       $('status').style.color = error ? '#b42318' : '';
     }
+
+    function applyLanguage(value) {
+      language = value === 'tet' ? 'tet' : 'pt';
+      document.documentElement.lang = language === 'tet' ? 'tet' : 'pt-BR';
+      $('language').value = language;
+      $('language').setAttribute('aria-label', t('Idioma'));
+      for (const element of document.querySelectorAll('[data-i18n]')) {
+        element.textContent = t(element.dataset.i18n);
+      }
+      for (const element of document.querySelectorAll('[data-i18n-placeholder]')) {
+        element.placeholder = t(element.dataset.i18nPlaceholder);
+      }
+      renderList();
+      renderPreview();
+      setStatus(lastStatus.template, lastStatus.error, lastStatus.vars);
+    }
+
     function itemText(item) {
       return item.citations?.[style] || item.citations?.ABNT ||
         [item.authors?.join('; '), item.title, item.year].filter(Boolean).join('. ');
@@ -100,7 +164,7 @@
       if (!items.length) {
         const empty = document.createElement('div');
         empty.className = 'muted';
-        empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Carregue uma bibliografia para começar.';
+        empty.textContent = t(bibliography ? 'Nenhuma referência encontrada.' : 'Carregue uma bibliografia para começar.');
         list.appendChild(empty);
         selected = null;
         renderPreview();
@@ -110,7 +174,7 @@
         const row = document.createElement('div');
         row.className = 'item' + (selected?.id === item.id ? ' selected' : '');
         const title = document.createElement('strong');
-        title.textContent = item.title || '(sem título)';
+        title.textContent = item.title || t('(sem título)');
         const meta = document.createElement('span');
         meta.textContent = [item.authors?.join(', '), item.year, item.journal].filter(Boolean).join(' · ');
         row.append(title, meta);
@@ -123,7 +187,7 @@
       }
     }
     function renderPreview() {
-      $('preview').textContent = selected ? itemText(selected) : 'Nenhuma referência selecionada.';
+      $('preview').textContent = selected ? itemText(selected) : t('Nenhuma referência selecionada.');
       $('insert-citation').disabled = !selected;
       $('insert-bibliography').disabled = !bibliography?.items?.length;
     }
@@ -142,12 +206,12 @@
           renderList();
           renderPreview();
           google.script.run.saveBibliographyUrl(url);
-          setStatus(`${data.items.length} referência(s) carregada(s).`);
+          setStatus('{n} referência(s) carregada(s).', false, { n: data.items.length });
         })
         .withFailureHandler((err) => {
           bibliography = null;
           renderList();
-          setStatus(`não foi possível carregar: ${err.message}`, true);
+          setStatus('não foi possível carregar: {msg}', true, { msg: err.message });
         })
         .loadBibliography(url);
     }
@@ -155,14 +219,14 @@
       if (!selected) return;
       google.script.run
         .withSuccessHandler(() => setStatus('citação inserida.'))
-        .withFailureHandler((err) => setStatus(`não foi possível inserir: ${err.message}`, true))
+        .withFailureHandler((err) => setStatus('não foi possível inserir: {msg}', true, { msg: err.message }))
         .insertCitation(itemText(selected));
     }
     function insertBibliography() {
       if (!bibliography?.items?.length) return;
       google.script.run
         .withSuccessHandler(() => setStatus('bibliografia inserida.'))
-        .withFailureHandler((err) => setStatus(`não foi possível inserir: ${err.message}`, true))
+        .withFailureHandler((err) => setStatus('não foi possível inserir: {msg}', true, { msg: err.message }))
         .insertBibliography(bibliography.items.map(itemText));
     }
     function init() {
@@ -176,8 +240,15 @@
       };
       $('insert-citation').onclick = insertCitation;
       $('insert-bibliography').onclick = insertBibliography;
+      $('language').onchange = () => {
+        const value = $('language').value;
+        applyLanguage(value);
+        google.script.run.saveLanguage(value);
+      };
+      applyLanguage('pt');
       google.script.run
         .withSuccessHandler((config) => {
+          applyLanguage(config.language || 'pt');
           $('bibliography-url').value = config.url || '';
           if (config.url) loadBibliography();
         })

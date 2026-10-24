@@ -682,7 +682,8 @@ app.whenReady().then(async () => {
     wordDir: path.join(__dirname, 'integrations', 'word'),
     getVersion: () => app.getVersion(),
     getLibraryPath: () => app.getPath('userData'),
-    getPayload: async () => githubBibliographyPayload(await dataCall('library:all'))
+    getPayload: async () => githubBibliographyPayload(await dataCall('library:all')),
+    getLanguage: () => I18n.getLanguage()
   });
   const isolatedProfile = app.commandLine.hasSwitch('user-data-dir') || Boolean(process.env.CITE_STORAGE_CONFIG);
   const skipWordConnector = process.env.CITE_DISABLE_WORD === '1' ||

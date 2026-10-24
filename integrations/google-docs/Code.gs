@@ -11,9 +11,18 @@ function showSidebar() {
 }
 
 function getConfig() {
+  const properties = PropertiesService.getDocumentProperties();
+  const language = properties.getProperty('CITE_LANGUAGE');
   return {
-    url: PropertiesService.getDocumentProperties().getProperty('CITE_BIBLIOGRAPHY_URL') || ''
+    url: properties.getProperty('CITE_BIBLIOGRAPHY_URL') || '',
+    language: language === 'tet' ? 'tet' : 'pt'
   };
+}
+
+function saveLanguage(language) {
+  const value = language === 'tet' ? 'tet' : 'pt';
+  PropertiesService.getDocumentProperties().setProperty('CITE_LANGUAGE', value);
+  return { language: value };
 }
 
 function saveBibliographyUrl(url) {
