@@ -97,6 +97,15 @@ function makeWordMock() {
           controls.push(control);
           return control;
         },
+        insertParagraph() {
+          return {
+            insertContentControl() {
+              const control = createControl();
+              controls.push(control);
+              return control;
+            }
+          };
+        },
         insertText() {}
       }
     },
@@ -115,12 +124,24 @@ function makeWordMock() {
   };
 }
 
-function loadFieldsWithWord() {
+function loadFieldsWithWord({ Office } = {}) {
   const code = fs.readFileSync(path.join(__dirname, '..', 'integrations', 'word', 'fields.js'), 'utf8');
   const mock = makeWordMock();
   const sandbox = { window: {}, Word: mock.Word };
+  if (Office) sandbox.Office = Office;
   vm.runInNewContext(code, sandbox);
   return { fields: sandbox.window.CiteFields, mock };
+}
+
+function makeSettings() {
+  const data = new Map();
+  return {
+    data,
+    get: (key) => data.get(key),
+    set: (key, value) => data.set(key, value),
+    remove: (key) => data.delete(key),
+    saveAsync: (callback) => callback({ status: 'succeeded' })
+  };
 }
 
 test('inserts linked citations and bibliography content controls', async () => {
@@ -129,7 +150,7 @@ test('inserts linked citations and bibliography content controls', async () => {
 
   await fields.insertCitation(item, 'ABNT');
   assert.equal(mock.controls.length, 1);
-  assert.equal(mock.controls[0].tag, 'cite:citation:ref-1');
+  assert.deepEqual([...fields.citationIds(mock.controls[0].tag)], ['ref-1']);
   assert.equal(mock.controls[0].text, '(SILVA, 2026)');
   assert.equal(mock.controls[0].appearance, 'Hidden');
 
@@ -156,7 +177,7 @@ test('edits the citation under the cursor', async () => {
   mock.setSelectionControl(mock.controls[0]);
   const updated = await fields.updateSelectedCitation(second, 'ABNT');
   assert.equal(updated, true);
-  assert.equal(mock.controls[0].tag, 'cite:citation:b');
+  assert.deepEqual([...fields.citationIds(mock.controls[0].tag)], ['b']);
   assert.equal(mock.controls[0].text, '(COSTA, 2024)');
 });
 
@@ -241,7 +262,7 @@ test('inserts, refreshes and unlinks every citation style', async () => {
 
     await scoped.insertCitation(item, style);
     assert.equal(mock.controls.length, 1, style);
-    assert.equal(mock.controls[0].tag, 'cite:citation:ref-1', style);
+    assert.deepEqual([...scoped.citationIds(mock.controls[0].tag)], ['ref-1'], style);
 
     await scoped.refreshDocument([item], style);
     assert.equal(mock.controls[0].text, CITATION_MATRIX[style]?.[1] || '(1)', style);
@@ -273,4 +294,85 @@ test('numbers Vancouver citations and bibliography in document order', async () 
   assert.deepEqual(mock.controls.slice(0, 3).map((control) => control.text), ['(1)', '(2)', '(2)']);
   assert.match(mock.controls[3].text, /^1\. Beta/);
   assert.match(mock.controls[3].text, /\n\n2\. Alfa/);
+});
+
+test('combines multiple references and applies locator, suffix and apud', () => {
+  const fields = loadFields();
+  const silva = { id: 's', authors: ['Silva, G.'], year: '2020', title: 'Silva' };
+  const costa = { id: 'c', authors: ['Costa, M.'], year: '2001', title: 'Costa' };
+
+  assert.equal(fields.citationText([silva, costa], 'ABNT'), '(SILVA, 2020; COSTA, 2001)');
+  assert.equal(fields.citationText([silva], 'ABNT', { locator: 'p. 10' }), '(SILVA, 2020, p. 10)');
+  assert.equal(
+    fields.citationText([silva], 'ABNT', { locator: 'p. 10', suffix: 'grifo nosso' }),
+    '(SILVA, 2020, p. 10, grifo nosso)'
+  );
+  assert.equal(
+    fields.citationText([costa], 'ABNT', { apud: 'SILVA, 1999', locator: 'p. 10' }),
+    '(SILVA, 1999 apud COSTA, 2001, p. 10)'
+  );
+  assert.equal(fields.citationText([silva], 'ABNT', { prefix: 'cf.' }), '(cf. SILVA, 2020)');
+  assert.equal(fields.citationText([silva], 'ABNT', { yearSuffix: 'a' }), '(SILVA, 2020a)');
+  assert.equal(fields.citationText([silva], 'ABNT', { suppressAuthor: true }), '(2020)');
+  assert.equal(fields.citationText([silva], 'ABNT', { suppressYear: true, locator: 'p. 10' }), '(SILVA, p. 10)');
+});
+
+test('formats narrative citations for each style', () => {
+  const fields = loadFields();
+  const item = { authors: ['Silva, G.'], year: '2020', title: 'Título' };
+  assert.equal(fields.citationText([item], 'ABNT', { narrative: true }), 'SILVA (2020)');
+  assert.equal(fields.citationText([item], 'APA', { narrative: true }), 'Silva (2020)');
+  assert.equal(fields.citationText([item], 'MLA', { narrative: true }), 'Silva (2020)');
+  assert.equal(
+    fields.citationText([item], 'ABNT', { narrative: true, locator: 'p. 10', suffix: 'grifo nosso' }),
+    'SILVA (2020, p. 10, grifo nosso)'
+  );
+});
+
+test('numbers multiple Vancouver references together', () => {
+  const fields = loadFields();
+  const first = { id: 'a', authors: ['Alfa, A.'], year: '2020', title: 'Alfa' };
+  const second = { id: 'b', authors: ['Beta, B.'], year: '2021', title: 'Beta' };
+  assert.equal(fields.citationText([first, second], 'Vancouver', { numbers: [3, 4] }), '(3,4)');
+  assert.equal(
+    fields.citationText([first, second], 'Vancouver', { numbers: [3, 4], locator: 'p. 9', suffix: 'grifo nosso' }),
+    '(3,4, p. 9, grifo nosso)'
+  );
+});
+
+test('inserts and edits a multi-reference citation with options', async () => {
+  const { fields, mock } = loadFieldsWithWord();
+  const silva = { id: 's', authors: ['Silva, G.'], year: '2020', title: 'Silva' };
+  const costa = { id: 'c', authors: ['Costa, M.'], year: '2001', title: 'Costa' };
+
+  await fields.insertCitation([silva, costa], 'ABNT', { locator: 'p. 10', suffix: 'grifo nosso' });
+  assert.equal(mock.controls[0].text, '(SILVA, 2020, p. 10; COSTA, 2001, grifo nosso)');
+  assert.deepEqual([...fields.citationIds(mock.controls[0].tag)], ['s', 'c']);
+  assert.equal(fields.citationRef(mock.controls[0].tag).options.locator, 'p. 10');
+
+  mock.setSelectionControl(mock.controls[0]);
+  const selected = await fields.selectedCitation();
+  assert.deepEqual(selected.ids, ['s', 'c']);
+  assert.equal(selected.options.suffix, 'grifo nosso');
+
+  const updated = await fields.updateSelectedCitation([costa], 'ABNT', { apud: 'SILVA, 1999' });
+  assert.equal(updated, true);
+  assert.equal(mock.controls[0].text, '(SILVA, 1999 apud COSTA, 2001)');
+  assert.deepEqual([...fields.citationIds(mock.controls[0].tag)], ['c']);
+});
+
+test('keeps citation options in document settings between sessions', async () => {
+  const settings = makeSettings();
+  const office = { context: { document: { settings } } };
+  const first = loadFieldsWithWord({ Office: office });
+  const item = { id: 'ref-1', authors: ['Silva, G.'], year: '2026', title: 'Título' };
+
+  await first.fields.insertCitation(item, 'ABNT', { locator: 'p. 12', suffix: 'grifo nosso' });
+  const tag = first.mock.controls[0].tag;
+  assert.ok(settings.data.size > 0);
+
+  const second = loadFieldsWithWord({ Office: office });
+  assert.deepEqual([...second.fields.citationIds(tag)], ['ref-1']);
+  assert.equal(second.fields.citationRef(tag).options.locator, 'p. 12');
+  assert.equal(second.fields.citationRef(tag).options.suffix, 'grifo nosso');
 });

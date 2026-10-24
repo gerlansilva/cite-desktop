@@ -51,7 +51,7 @@ function certificateIsUsable(certPath) {
 
 // Incremente ao alterar painel, campos ou ícones para forçar o Word a
 // recarregar os arquivos mesmo quando a versão do aplicativo não muda.
-const ADDIN_REVISION = '4';
+const ADDIN_REVISION = '5';
 
 function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getPayload }) {
   const baseDir = process.env.CITE_WORD_ADDIN_DIR || path.join(appDataDir, 'word-addin');

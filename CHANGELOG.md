@@ -12,6 +12,10 @@
 - Citações e bibliografia inseridas como campos vinculados, com **Atualizar citações** e **Desvincular citações** na faixa de opções e no painel.
 - Vancouver com citações numéricas e bibliografia numerada na ordem de citação; ABNT, APA, MLA, Harvard e Chicago com regras próprias de autores no texto.
 - Edição de uma citação existente: com o cursor dentro dela, escolher outra referência substitui o campo sem perder o vínculo.
+- Seleção múltipla de referências no painel, com citação combinada na mesma chamada.
+- Opções de citação: prefixo, página, sufixo, complemento do ano, apud, citação narrativa, omitir autor e omitir ano.
+- Atalhos para **grifo nosso**, **grifo do autor**, **adaptado de** e **cf.**
+- Botão **Editar citação do cursor**, que carrega as referências e opções da citação selecionada.
 - Cartão **Documento** no painel, com contagem de citações, atualização automática configurável e as ações de atualizar e desvincular.
 - Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela inicial pronta para uso.
 - Ação **Alterar pasta** na tela inicial e item **Arquivo > Início** no menu.
@@ -26,6 +30,7 @@
 - Vancouver passou a usar citações numéricas e bibliografia na ordem de citação.
 - Autores com iniciais antes do sobrenome, como `SA Costa`, não são mais confundidos com sufixo de empresa na ABNT.
 - Cobertura de testes para os seis estilos, de um a quatro autores, e para todos os tipos de referência.
+- Inserir bibliografia em um documento novo não substitui mais o conteúdo já existente: a lista é criada em parágrafos próprios ao final.
 - Painel do Word passou a recarregar os arquivos atualizados a cada versão, sem cache antigo.
 - Testes não alteram mais a instalação real do add-in no Word.
 

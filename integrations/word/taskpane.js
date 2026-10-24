@@ -5,7 +5,7 @@
   const F = window.CiteFields;
 
   let bibliography = null;
-  let selected = null;
+  let selection = [];
   let style = 'ABNT';
   let autoRefresh = true;
   let initialized = false;
@@ -59,8 +59,65 @@
     return F.referenceText(item, style);
   }
 
-  function inTextCitation(item) {
-    return F.inTextCitation(item, style);
+  function selectedItems() {
+    return selection
+      .map((id) => (bibliography?.items || []).find((item) => String(item.id) === id))
+      .filter(Boolean);
+  }
+
+  function isSelected(id) {
+    return selection.includes(String(id));
+  }
+
+  function toggleSelection(item) {
+    const id = String(item.id);
+    const index = selection.indexOf(id);
+    if (index >= 0) selection.splice(index, 1);
+    else selection.push(id);
+    renderList();
+    renderPreview();
+  }
+
+  function clearSelection() {
+    selection = [];
+    renderList();
+    renderPreview();
+  }
+
+  function citationOptions() {
+    return {
+      prefix: $('citation-prefix').value.trim(),
+      locator: $('citation-locator').value.trim(),
+      suffix: $('citation-suffix').value.trim(),
+      yearSuffix: $('citation-year-suffix').value.trim(),
+      apud: $('citation-apud').value.trim(),
+      narrative: $('citation-narrative').checked,
+      suppressAuthor: $('citation-suppress-author').checked,
+      suppressYear: $('citation-suppress-year').checked
+    };
+  }
+
+  function syncNarrativeState() {
+    const apud = $('citation-apud').value.trim();
+    $('citation-narrative').disabled = Boolean(apud);
+    if (apud) $('citation-narrative').checked = false;
+  }
+
+  function setCitationOptions(options = {}) {
+    $('citation-prefix').value = options.prefix || '';
+    $('citation-locator').value = options.locator || '';
+    $('citation-suffix').value = options.suffix || '';
+    $('citation-year-suffix').value = options.yearSuffix || '';
+    $('citation-apud').value = options.apud || '';
+    $('citation-suppress-author').checked = Boolean(options.suppressAuthor);
+    $('citation-suppress-year').checked = Boolean(options.suppressYear);
+    syncNarrativeState();
+    $('citation-narrative').checked = Boolean(options.narrative) && !$('citation-narrative').disabled;
+  }
+
+  function clearCitationOptions() {
+    setCitationOptions({});
+    renderPreview();
   }
 
   function renderStyles() {
@@ -90,55 +147,73 @@
       .includes(query));
   }
 
+  function renderSelectionBar() {
+    const count = selectedItems().length;
+    $('selection-bar').hidden = count === 0;
+    $('selection-count').textContent = `${count} ${count === 1 ? 'selecionada' : 'selecionadas'}`;
+  }
+
   function renderList() {
     const list = $('list');
     const items = filteredItems();
     list.innerHTML = '';
     $('count').textContent = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
+    renderSelectionBar();
 
     if (!items.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
       empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Conecte o Cite ou carregue uma bibliografia para começar.';
       list.appendChild(empty);
-      selected = null;
-      renderPreview();
       return;
     }
 
     for (const item of items) {
+      const active = isSelected(item.id);
       const row = document.createElement('button');
       row.type = 'button';
-      row.className = 'item' + (selected?.id === item.id ? ' selected' : '');
-      row.setAttribute('aria-pressed', String(selected?.id === item.id));
+      row.className = 'item' + (active ? ' selected' : '');
+      row.setAttribute('aria-pressed', String(active));
+
+      const check = document.createElement('span');
+      check.className = 'check';
+      check.setAttribute('aria-hidden', 'true');
+      check.textContent = '✓';
+
+      const body = document.createElement('span');
+      body.className = 'item-body';
       const title = document.createElement('strong');
       title.textContent = item.title || '(sem título)';
       const meta = document.createElement('span');
       meta.textContent = [item.authors?.join(', '), item.year, item.journal].filter(Boolean).join(' · ');
-      row.append(title, meta);
-      row.addEventListener('click', () => {
-        selected = item;
-        renderList();
-        renderPreview();
-      });
+      body.append(title, meta);
+      row.append(check, body);
+
+      row.addEventListener('click', () => toggleSelection(item));
       list.appendChild(row);
     }
   }
 
   function renderPreview() {
-    $('preview-citation').textContent = selected ? inTextCitation(selected) : 'Nenhuma referência selecionada.';
-    $('preview-reference').textContent = selected ? referenceText(selected) : 'Selecione uma referência na lista.';
-    $('insert-citation').disabled = !selected;
-    $('insert-reference').disabled = !selected;
+    const items = selectedItems();
+    const options = citationOptions();
+    $('preview-citation').textContent = items.length
+      ? F.citationText(items, style, options)
+      : 'Nenhuma referência selecionada.';
+    $('preview-reference').textContent = items.length
+      ? items.map((item) => referenceText(item)).join('\n\n')
+      : 'Selecione uma ou mais referências na lista.';
+    $('insert-citation').disabled = !items.length;
+    $('insert-reference').disabled = !items.length;
     $('insert-bibliography').disabled = !bibliography?.items?.length;
+    renderSelectionBar();
   }
 
   function applyBibliography(data, keepSelection = false) {
-    const previousId = keepSelection ? selected?.id : null;
+    const previous = keepSelection ? selection : [];
     bibliography = data;
-    selected = previousId
-      ? (data.items || []).find((item) => item.id === previousId) || null
-      : null;
+    const available = new Set((data.items || []).map((item) => String(item.id)));
+    selection = previous.filter((id) => available.has(id));
     renderStyles();
     renderList();
     renderPreview();
@@ -251,7 +326,7 @@
       return true;
     } catch (err) {
       bibliography = null;
-      selected = null;
+      selection = [];
       renderList();
       renderPreview();
       setStatus(`Não foi possível carregar: ${err.message}`, true);
@@ -305,20 +380,23 @@
   }
 
   async function insertCitation() {
-    if (!selected) return;
+    const items = selectedItems();
+    if (!items.length) return;
+    const options = citationOptions();
     try {
-      const updated = await F.updateSelectedCitation(selected, style);
+      const updated = await F.updateSelectedCitation(items, style, options);
       if (updated) {
-        setStatus('Citação atualizada para a referência selecionada.');
+        setStatus('Citação atualizada com as referências e opções escolhidas.');
       } else {
-        await F.insertCitation(selected, style);
-        setStatus('Citação inserida e vinculada ao Cite.');
+        await F.insertCitation(items, style, options);
+        setStatus(items.length === 1 ? 'Citação inserida e vinculada ao Cite.' : 'Citações inseridas na mesma referência.');
       }
       if (autoRefresh) await refreshFields({ silent: true });
       await updateFieldCount();
+      clearCitationOptions();
     } catch (err) {
       try {
-        await insertText(inTextCitation(selected));
+        await insertText(F.citationText(items, style, options));
         setStatus(`Citação inserida como texto; não foi possível vinculá-la: ${err.message}`, true);
       } catch (fallbackError) {
         setStatus(`Não foi possível inserir: ${fallbackError.message}`, true);
@@ -327,10 +405,11 @@
   }
 
   async function insertReference() {
-    if (!selected) return;
+    const items = selectedItems();
+    if (!items.length) return;
     try {
-      await insertText(referenceText(selected));
-      setStatus('Referência inserida como texto.');
+      await insertText(items.map((item) => referenceText(item)).join('\n\n'));
+      setStatus(items.length === 1 ? 'Referência inserida como texto.' : 'Referências inseridas como texto.');
     } catch (err) {
       setStatus(`Não foi possível inserir: ${err.message}`, true);
     }
@@ -372,22 +451,23 @@
   async function preselectCitation() {
     if (!F.available()) return;
     try {
-      const ids = await F.selectedCitationIds();
-      if (!ids?.length) return;
-      const item = (bibliography?.items || []).find((entry) => String(entry.id) === ids[0]);
-      if (!item) return;
-      selected = item;
+      const citation = await F.selectedCitation();
+      if (!citation) return;
+      const ids = new Set((bibliography?.items || []).map((item) => String(item.id)));
+      selection = citation.ids.filter((id) => ids.has(String(id)));
+      setCitationOptions(citation.options);
       renderList();
       renderPreview();
-      setStatus('Editando a citação selecionada. Escolha outra referência para substituir.');
+      setStatus('Editando a citação selecionada. Ajuste as referências e as opções e clique em Inserir citação.');
     } catch {}
   }
 
   function applyMode() {
     const mode = new URLSearchParams(window.location.search).get('mode');
     if (mode === 'settings') {
-      $('document-card').scrollIntoView({ block: 'nearest' });
-      setStatus('Escolha o estilo e o comportamento de atualização.');
+      $('citation-options-card').open = true;
+      $('citation-options-card').scrollIntoView({ block: 'nearest' });
+      setStatus('Escolha o estilo e as opções da próxima citação.');
     } else if (mode === 'bibliography') {
       $('bibliography-card').scrollIntoView({ block: 'nearest' });
       setStatus('Use Inserir bibliografia para criar ou atualizar a lista.');
@@ -406,6 +486,7 @@
       if (event.key === 'Enter') loadBibliography();
     });
     $('search').addEventListener('input', renderList);
+    $('clear-selection').addEventListener('click', clearSelection);
     $('style').addEventListener('change', () => {
       style = $('style').value;
       try {
@@ -421,11 +502,30 @@
         localStorage.setItem('cite-auto-refresh', autoRefresh ? '1' : '0');
       } catch {}
     });
+    for (const id of ['citation-prefix', 'citation-locator', 'citation-suffix', 'citation-year-suffix', 'citation-apud']) {
+      $(id).addEventListener('input', () => {
+        syncNarrativeState();
+        renderPreview();
+      });
+    }
+    for (const id of ['citation-narrative', 'citation-suppress-author', 'citation-suppress-year']) {
+      $(id).addEventListener('change', renderPreview);
+    }
+    for (const chip of document.querySelectorAll('.chip')) {
+      chip.addEventListener('click', () => {
+        const target = chip.dataset.suffix ? $('citation-suffix') : $('citation-prefix');
+        const value = chip.dataset.suffix || chip.dataset.prefix || '';
+        target.value = target.value === value ? '' : value;
+        syncNarrativeState();
+        renderPreview();
+      });
+    }
     $('insert-citation').addEventListener('click', insertCitation);
     $('insert-reference').addEventListener('click', insertReference);
     $('insert-bibliography').addEventListener('click', insertBibliography);
     $('refresh-doc').addEventListener('click', () => refreshFields());
     $('unlink-doc').addEventListener('click', unlinkFields);
+    $('load-citation').addEventListener('click', preselectCitation);
     window.addEventListener('focus', () => {
       if (connected && !refreshing) refreshLocal();
       updateFieldCount();
@@ -467,7 +567,8 @@
       await loadBibliography($('bibliography-url').value);
     }
     updateFieldCount();
-    applyMode();  }
+    applyMode();
+  }
 
   if (typeof Office !== 'undefined' && typeof Office.onReady === 'function') {
     Office.onReady(() => init());

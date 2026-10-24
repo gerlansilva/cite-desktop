@@ -35,12 +35,32 @@
     .list-head .label { margin: 0; }
     .count { color: var(--muted); font-size: 10.5px; }
     #list { max-height: 39vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
-    .item { display: block; width: 100%; border: 0; border-bottom: 1px solid #eef1f6; border-radius: 0; padding: 9px 10px; text-align: left; background: transparent; white-space: normal; }
+    .item { display: flex; gap: 8px; align-items: flex-start; width: 100%; border: 0; border-bottom: 1px solid #eef1f6; border-radius: 0; padding: 9px 10px; text-align: left; background: transparent; white-space: normal; }
     .item:last-child { border-bottom: 0; }
     .item:hover { background: var(--surface); }
     .item.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
-    .item strong { display: block; font-size: 12px; line-height: 1.35; font-weight: 650; }
-    .item span { display: block; color: var(--muted); font-size: 10.5px; margin-top: 3px; }
+    .item .check { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 15px; height: 15px; margin-top: 1px; border: 1px solid #c9d2de; border-radius: 4px; color: transparent; font-size: 10px; line-height: 1; }
+    .item.selected .check { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .item-body { min-width: 0; }
+    .item-body strong { display: block; font-size: 12px; line-height: 1.35; font-weight: 650; }
+    .item-body span { display: block; color: var(--muted); font-size: 10.5px; margin-top: 3px; }
+    .selection-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -2px 0 6px; color: var(--muted); font-size: 10.5px; }
+    .selection-bar[hidden] { display: none; }
+    .link { border: 0; background: transparent; color: var(--accent); padding: 0; font: inherit; font-weight: 600; cursor: pointer; }
+    .link:hover { text-decoration: underline; }
+    .options-card { padding: 0; }
+    .options-card > summary { padding: 10px; font-size: 11.5px; font-weight: 600; color: var(--text); }
+    .options-body { padding: 0 10px 10px; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .options-grid .wide { grid-column: 1 / -1; }
+    .field { display: block; min-width: 0; }
+    .field span { display: block; color: var(--muted); font-size: 10px; font-weight: 600; margin-bottom: 3px; }
+    .field input { padding: 6px 7px; font-size: 11.5px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chip { padding: 3px 8px; border-radius: 999px; font-size: 10.5px; color: var(--accent-dark); background: var(--accent-soft); border-color: #d1e0ff; }
+    .chip:hover { background: #dbe8ff; border-color: #b8d0ff; }
+    .options-card .check-line { margin-top: 7px; }
+    .options-card .hint { margin-top: 7px; }
     .empty { padding: 14px 10px; color: var(--muted); font-size: 11.5px; text-align: center; }
     .preview-card { background: var(--surface); }
     .preview-block + .preview-block { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line); }
@@ -119,6 +139,10 @@
       <span class="label">Referências</span>
       <span id="count" class="count">0 itens</span>
     </div>
+    <div id="selection-bar" class="selection-bar" hidden>
+      <span id="selection-count"></span>
+      <button id="clear-selection" class="link" type="button">Limpar seleção</button>
+    </div>
     <div id="list"><div class="empty">Carregue uma bibliografia para começar.</div></div>
   </section>
 
@@ -136,8 +160,31 @@
       <button id="insert-reference" disabled>Inserir referência</button>
       <button id="insert-bibliography" class="wide" disabled>Inserir bibliografia</button>
     </div>
-    <p class="hint">A citação é inserida no cursor. A bibliografia insere todas as referências carregadas.</p>
+    <p class="hint">Selecione uma ou mais referências. A citação é inserida no cursor; se o cursor estiver dentro de uma citação, ela é atualizada.</p>
   </section>
+
+  <details class="card options-card" id="citation-options-card">
+    <summary>Opções da citação: página, apud, grifo nosso</summary>
+    <div class="options-body">
+      <div class="options-grid">
+        <label class="field" for="citation-prefix"><span>Prefixo</span><input id="citation-prefix" placeholder="cf., conforme"></label>
+        <label class="field" for="citation-locator"><span>Página</span><input id="citation-locator" placeholder="p. 10"></label>
+        <label class="field" for="citation-suffix"><span>Sufixo</span><input id="citation-suffix" placeholder="grifo nosso"></label>
+        <label class="field" for="citation-year-suffix"><span>Ano</span><input id="citation-year-suffix" placeholder="a"></label>
+        <label class="field wide" for="citation-apud"><span>Apud (obra original, sem a palavra apud)</span><input id="citation-apud" placeholder="SILVA, 1999"></label>
+      </div>
+      <div class="chip-row">
+        <button type="button" class="chip" data-suffix="grifo nosso">grifo nosso</button>
+        <button type="button" class="chip" data-suffix="grifo do autor">grifo do autor</button>
+        <button type="button" class="chip" data-suffix="adaptado de">adaptado de</button>
+        <button type="button" class="chip" data-prefix="cf.">cf.</button>
+      </div>
+      <label class="check-line" for="citation-narrative"><input type="checkbox" id="citation-narrative"><span>Citação narrativa (autor fora dos parênteses)</span></label>
+      <label class="check-line" for="citation-suppress-author"><input type="checkbox" id="citation-suppress-author"><span>Omitir autor</span></label>
+      <label class="check-line" for="citation-suppress-year"><input type="checkbox" id="citation-suppress-year"><span>Omitir ano</span></label>
+      <p class="hint">A página se aplica à primeira referência. O sufixo entra depois da página. Apud usa o formato parentético e é desativado na citação narrativa.</p>
+    </div>
+  </details>
 
   <section class="card" id="document-card">
     <div class="list-head">
@@ -149,10 +196,11 @@
       <span>Atualizar citações automaticamente</span>
     </label>
     <div class="actions">
+      <button id="load-citation" class="wide">Editar citação do cursor</button>
       <button id="refresh-doc">Atualizar citações</button>
       <button id="unlink-doc">Desvincular citações</button>
     </div>
-    <p class="hint">As citações e a bibliografia ficam vinculadas ao Cite. Para editar uma citação, coloque o cursor nela e insira outra referência.</p>
+    <p class="hint">As citações e a bibliografia ficam vinculadas ao Cite. Para editar, coloque o cursor na citação: as referências e as opções são carregadas no painel; ajuste e clique em Inserir citação.</p>
   </section>
 
   <details>

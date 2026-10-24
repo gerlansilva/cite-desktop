@@ -26,7 +26,7 @@ Ao abrir, o Cite mostra a tela inicial com o resumo da biblioteca, as referênci
 
 O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do Zotero. A aba tem os botões **Inserir citação**, **Inserir bibliografia** e **Abrir painel**, além do menu **Mais** com **Preferências do documento**, **Atualizar citações** e **Desvincular citações**. O painel se conecta à biblioteca local pelo próprio aplicativo, sem publicar nada no GitHub.
 
-As citações e a bibliografia são inseridas como campos vinculados do Cite. Ao trocar o estilo ou atualizar a biblioteca, use **Atualizar citações** para reformatar o documento inteiro. Com o cursor dentro de uma citação, escolher outra referência no painel substitui a citação existente. **Desvincular citações** converte os campos em texto comum.
+As citações e a bibliografia são inseridas como campos vinculados do Cite. Selecione uma ou mais referências para combiná-las na mesma chamada e use **Opções da citação** para página, prefixo, sufixo, apud, citação narrativa, omissão de autor/ano e complemento do ano. Ao trocar o estilo ou atualizar a biblioteca, use **Atualizar citações** para reformatar o documento inteiro. **Desvincular citações** converte os campos em texto comum.
 
 O Cite serve o painel e a API em `https://localhost:23120` com um certificado local. Na tela inicial, o cartão **Cite no Word** instala o certificado no chaveiro do sistema, copia o manifesto para a pasta `wef` do Word e inicia o painel. Depois é só reiniciar o Word e abrir **Página Inicial → Suplementos → Cite**.
 

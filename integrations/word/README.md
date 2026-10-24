@@ -7,18 +7,21 @@ O add-in adiciona uma aba **Cite** à faixa de opções do Word, ao lado de abas
 ## Recursos
 
 - Aba **Cite** com os comandos:
-  - **Inserir citação** — busca uma referência e insere a citação no cursor.
+  - **Inserir citação** — busca uma ou mais referências e insere a citação no cursor.
   - **Inserir bibliografia** — insere ou atualiza a lista completa no documento.
   - **Abrir painel** — abre a biblioteca para navegar e inserir.
-  - **Mais → Preferências do documento** — escolhe o estilo, a origem da bibliografia e a atualização automática.
+  - **Mais → Preferências do documento** — escolhe o estilo e as opções da próxima citação.
   - **Mais → Atualizar citações** — reformata todas as citações e a bibliografia com o estilo atual.
   - **Mais → Desvincular citações** — converte os campos em texto comum.
 - Conexão local com o aplicativo Cite aberto no mesmo computador.
 - Estilos ABNT, APA, MLA, Harvard, Vancouver e Chicago.
 - Citação no texto no formato autor-data, adequada ao estilo escolhido; Vancouver usa numeração por ordem de citação.
 - Regras de autores por estilo: ABNT lista até três e usa `et al.` a partir de quatro; APA usa `et al.` a partir de três; MLA idem; Harvard usa `and` para dois e `et al.` a partir de três; Chicago lista três e usa `et al.` a partir de quatro.
-- Citações e bibliografia como campos vinculados (`cite:citation:<id>` e `cite:bibliography`).
-- Edição de citação existente: com o cursor dentro do campo, escolher outra referência substitui a citação.
+- Seleção múltipla de referências, com citação combinada na mesma chamada.
+- Opções de citação: prefixo, página/localizador, sufixo, complemento do ano (`2020a`), **apud**, citação narrativa, omitir autor e omitir ano.
+- Atalhos de sufixo para **grifo nosso**, **grifo do autor** e **adaptado de**, além do prefixo **cf.**
+- Citações e bibliografia como campos vinculados (`cite:citation:<token>` e `cite:bibliography`).
+- Edição de citação existente: o botão **Editar citação do cursor** carrega as referências e as opções aplicadas.
 - Cartão **Documento** no painel com contagem de campos, atualização automática e ações de atualizar/desvincular.
 - Busca por título, autor, ano, periódico, DOI ou citação formatada.
 - Atualização automática da lista enquanto o Cite está aberto.
@@ -82,16 +85,29 @@ O manifesto continua instalado; não é preciso reinstalar. Esse comportamento �
 
 ## Citações vinculadas
 
-As citações e a bibliografia são gravadas em content controls do Word com as etiquetas `cite:citation:<ids>` e `cite:bibliography`. O vínculo permite reformatar o documento sem reinserir cada citação.
+As citações e a bibliografia são gravadas em content controls do Word com as etiquetas `cite:citation:<token>` e `cite:bibliography`. O token é curto e aponta para os metadados da citação (referências e opções) guardados nas configurações do documento pelo add-in. O vínculo permite reformatar o documento sem reinserir cada citação.
 
-- **Inserir citação**: sem campo sob o cursor, insere uma nova citação vinculada. Com o cursor dentro de uma citação existente, substitui a referência mantendo o vínculo.
+- **Inserir citação**: sem campo sob o cursor, insere uma nova citação vinculada. Com o cursor dentro de uma citação existente, substitui a citação mantendo o vínculo.
+- **Seleção múltipla**: clique em quantas referências precisar. A citação combina todas na ordem de seleção, com `;` entre elas (`,` no Vancouver).
+- **Editar citação do cursor**: carrega as referências e as opções da citação onde o cursor está.
+- **Opções**: prefixo, página, sufixo, complemento do ano, apud, citação narrativa, omitir autor e omitir ano.
 - **Inserir bibliografia**: cria o campo de bibliografia ou atualiza o texto do campo existente.
-- **Atualizar citações**: percorre todos os campos e aplica o estilo escolhido, inclusive a ordenação da bibliografia.
+- **Atualizar citações**: percorre todos os campos e aplica o estilo escolhido, preservando as opções de cada citação.
 - **Desvincular citações**: remove os campos e mantém o texto, que deixa de ser atualizado pelo Cite.
 
-A contagem de citações e bibliografias aparece no cartão **Documento** do painel. A atualização automática é opcional; desmarque **Atualizar citações automaticamente** para evitar reformatações enquanto edita o texto.
+Exemplos de saída:
+
+```text
+(COSTA; CRUZ, 2021)
+(SILVA, 2020, p. 10, grifo nosso)
+(SILVA, 1999 apud COSTA, 2001, p. 10)
+SILVA (2020, p. 10, grifo nosso)
+(SILVA, 2020a)
+```
 
 No estilo **Vancouver**, as citações são numéricas `(1)`, `(2)` e a bibliografia é numerada na ordem de primeira citação. Ao inserir, remover ou reordenar citações, **Atualizar citações** refaz a numeração e a ordem da lista.
+
+A contagem de citações e bibliografias aparece no cartão **Documento** do painel. A atualização automática é opcional; desmarque **Atualizar citações automaticamente** para evitar reformatações enquanto edita o texto.
 
 ## Usar a bibliografia publicada
 
@@ -150,7 +166,7 @@ manifest.xml               manifesto de produção, com placeholders
 manifest.local-server.xml  manifesto local com __PORT__, usado na instalação
 manifest.localhost.xml     manifesto de desenvolvimento na porta 3000
 taskpane.html/js           painel do Word
-fields.js                  formatação e content controls de citação e bibliografia
+fields.js                  formatação, opções, metadados e content controls de citação e bibliografia
 commands.html/js           FunctionFile dos comandos Atualizar e Desvincular
 demo-bibliography.json     bibliografia fictícia para demonstração
 assets/                    ícones do add-in (16, 32 e 80 px)
@@ -160,7 +176,7 @@ assets/                    ícones do add-in (16, 32 e 80 px)
 
 - O add-in precisa do Cite aberto para a conexão local; sem ele, só a bibliografia publicada funciona.
 - O painel precisa estar em HTTPS confiável.
-- A edição de uma citação substitui a referência inteira; não há editor de prefixo, sufixo ou supressão de autor.
+- A página/localizador é única por citação e se aplica à primeira referência.
 - Não há notas de rodapé nem anotações vinculadas ao documento.
 - A instalação automática do manifesto está disponível apenas no Word para macOS.
 - O build do add-in não é assinado nem publicado na Office Store.
