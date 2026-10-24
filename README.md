@@ -6,6 +6,12 @@ Versão atual: **0.2.0**.
 
 ## Interface
 
+### Tela inicial
+
+![Tela inicial do Cite](docs/images/inicio.png)
+
+Ao abrir, o Cite mostra a tela inicial com o resumo da biblioteca, as referências adicionadas recentemente e atalhos para criar uma referência, buscar artigos ou importar um PDF. O menu **Arquivo > Início** reabre essa tela, e **Abrir biblioteca** leva à lista completa.
+
 ### Biblioteca
 
 ![Biblioteca do Cite](docs/images/biblioteca.png)
@@ -31,6 +37,7 @@ Depois copie `integrations/word/manifest.localhost.xml` para a pasta `wef` do Wo
 
 ## Recursos
 
+- Tela inicial com resumo da biblioteca, referências recentes e ações rápidas.
 - Biblioteca local com favoritos, lixeira, coleções, etiquetas e busca.
 - Importação de BibTeX e RIS; exportação de BibTeX, RIS, Markdown e CSV.
 - Citações em ABNT, APA, MLA, Harvard, Vancouver e Chicago.
@@ -70,7 +77,7 @@ O build não tem certificado digital. O Windows pode exibir o aviso do SmartScre
 
 ### Primeiro uso
 
-Na primeira execução, o Cite cria automaticamente a biblioteca em `~/Documents/Cite` e abre a tela vazia, pronta para receber a primeira referência. Nenhum projeto precisa ser criado.
+Na primeira execução, o Cite cria automaticamente a biblioteca em `~/Documents/Cite` e abre a tela inicial, pronta para receber a primeira referência. Nenhum projeto precisa ser criado.
 
 O caminho fica registrado em:
 

@@ -4,7 +4,9 @@
 
 ### Adicionado
 
-- Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela vazia pronta para uso.
+- Tela inicial com resumo da biblioteca, referências recentes e atalhos para nova referência, busca e importação de PDF.
+- Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela inicial pronta para uso.
+- Ação **Alterar pasta** na tela inicial e item **Arquivo > Início** no menu.
 - Tela de recuperação quando a pasta da biblioteca é excluída, movida ou fica sem permissão, com as opções **Usar a biblioteca padrão** e **Escolher outra pasta**.
 - Testes de primeira execução e de biblioteca ausente.
 

@@ -15,6 +15,6 @@ export async function launchApp(env: Record<string, string> = {}, options: { use
   const userDataDir = options.userDataDir || fs.mkdtempSync(path.join(os.tmpdir(), 'ppd-test-'));
   return electron.launch({
     args: ['.', `--user-data-dir=${userDataDir}`],
-    env: { ...process.env, ...env }
+    env: { ...process.env, CITE_SKIP_HOME: '1', ...env }
   });
 }

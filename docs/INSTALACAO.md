@@ -41,9 +41,9 @@ O executável não possui assinatura digital. Se o SmartScreen exibir um aviso, 
 
 ## Dados do usuário
 
-Na primeira execução, o Cite cria a biblioteca em `~/Documents/Cite` sem pedir configuração. Nessa pasta ficam os dados locais e a subpasta `attachments`.
+Na primeira execução, o Cite cria a biblioteca em `~/Documents/Cite` sem pedir configuração e abre a tela inicial. Nela é possível abrir a biblioteca, criar uma referência, buscar artigos ou importar um PDF. Nessa pasta ficam os dados locais e a subpasta `attachments`.
 
-Se a pasta for excluída, movida ou ficar sem permissão, o Cite mostra uma tela de recuperação. Nela é possível usar a biblioteca padrão, que cria uma pasta vazia, ou escolher outra pasta.
+Se a pasta for excluída, movida ou ficar sem permissão, o Cite mostra uma tela de recuperação. Nela é possível usar a biblioteca padrão, que cria uma pasta vazia, ou escolher outra pasta. Também é possível trocar a pasta pela tela inicial, em **Alterar pasta**.
 
 - macOS: `~/Library/Application Support/Cite/storage.json`
 - Windows: `%APPDATA%\Cite\storage.json`

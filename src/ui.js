@@ -3136,4 +3136,25 @@ window.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeCollectionColorMenu();
 });
 
-refresh().then(refreshAttachments).catch((err) => (statusEl.textContent = err.message));
+const launchParams = new URLSearchParams(window.location.search);
+const launchAction = launchParams.get('action');
+const launchFocus = launchParams.get('focus');
+if (launchFocus) selectedPubId = launchFocus;
+
+function runLaunchAction() {
+  if (launchAction === 'new') {
+    document.getElementById('add-menu-button').click();
+    document.getElementById('create-new').click();
+  } else if (launchAction === 'search') {
+    openSearchModal();
+  } else if (launchAction === 'import') {
+    document.getElementById('file').click();
+  }
+}
+
+refresh()
+  .then(() => {
+    runLaunchAction();
+    return refreshAttachments();
+  })
+  .catch((err) => (statusEl.textContent = err.message));

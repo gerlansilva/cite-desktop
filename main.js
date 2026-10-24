@@ -437,10 +437,39 @@ function createSetupWindow() {
   return win;
 }
 
-function createWindow() {
-  const existing = BrowserWindow.getAllWindows().find(
-    (win) => !win.isDestroyed() && win.webContents.getURL().includes('ui.html')
+function findWindow(part) {
+  return BrowserWindow.getAllWindows().find(
+    (win) => !win.isDestroyed() && win.webContents.getURL().includes(part)
   );
+}
+
+function createHomeWindow() {
+  const existing = findWindow('home.html');
+  if (existing) {
+    existing.focus();
+    return existing;
+  }
+  const win = new BrowserWindow({
+    width: 1120,
+    height: 860,
+    minWidth: 820,
+    minHeight: 620,
+    title: 'Cite',
+    backgroundColor: '#f3f6f9',
+    webPreferences: {
+      preload: path.join(__dirname, 'home-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  });
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.loadFile(path.join(__dirname, 'src', 'home.html'), { query: { lang: readLanguage() } });
+  return win;
+}
+
+function createWindow(extraQuery = {}) {
+  const existing = findWindow('ui.html');
   if (existing) {
     existing.focus();
     return existing;
@@ -460,16 +489,91 @@ function createWindow() {
     }
   });
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  win.loadFile(path.join(__dirname, 'src', 'ui.html'), { query: { lang: readLanguage() } });
+  win.loadFile(path.join(__dirname, 'src', 'ui.html'), {
+    query: { lang: readLanguage(), ...extraQuery }
+  });
   return win;
 }
+
+ipcMain.handle('home:state', () => ({
+  version: app.getVersion(),
+  libraryPath: app.getPath('userData')
+}));
+
+ipcMain.handle('home:open', (event, payload = {}) => {
+  const source = BrowserWindow.fromWebContents(event.sender);
+  const win = createWindow({
+    ...(payload.action ? { action: payload.action } : {}),
+    ...(payload.id ? { focus: payload.id } : {})
+  });
+  if (source && source !== win && !source.isDestroyed()) source.close();
+  return { ok: true };
+});
+
+ipcMain.handle('home:change-folder', async (event) => {
+  const parent = BrowserWindow.fromWebContents(event.sender);
+  const options = {
+    title: t('Escolha uma pasta para o Cite'),
+    buttonLabel: t('Usar esta pasta'),
+    defaultPath: path.dirname(app.getPath('userData')),
+    properties: ['openDirectory', 'createDirectory']
+  };
+  const result = parent
+    ? await dialog.showOpenDialog(parent, options)
+    : await dialog.showOpenDialog(options);
+  if (result.canceled || !result.filePaths?.length) return { canceled: true };
+
+  try {
+    const target = path.resolve(result.filePaths[0]);
+    const current = app.getPath('userData');
+    if (samePath(target, current)) return { ok: true, path: target, same: true };
+
+    fs.mkdirSync(target, { recursive: true });
+    fs.accessSync(target, fs.constants.W_OK);
+
+    const hasData = ['IndexedDB', 'Local Storage', 'attachments'].some((entry) =>
+      fs.existsSync(path.join(target, entry))
+    );
+    if (!hasData) {
+      const messageOptions = {
+        type: 'question',
+        buttons: [t('Usar esta pasta'), t('Cancelar')],
+        defaultId: 1,
+        cancelId: 1,
+        message: t('A pasta está vazia'),
+        detail: t('O Cite vai usar uma biblioteca nova em {path}. Os dados atuais continuam em {current}.', {
+          path: target,
+          current
+        })
+      };
+      const choice = parent
+        ? await dialog.showMessageBox(parent, messageOptions)
+        : await dialog.showMessageBox(messageOptions);
+      if (choice.response !== 0) return { canceled: true };
+    }
+
+    writeStorageConfig(target, null);
+    app.relaunch();
+    app.exit(0);
+    return { ok: true, path: target };
+  } catch (err) {
+    console.error('Falha ao alterar a pasta da biblioteca:', err.message);
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('home:word-help', () => {
+  shell.openExternal('https://github.com/gerlansilva/cite-desktop/blob/main/integrations/word/README.md');
+  return { ok: true };
+});
 
 function buildMenu() {
   const isMac = process.platform === 'darwin';
   const fileMenu = {
     label: t('Arquivo'),
     submenu: [
-      { id: 'open-local', label: t('Abrir biblioteca'), accelerator: 'CmdOrCtrl+O', click: createWindow },
+      { id: 'open-home', label: t('Início'), accelerator: 'CmdOrCtrl+Shift+H', click: () => createHomeWindow() },
+      { id: 'open-local', label: t('Abrir biblioteca'), accelerator: 'CmdOrCtrl+O', click: () => createWindow() },
       { type: 'separator' },
       isMac
         ? { role: 'close', label: t('Fechar janela') }
@@ -568,10 +672,14 @@ app.whenReady().then(async () => {
     }
     pendingAttachmentRebase = null;
   }
-  createWindow();
+  if (process.env.CITE_SKIP_HOME === '1') createWindow();
+  else createHomeWindow();
   reconcileAttachments();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      if (process.env.CITE_SKIP_HOME === '1') createWindow();
+      else createHomeWindow();
+    }
   });
 });
 

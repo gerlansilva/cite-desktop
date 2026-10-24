@@ -56,23 +56,26 @@ test('first run creates the default library and opens an empty library', async (
   const libraryDir = path.join(root, 'Cite');
   const configPath = path.join(root, 'storage.json');
 
-  const { app } = await launchSetup({
+  const { app, windowFor } = await launchSetup({
     CITE_STORAGE_CONFIG: configPath,
     CITE_DEFAULT_STORAGE_DIR: libraryDir
   });
 
-  let window: any;
-  for (let i = 0; i < 120; i++) {
-    window = app.windows().find((w) => w.url().includes('ui.html'));
-    if (window) break;
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  if (!window) throw new Error('library window not found');
+  const home = await windowFor('home.html');
+  if (!home) throw new Error('home window not found');
+  await home.waitForLoadState('domcontentloaded');
 
-  await window.waitForLoadState('domcontentloaded');
-  await expect(window.locator('#list')).toContainText('Sua biblioteca está vazia');
+  await expect(home.locator('h1')).toContainText('Bem-vindo ao Cite');
+  await expect(home.locator('#recent-empty')).toBeVisible();
+  await expect(home.locator('#library-path')).toHaveText(libraryDir);
   expect(fs.existsSync(libraryDir)).toBe(true);
   expect(JSON.parse(fs.readFileSync(configPath, 'utf8')).storageDir).toBe(libraryDir);
+
+  await home.click('#open-library');
+  const library = await windowFor('ui.html');
+  if (!library) throw new Error('library window not found');
+  await library.waitForLoadState('domcontentloaded');
+  await expect(library.locator('#list')).toContainText('Sua biblioteca está vazia');
 
   await app.evaluate(({ app: electronApp }) => electronApp.quit());
   await app.close();

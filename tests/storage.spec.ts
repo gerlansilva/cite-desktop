@@ -16,7 +16,7 @@ test('uses the configured data folder for the database and attachments', async (
   const app = await electron.launch({
     args: ['.'],
     cwd: process.cwd(),
-    env: { ...process.env, CITE_STORAGE_CONFIG: configPath, CITE_NO_OPEN: '1' }
+    env: { ...process.env, CITE_STORAGE_CONFIG: configPath, CITE_NO_OPEN: '1', CITE_SKIP_HOME: '1' }
   });
 
   let window: any;

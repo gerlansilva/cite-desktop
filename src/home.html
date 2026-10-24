@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:">
+  <title>Cite</title>
+  <link rel="stylesheet" href="./home.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand" aria-label="Cite">
+        <img class="brand-mark" src="./assets/cite-icon.png" alt="">
+        <span class="brand-name">Cite</span>
+      </div>
+      <div class="header-actions">
+        <button id="theme" class="ghost" type="button" aria-label="Alternar tema">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2m0 14v2M5.6 5.6 7 7m10 10 1.4 1.4M3 12h2m14 0h2M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
+        </button>
+        <div class="lang" role="group" aria-label="Idioma">
+          <button class="lang-btn" type="button" data-lang="pt">PT</button>
+          <button class="lang-btn" type="button" data-lang="tet">TET</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Bem-vindo ao Cite</h1>
+        <p>Sua biblioteca local de referências, PDFs e citações.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="open-library" class="btn primary lg" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H9a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H15a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h5z"/></svg>
+          Abrir biblioteca
+          <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="quick" aria-label="Ações rápidas">
+      <button id="new-reference" class="tile" type="button">
+        <span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="tile-text"><strong>Nova referência</strong><small>Cadastre um artigo, livro ou tese</small></span>
+      </button>
+      <button id="search-articles" class="tile" type="button">
+        <span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></span>
+        <span class="tile-text"><strong>Buscar artigos</strong><small>Pesquise em bases públicas</small></span>
+      </button>
+      <button id="import-pdf" class="tile" type="button">
+        <span class="tile-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+        <span class="tile-text"><strong>Importar PDF</strong><small>Envie um ou vários arquivos</small></span>
+      </button>
+    </section>
+
+    <section class="grid">
+      <article class="card library">
+        <div class="card-head">
+          <h2>Biblioteca</h2>
+          <button id="change-folder" class="link" type="button">Alterar pasta</button>
+        </div>
+        <p id="library-path" class="path" title="">—</p>
+        <p id="library-stats" class="stats">Carregando…</p>
+        <div class="chips" id="library-chips"></div>
+      </article>
+
+      <article class="card word-card">
+        <div class="word-head">
+          <span class="word-icon" aria-hidden="true">W</span>
+          <h2>Cite no Word</h2>
+        </div>
+        <p class="word-text">Adicione uma aba própria na faixa de opções do Word para citar e inserir a bibliografia sem sair do documento.</p>
+        <button id="word-help" class="btn small" type="button">Como instalar</button>
+      </article>
+    </section>
+
+    <section class="recent">
+      <div class="section-head">
+        <h2>Adicionadas recentemente</h2>
+        <button id="open-recent" class="link" type="button">Ver biblioteca</button>
+      </div>
+      <ul id="recent-list" class="recent-list"></ul>
+      <p id="recent-empty" class="recent-empty" hidden>
+        Nenhuma referência ainda. Cadastre a primeira ou importe um PDF.
+      </p>
+    </section>
+
+    <footer class="footer">
+      <span id="version">Cite</span>
+      <span class="dot">·</span>
+      <span id="footer-note">Dados salvos apenas neste computador</span>
+    </footer>
+  </div>
+
+  <script src="./i18n.js"></script>
+  <script src="./home.js"></script>
+</body>
+</html>
