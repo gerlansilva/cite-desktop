@@ -53,6 +53,15 @@
     details { margin-top: 10px; color: var(--muted); font-size: 11px; }
     summary { cursor: pointer; }
     details p { margin: 6px 0 0; }
+    .local-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .state { padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 10px; font-weight: 600; }
+    .state.on { border-color: #c7e5db; background: var(--accent-soft); color: #0f7b5f; }
+    .state.off { color: var(--danger); border-color: #f3c7c2; background: #fef4f3; }
+    .local-note { margin: 2px 0 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; word-break: break-all; }
+    .source-details { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+    .source-details summary { font-size: 11px; color: var(--muted); }
+    .source-box { margin-top: 8px; }
+    .source-box .row { margin-top: 7px; }
     @media (max-height: 620px) { #list { max-height: 30vh; } }
   </style>
 </head>
@@ -65,14 +74,17 @@
     </div>
   </div>
 
-  <section class="card source" aria-labelledby="source-label">
-    <label class="label" id="source-label" for="bibliography-url">Bibliografia publicada</label>
-    <input id="bibliography-url" placeholder="https://raw.githubusercontent.com/.../bibliography.json" autocomplete="off" spellcheck="false">
-    <div class="row">
-      <button id="load" class="primary">Carregar</button>
-      <button id="load-demo">Usar exemplo</button>
+  <section class="card local" aria-labelledby="local-label">
+    <div class="local-head">
+      <span class="label" id="local-label">Biblioteca do Cite</span>
+      <span id="local-state" class="state">Verificando…</span>
     </div>
-    <div class="style-row" style="margin-top:7px">
+    <p id="local-note" class="local-note">Procurando o aplicativo neste computador…</p>
+    <div class="row">
+      <button id="connect" class="primary">Conectar</button>
+      <button id="refresh" disabled>Atualizar</button>
+    </div>
+    <div class="style-row" style="margin-top:8px">
       <div>
         <label class="label" for="style">Estilo</label>
         <select id="style" aria-label="Estilo de citação"></select>
@@ -80,6 +92,19 @@
     </div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
   </section>
+
+  <details class="source-details">
+    <summary>Sem o aplicativo aberto: bibliografia publicada</summary>
+    <div class="source-box">
+      <label class="label" for="bibliography-url">URL do bibliography.json</label>
+      <input id="bibliography-url" placeholder="https://raw.githubusercontent.com/.../bibliography.json" autocomplete="off" spellcheck="false">
+      <div class="row">
+        <button id="load" class="primary">Carregar</button>
+        <button id="load-demo">Usar exemplo</button>
+      </div>
+      <p class="hint">Use esta opção apenas quando o Cite não estiver aberto.</p>
+    </div>
+  </details>
 
   <div class="search-wrap">
     <label class="label" for="search">Buscar referência</label>
@@ -113,7 +138,7 @@
 
   <details>
     <summary>Como conectar sua biblioteca</summary>
-    <p>No Cite, abra <strong>Ferramentas → Integrações</strong>, publique a bibliografia no GitHub e cole aqui a URL pública do <code>bibliography.json</code>.</p>
+    <p>Com o Cite aberto neste computador, o painel se conecta sozinho à sua biblioteca. Se o aplicativo estiver fechado, publique a bibliografia em <strong>Ferramentas → Integrações</strong> e informe a URL pública do <code>bibliography.json</code>.</p>
   </details>
 
   <script src="./taskpane.js"></script>

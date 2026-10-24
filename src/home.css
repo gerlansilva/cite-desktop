@@ -283,7 +283,19 @@ button { font-family: inherit; }
 
 html[data-theme="dark"] .word-icon { background: #3c6db8; }
 
-.word-text { margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.word-text { margin: 0 0 10px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+.word-status { margin: 0 0 12px; color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; }
+
+.word-status.on { color: #067647; }
+
+html[data-theme="dark"] .word-status.on { color: #75e0a7; }
+
+.word-status.error { color: #b42318; }
+
+html[data-theme="dark"] .word-status.error { color: #ff8b7e; }
+
+.word-actions { display: flex; align-items: center; gap: 12px; margin-top: auto; }
 
 .section-head {
   display: flex;

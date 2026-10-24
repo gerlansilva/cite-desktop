@@ -12,6 +12,8 @@
   const recentEmpty = document.getElementById('recent-empty');
   const footerNote = document.getElementById('footer-note');
   const versionEl = document.getElementById('version');
+  const wordStatusEl = document.getElementById('word-status');
+  const wordInstallBtn = document.getElementById('word-install');
   const langButtons = [...document.querySelectorAll('.lang-btn')];
 
 
@@ -142,6 +144,53 @@
     }
   }
 
+  function renderWord(word) {
+    wordStatusEl.classList.remove('on', 'error');
+    if (!word || !word.supported) {
+      wordStatusEl.textContent = t('Instalação automática disponível no Word para macOS.');
+      wordInstallBtn.hidden = true;
+      return;
+    }
+    if (!word.installed) {
+      wordStatusEl.textContent = t('Ainda não instalado no Word');
+      wordInstallBtn.hidden = false;
+      wordInstallBtn.disabled = false;
+      wordInstallBtn.textContent = t('Instalar no Word');
+      return;
+    }
+    wordInstallBtn.hidden = false;
+    wordInstallBtn.disabled = false;
+    wordInstallBtn.textContent = t('Reinstalar');
+    if (word.running) {
+      wordStatusEl.textContent = `Instalado · ${word.url}`;
+      wordStatusEl.classList.add('on');
+    } else {
+      wordStatusEl.textContent = t('Instalado, mas o painel local não iniciou');
+      wordStatusEl.classList.add('error');
+    }
+  }
+
+  wordInstallBtn.addEventListener('click', async () => {
+    wordInstallBtn.disabled = true;
+    wordStatusEl.classList.remove('on', 'error');
+    wordStatusEl.textContent = t('Instalando certificado e painel local…');
+    try {
+      const result = await api.word.install();
+      if (!result?.ok) {
+        wordStatusEl.classList.add('error');
+        wordStatusEl.textContent = result?.error || t('Não foi possível instalar no Word.');
+      } else {
+        renderWord(result.status);
+        setFooterNote(t('Reinicie o Word e abra Página Inicial > Suplementos > Cite.'));
+      }
+    } catch (err) {
+      wordStatusEl.classList.add('error');
+      wordStatusEl.textContent = t('Não foi possível instalar no Word: {error}', { error: err.message });
+    } finally {
+      wordInstallBtn.disabled = false;
+    }
+  });
+
   async function load() {
     const [state, items, attachments, collections] = await Promise.all([
       api.home.state(),
@@ -154,6 +203,8 @@
     versionEl.textContent = version ? `Cite ${version}` : 'Cite';
     pathEl.textContent = state?.libraryPath || '';
     pathEl.title = state?.libraryPath || '';
+
+    renderWord(state?.word);
 
     const total = items.length;
     const pubsWithPdf = new Set(attachments.map((att) => att.pub_id).filter(Boolean));

@@ -24,16 +24,11 @@ Ao abrir, o Cite mostra a tela inicial com o resumo da biblioteca, as referênci
 
 ![Cite no Word, com aba própria e painel de citações](docs/images/word.png)
 
-O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do Zotero, com comandos para inserir citações, inserir a bibliografia, abrir o painel e configurar o estilo. O painel lê o `bibliography.json` publicado pelo Cite e permite buscar referências sem sair do documento.
+O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do Zotero, com comandos para inserir citações, inserir a bibliografia, abrir o painel e configurar o estilo. O painel se conecta à biblioteca local pelo próprio aplicativo, sem publicar nada no GitHub.
 
-Para testar localmente:
+O Cite serve o painel e a API em `https://localhost:23120` com um certificado local. Na tela inicial, o cartão **Cite no Word** instala o certificado no chaveiro do sistema, copia o manifesto para a pasta `wef` do Word e inicia o painel. Depois é só reiniciar o Word e abrir **Página Inicial → Suplementos → Cite**.
 
-```bash
-npx office-addin-dev-certs install
-npm run word:serve
-```
-
-Depois copie `integrations/word/manifest.localhost.xml` para a pasta `wef` do Word e reinicie o aplicativo. O modo de demonstração carrega oito referências fictícias. As instruções completas estão em [integrations/word/README.md](integrations/word/README.md).
+A conexão é local e offline: o painel busca as referências direto da biblioteca aberta no Cite. Se o aplicativo estiver fechado, o painel oferece o modo alternativo com o `bibliography.json` publicado. As instruções completas estão em [integrations/word/README.md](integrations/word/README.md).
 
 ## Recursos
 
@@ -50,8 +45,9 @@ Depois copie `integrations/word/manifest.localhost.xml` para a pasta `wef` do Wo
   - busca, zoom, rotação e cópia com número da página;
   - tema claro e escuro;
   - tradução de trechos para português, inglês, espanhol e **Tetum Dili**.
-- Publicação de `bibliography.json` no GitHub.
-- Add-ins para Microsoft Word e Google Docs em [`integrations/`](integrations/).
+- Add-in do Microsoft Word com aba própria e conexão local por HTTPS.
+- Publicação opcional de `bibliography.json` no GitHub.
+- Add-in do Google Docs em [`integrations/`](integrations/).
 - Backup e restauração da biblioteca.
 - Interface em português e Tetum.
 

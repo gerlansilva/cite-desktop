@@ -50,6 +50,25 @@ Se a pasta for excluída, movida ou ficar sem permissão, o Cite mostra uma tela
 
 Para fazer backup, use a opção **Backup** dentro do Cite ou copie a pasta da biblioteca com o aplicativo fechado.
 
+## Integração com o Word
+
+O add-in do Word é instalado pela tela inicial do Cite, no cartão **Cite no Word**, com o botão **Instalar no Word**. A instalação é automática no macOS:
+
+1. o Cite gera um certificado local para `localhost` e `127.0.0.1`;
+2. adiciona o certificado ao chaveiro do sistema;
+3. copia o manifesto `cite-word.xml` para a pasta `wef` do Word;
+4. inicia o painel em `https://localhost:23120`.
+
+Depois, reinicie o Word e abra **Página Inicial → Suplementos → Cite**. O painel se conecta à biblioteca local direto do aplicativo, sem publicar nada no GitHub.
+
+O macOS pode pedir a senha do usuário ao confiar no certificado. É esperado: o certificado serve apenas para o painel local do Cite e não é enviado para nenhum servidor.
+
+- Estado da integração: `~/Library/Application Support/Cite/word-addin/install.json`
+- Certificado e chave: `~/Library/Application Support/Cite/word-addin/tls/`
+- Manifesto instalado: `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/cite-word.xml`
+
+No Windows, a instalação automática ainda não está disponível; siga as instruções manuais em [integrations/word/README.md](../integrations/word/README.md).
+
 ## Desinstalação
 
 ### macOS
@@ -77,6 +96,16 @@ O instalador não tem certificado de assinatura de código. Use **Mais informaç
 ### O PDF não abre no Windows
 
 Verifique se o caminho do arquivo contém caracteres especiais e se o arquivo ainda existe. O visualizador usa URLs `file:///` convertidas a partir do caminho local.
+
+### O painel do Word não conecta
+
+Confirme que o Cite está aberto e que o painel mostra **Conectado**. Se necessário, clique em **Reconectar**. Verifique a porta:
+
+```bash
+curl -s https://localhost:23120/ping
+```
+
+Se o certificado não estiver confiável, reinstale pela tela inicial em **Reinstalar**. Se o Word não mostrar a aba **Cite**, confirme que `cite-word.xml` está em `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/` e reinicie o Word.
 
 ### A tradução não funciona
 

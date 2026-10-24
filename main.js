@@ -4,6 +4,7 @@ const fs = require('fs');
 const zlib = require('zlib');
 const crypto = require('crypto');
 const { attachmentsDir, cleanupOrphans, safeName, saveAttachment } = require('./storage');
+const { createWordAddin } = require('./word-addin');
 const Citations = require('./src/citations');
 const BibTeX = require('./src/bibtex');
 const I18n = require('./src/i18n');
@@ -18,6 +19,7 @@ const INTEGRATIONS_CONFIG = process.env.CITE_INTEGRATIONS_CONFIG ||
 const SETTINGS_CONFIG = path.join(app.getPath('userData'), 'settings.json');
 let pendingAttachmentRebase = null;
 let storageSetup = null;
+let wordAddin = null;
 
 function samePath(a, b) {
   return path.resolve(a) === path.resolve(b);
@@ -497,7 +499,8 @@ function createWindow(extraQuery = {}) {
 
 ipcMain.handle('home:state', () => ({
   version: app.getVersion(),
-  libraryPath: app.getPath('userData')
+  libraryPath: app.getPath('userData'),
+  word: wordAddin?.status() || null
 }));
 
 ipcMain.handle('home:open', (event, payload = {}) => {
@@ -565,6 +568,18 @@ ipcMain.handle('home:change-folder', async (event) => {
 ipcMain.handle('home:word-help', () => {
   shell.openExternal('https://github.com/gerlansilva/cite-desktop/blob/main/integrations/word/README.md');
   return { ok: true };
+});
+
+ipcMain.handle('word:status', () => wordAddin?.status() || null);
+
+ipcMain.handle('word:install', async () => {
+  if (!wordAddin) return { ok: false, error: 'integração indisponível' };
+  return wordAddin.install();
+});
+
+ipcMain.handle('word:uninstall', async () => {
+  if (!wordAddin) return { ok: false, error: 'integração indisponível' };
+  return wordAddin.uninstall();
 });
 
 function buildMenu() {
@@ -662,6 +677,14 @@ app.whenReady().then(async () => {
   buildMenu();
   createDataWorker();
   await dataWorkerReady;
+  wordAddin = createWordAddin({
+    appDataDir: path.join(app.getPath('appData'), APP_NAME),
+    wordDir: path.join(__dirname, 'integrations', 'word'),
+    getVersion: () => app.getVersion(),
+    getLibraryPath: () => app.getPath('userData'),
+    getPayload: async () => githubBibliographyPayload(await dataCall('library:all'))
+  });
+  await wordAddin.ensureInstalled();
   if (pendingAttachmentRebase) {
     try {
       await dataCall('attachments:rebasePaths', pendingAttachmentRebase);
@@ -1440,6 +1463,10 @@ ipcMain.handle('pdf:openWindow', (_event, filePath) => {
   });
   win.loadFile(filePath);
   return { ok: true };
+});
+
+app.on('will-quit', () => {
+  wordAddin?.stop();
 });
 
 app.on('window-all-closed', () => {

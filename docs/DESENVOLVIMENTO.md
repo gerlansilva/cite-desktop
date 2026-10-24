@@ -101,17 +101,44 @@ A seleção de texto gera um menu flutuante com destaque, sublinhado, tachado, c
 O add-in fica em `integrations/word` e usa o manifesto XML de task pane com `VersionOverrides` para criar a aba **Cite**. Os botões da faixa de opções usam `ShowTaskpane`; o `commands.html` funciona como `FunctionFile` e deixa espaço para futuros comandos `ExecuteFunction`.
 
 - `manifest.xml`: produção, com placeholders de usuário/repositório.
+- `manifest.local-server.xml`: manifesto local com `__PORT__`, usado pelo conector do aplicativo.
 - `manifest.localhost.xml`: desenvolvimento local em `https://localhost:3000`.
-- `taskpane.html/js`: busca, prévia, estilos e inserção no documento.
+- `taskpane.html/js`: busca, prévia, estilos, conexão local e inserção no documento.
 - `demo-bibliography.json`: bibliografia fictícia para demonstração.
-- `scripts/serve-word-addin.js`: servidor HTTPS local usando o certificado do `office-addin-dev-certs`.
+- `word-addin.js`: certificado, confiança, manifesto e instalação.
+- `connector.js`: servidor HTTPS local com `/ping`, `/library` e arquivos do painel.
+- `scripts/serve-word-addin.js`: servidor HTTPS isolado para desenvolver o add-in.
 
-Para executar:
+### Conector local
+
+O Word no macOS usa WebKit e bloqueia requisições HTTP para `127.0.0.1` a partir de uma página HTTPS. Por isso o aplicativo serve o painel e a API no mesmo host HTTPS:
+
+```text
+https://localhost:23120/taskpane.html   painel
+https://localhost:23120/ping            identificação e caminho da biblioteca
+https://localhost:23120/library         bibliografia completa
+```
+
+O certificado é gerado com `selfsigned`, com `CA:TRUE` e SAN para `localhost` e `127.0.0.1`. No macOS, a confiança usa `security add-trusted-cert`; no Windows, `certutil -addstore -user Root`. A porta padrão é 23120, com tentativa até 23129. Se a porta mudar, o manifesto é reescrito.
+
+A instalação grava o estado em `~/Library/Application Support/Cite/word-addin/install.json` e o certificado em `tls/`. O manifesto é copiado para `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/cite-word.xml`.
+
+Para desenvolver com recarga do aplicativo:
 
 ```bash
-npx office-addin-dev-certs install
-npm run word:serve
+npm start
 ```
+
+O painel fica em `https://localhost:23120/taskpane.html`. O servidor isolado do add-in continua disponível com `npm run word:serve`.
+
+Testes:
+
+```bash
+node --test tests/word-addin.test.js
+npx playwright test tests/word-addin.spec.ts
+```
+
+Eles usam `CITE_WORD_WEF_DIR`, `CITE_WORD_ADDIN_DIR`, `CITE_WORD_TRUST=skip` e `CITE_WORD_PORT` para não tocar na instalação real.
 
 O painel usa `Word.run` e `context.document.getSelection()` para inserir citações e `context.document.body.insertText(..., Word.InsertLocation.end)` para acrescentar a bibliografia ao final do documento.
 

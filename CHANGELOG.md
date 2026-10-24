@@ -5,6 +5,9 @@
 ### Adicionado
 
 - Tela inicial com resumo da biblioteca, referências recentes e atalhos para nova referência, busca e importação de PDF.
+- Cartão **Cite no Word** na tela inicial, com instalação do painel local, certificado e manifesto em um clique.
+- Conexão local do add-in do Word por HTTPS em `localhost`, sem GitHub e sem internet.
+- Painel do Word com status da conexão, atualização automática da lista e modo alternativo com `bibliography.json` publicado.
 - Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela inicial pronta para uso.
 - Ação **Alterar pasta** na tela inicial e item **Arquivo > Início** no menu.
 - Tela de recuperação quando a pasta da biblioteca é excluída, movida ou fica sem permissão, com as opções **Usar a biblioteca padrão** e **Escolher outra pasta**.

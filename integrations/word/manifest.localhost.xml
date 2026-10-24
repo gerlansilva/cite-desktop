@@ -21,7 +21,7 @@
     <Host Name="Document"/>
   </Hosts>
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://localhost:3000/taskpane.html?demo=1"/>
+    <SourceLocation DefaultValue="https://localhost:3000/taskpane.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
 
@@ -118,9 +118,9 @@
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Cite.CommandsUrl" DefaultValue="https://localhost:3000/commands.html"/>
-        <bt:Url id="Cite.PanelUrl" DefaultValue="https://localhost:3000/taskpane.html?demo=1"/>
-        <bt:Url id="Cite.CitationUrl" DefaultValue="https://localhost:3000/taskpane.html?demo=1&amp;mode=citation"/>
-        <bt:Url id="Cite.BibliographyUrl" DefaultValue="https://localhost:3000/taskpane.html?demo=1&amp;mode=bibliography"/>
+        <bt:Url id="Cite.PanelUrl" DefaultValue="https://localhost:3000/taskpane.html"/>
+        <bt:Url id="Cite.CitationUrl" DefaultValue="https://localhost:3000/taskpane.html?mode=citation"/>
+        <bt:Url id="Cite.BibliographyUrl" DefaultValue="https://localhost:3000/taskpane.html?mode=bibliography"/>
         <bt:Url id="Cite.PreferencesUrl" DefaultValue="https://localhost:3000/taskpane.html?mode=settings"/>
       </bt:Urls>
       <bt:ShortStrings>

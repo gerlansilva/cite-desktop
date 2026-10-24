@@ -79,6 +79,7 @@
   },
   "dependencies": {
     "dexie": "^4.4.6",
-    "pdfjs-dist": "^6.4.299"
+    "pdfjs-dist": "^6.4.299",
+    "selfsigned": "^2.4.1"
   }
 }

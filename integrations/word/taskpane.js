@@ -1,11 +1,18 @@
 (() => {
+  const LOCAL_PORTS = Array.from({ length: 10 }, (_, index) => 23120 + index);
+  const DEMO_URL = 'demo-bibliography.json';
+  const REFRESH_MS = 20000;
+
   let bibliography = null;
   let selected = null;
   let style = 'ABNT';
   let initialized = false;
+  let connected = false;
+  let localPort = null;
+  let localPath = '';
+  let refreshing = false;
 
   const $ = (id) => document.getElementById(id);
-  const demoUrl = 'demo-bibliography.json';
 
   function setStatus(message, error = false) {
     const status = $('status');
@@ -13,9 +20,37 @@
     status.classList.toggle('error', Boolean(error));
   }
 
+  function setLocalState(message, kind = '') {
+    const state = $('local-state');
+    state.textContent = message;
+    state.classList.toggle('on', kind === 'on');
+    state.classList.toggle('off', kind === 'off');
+  }
+
   function setBusy(busy) {
+    $('connect').disabled = busy;
     $('load').disabled = busy;
     $('load-demo').disabled = busy;
+    if (busy) $('refresh').disabled = true;
+    else $('refresh').disabled = !connected;
+  }
+
+  function setConnected(value) {
+    connected = value;
+    if (!value) {
+      localPort = null;
+      localPath = '';
+    }
+    $('connect').textContent = value ? 'Reconectar' : 'Conectar';
+    $('refresh').disabled = !value;
+    if (value) {
+      setLocalState('Conectado', 'on');
+      const suffix = localPort ? ` · porta ${localPort}` : '';
+      $('local-note').textContent = `${localPath || 'Biblioteca do Cite'}${suffix}`;
+    } else {
+      setLocalState('Desconectado', 'off');
+      $('local-note').textContent = 'Abra o aplicativo Cite neste computador e clique em Conectar.';
+    }
   }
 
   function referenceText(item) {
@@ -93,7 +128,7 @@
     if (!items.length) {
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Carregue uma bibliografia para começar.';
+      empty.textContent = bibliography ? 'Nenhuma referência encontrada.' : 'Conecte o Cite ou carregue uma bibliografia para começar.';
       list.appendChild(empty);
       selected = null;
       renderPreview();
@@ -127,10 +162,104 @@
     $('insert-bibliography').disabled = !bibliography?.items?.length;
   }
 
+  function applyBibliography(data, keepSelection = false) {
+    const previousId = keepSelection ? selected?.id : null;
+    bibliography = data;
+    selected = previousId
+      ? (data.items || []).find((item) => item.id === previousId) || null
+      : null;
+    renderStyles();
+    renderList();
+    renderPreview();
+  }
+
+  async function fetchJson(url, timeoutMs = 2500) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      const response = await fetch(url, {
+        cache: 'no-store',
+        signal: controller?.signal
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  async function findLocalApp() {
+    try {
+      const ping = await fetchJson('/ping', 1500);
+      if (ping?.app === 'Cite') return { base: '', port: window.location.port || null, ping };
+    } catch {}
+
+    for (const port of LOCAL_PORTS) {
+      try {
+        const ping = await fetchJson(`https://localhost:${port}/ping`, 1200);
+        if (ping?.app === 'Cite') return { base: `https://localhost:${port}`, port, ping };
+      } catch {}
+    }
+    return null;
+  }
+
+  async function connectLocal({ silent = false } = {}) {
+    if (!silent) {
+      setBusy(true);
+      setLocalState('Conectando…');
+      setStatus('Procurando o aplicativo Cite…');
+    }
+    try {
+      const found = await findLocalApp();
+      if (!found) throw new Error('aplicativo não encontrado');
+      const data = await fetchJson(`${found.base}/library`, 15000);
+      if (!Array.isArray(data?.items)) throw new Error('biblioteca indisponível');
+      localPort = found.port;
+      localPath = found.ping?.libraryPath || '';
+      applyBibliography(data, true);
+      setConnected(true);
+      if (!silent) {
+        const total = data.items.length;
+        setStatus(`${total} ${total === 1 ? 'referência' : 'referências'} da biblioteca local.`);
+      }
+      return true;
+    } catch (err) {
+      const wasConnected = connected;
+      setConnected(false);
+      if (!silent || wasConnected) {
+        setStatus('Não foi possível conectar ao Cite. Abra o aplicativo ou use a bibliografia publicada.', true);
+      }
+      return false;
+    } finally {
+      if (!silent) setBusy(false);
+    }
+  }
+
+  async function refreshLocal() {
+    if (refreshing) return;
+    if (!connected) {
+      await connectLocal();
+      return;
+    }
+    refreshing = true;
+    try {
+      const base = window.location.port === String(localPort) ? '' : `https://localhost:${localPort}`;
+      const data = await fetchJson(`${base}/library`, 15000);
+      if (!Array.isArray(data?.items)) throw new Error('biblioteca indisponível');
+      applyBibliography(data, true);
+      setStatus(`${data.items.length} ${data.items.length === 1 ? 'referência atualizada' : 'referências atualizadas'}.`);
+    } catch {
+      setConnected(false);
+      setStatus('O aplicativo Cite não respondeu. Abra-o e clique em Conectar.', true);
+    } finally {
+      refreshing = false;
+    }
+  }
+
   async function loadBibliography(url = $('bibliography-url').value.trim()) {
     if (!url) {
       setStatus('Informe a URL do bibliography.json.', true);
-      return;
+      return false;
     }
     $('bibliography-url').value = url;
     setBusy(true);
@@ -140,21 +269,20 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       if (!Array.isArray(data?.items)) throw new Error('formato inválido');
-      bibliography = data;
-      selected = null;
+      setConnected(false);
+      applyBibliography(data);
       try {
         localStorage.setItem('cite-bibliography-url', url);
       } catch {}
-      renderStyles();
-      renderList();
-      renderPreview();
       setStatus(`${data.items.length} ${data.items.length === 1 ? 'referência carregada' : 'referências carregadas'}.`);
+      return true;
     } catch (err) {
       bibliography = null;
       selected = null;
       renderList();
       renderPreview();
       setStatus(`Não foi possível carregar: ${err.message}`, true);
+      return false;
     } finally {
       setBusy(false);
     }
@@ -212,8 +340,10 @@
   }
 
   function bindEvents() {
+    $('connect').addEventListener('click', () => connectLocal());
+    $('refresh').addEventListener('click', refreshLocal);
     $('load').addEventListener('click', () => loadBibliography());
-    $('load-demo').addEventListener('click', () => loadBibliography(demoUrl));
+    $('load-demo').addEventListener('click', () => loadBibliography(DEMO_URL));
     $('bibliography-url').addEventListener('keydown', (event) => {
       if (event.key === 'Enter') loadBibliography();
     });
@@ -229,9 +359,15 @@
     $('insert-citation').addEventListener('click', insertCitation);
     $('insert-reference').addEventListener('click', insertReference);
     $('insert-bibliography').addEventListener('click', insertBibliography);
+    window.addEventListener('focus', () => {
+      if (connected && !refreshing) refreshLocal();
+    });
+    setInterval(() => {
+      if (connected && !refreshing && !document.hidden) refreshLocal();
+    }, REFRESH_MS);
   }
 
-  function init() {
+  async function init() {
     if (initialized) return;
     initialized = true;
     bindEvents();
@@ -240,12 +376,19 @@
       style = localStorage.getItem('cite-citation-style') || 'ABNT';
     } catch {}
     renderStyles();
+    renderList();
     renderPreview();
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('demo') === '1') {
-      loadBibliography(demoUrl);
-    } else if ($('bibliography-url').value) {
-      loadBibliography();
+      loadBibliography(DEMO_URL);
+      return;
+    }
+
+    setLocalState('Verificando…');
+    const ok = await connectLocal();
+    if (!ok && $('bibliography-url').value) {
+      loadBibliography($('bibliography-url').value);
     }
   }
 

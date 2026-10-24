@@ -9,6 +9,11 @@ const api = {
   settings: {
     setLanguage: (language) => ipcRenderer.invoke('settings:set-language', language)
   },
+  word: {
+    status: () => ipcRenderer.invoke('word:status'),
+    install: () => ipcRenderer.invoke('word:install'),
+    uninstall: () => ipcRenderer.invoke('word:uninstall')
+  },
   home: {
     state: () => ipcRenderer.invoke('home:state'),
     open: (action, id) => ipcRenderer.invoke('home:open', { action, id }),

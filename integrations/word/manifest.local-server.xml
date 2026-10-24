@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:ov="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+  xsi:type="TaskPaneApp">
+  <Id>b7f3a9c2-6d41-4e8b-9c2a-1f0d5e7a3b64</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Cite</ProviderName>
+  <DefaultLocale>pt-BR</DefaultLocale>
+  <DisplayName DefaultValue="Cite"/>
+  <Description DefaultValue="Insira citações da sua biblioteca Cite no Word."/>
+  <IconUrl DefaultValue="https://localhost:__PORT__/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:__PORT__/assets/icon-80.png"/>
+  <SupportUrl DefaultValue="https://github.com/gerlansilva/cite-desktop"/>
+  <AppDomains>
+    <AppDomain>https://localhost:__PORT__</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://localhost:__PORT__/taskpane.html"/>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <FunctionFile resid="Cite.CommandsUrl"/>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <CustomTab id="Cite.Tab">
+              <Group id="Cite.Group">
+                <Label resid="Cite.GroupLabel"/>
+                <Icon>
+                  <bt:Image size="16" resid="Cite.Icon16"/>
+                  <bt:Image size="32" resid="Cite.Icon32"/>
+                  <bt:Image size="80" resid="Cite.Icon80"/>
+                </Icon>
+                <Control xsi:type="Button" id="Cite.InsertCitation">
+                  <Label resid="Cite.InsertCitation.Label"/>
+                  <Supertip>
+                    <Title resid="Cite.InsertCitation.Label"/>
+                    <Description resid="Cite.Citation.Desc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Cite.Icon16"/>
+                    <bt:Image size="32" resid="Cite.Icon32"/>
+                    <bt:Image size="80" resid="Cite.Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Cite.CitationUrl"/>
+                  </Action>
+                </Control>
+                <Control xsi:type="Button" id="Cite.InsertBibliography">
+                  <Label resid="Cite.InsertBibliography.Label"/>
+                  <Supertip>
+                    <Title resid="Cite.InsertBibliography.Label"/>
+                    <Description resid="Cite.Bib.Desc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Cite.Icon16"/>
+                    <bt:Image size="32" resid="Cite.Icon32"/>
+                    <bt:Image size="80" resid="Cite.Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Cite.BibliographyUrl"/>
+                  </Action>
+                </Control>
+                <Control xsi:type="Button" id="Cite.OpenPanel">
+                  <Label resid="Cite.OpenPanel.Label"/>
+                  <Supertip>
+                    <Title resid="Cite.OpenPanel.Label"/>
+                    <Description resid="Cite.Panel.Desc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Cite.Icon16"/>
+                    <bt:Image size="32" resid="Cite.Icon32"/>
+                    <bt:Image size="80" resid="Cite.Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Cite.PanelUrl"/>
+                  </Action>
+                </Control>
+                <Control xsi:type="Button" id="Cite.Preferences">
+                  <Label resid="Cite.Preferences.Label"/>
+                  <Supertip>
+                    <Title resid="Cite.Preferences.Label"/>
+                    <Description resid="Cite.Prefs.Desc"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Cite.Icon16"/>
+                    <bt:Image size="32" resid="Cite.Icon32"/>
+                    <bt:Image size="80" resid="Cite.Icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                    <SourceLocation resid="Cite.PreferencesUrl"/>
+                  </Action>
+                </Control>
+              </Group>
+              <Label resid="Cite.TabLabel"/>
+            </CustomTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+    <Resources>
+      <bt:Images>
+        <bt:Image id="Cite.Icon16" DefaultValue="https://localhost:__PORT__/assets/icon-16.png"/>
+        <bt:Image id="Cite.Icon32" DefaultValue="https://localhost:__PORT__/assets/icon-32.png"/>
+        <bt:Image id="Cite.Icon80" DefaultValue="https://localhost:__PORT__/assets/icon-80.png"/>
+      </bt:Images>
+      <bt:Urls>
+        <bt:Url id="Cite.CommandsUrl" DefaultValue="https://localhost:__PORT__/commands.html"/>
+        <bt:Url id="Cite.PanelUrl" DefaultValue="https://localhost:__PORT__/taskpane.html"/>
+        <bt:Url id="Cite.CitationUrl" DefaultValue="https://localhost:__PORT__/taskpane.html?mode=citation"/>
+        <bt:Url id="Cite.BibliographyUrl" DefaultValue="https://localhost:__PORT__/taskpane.html?mode=bibliography"/>
+        <bt:Url id="Cite.PreferencesUrl" DefaultValue="https://localhost:__PORT__/taskpane.html?mode=settings"/>
+      </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="Cite.TabLabel" DefaultValue="Cite"/>
+        <bt:String id="Cite.GroupLabel" DefaultValue="Citações"/>
+        <bt:String id="Cite.InsertCitation.Label" DefaultValue="Inserir citação"/>
+        <bt:String id="Cite.InsertBibliography.Label" DefaultValue="Inserir bibliografia"/>
+        <bt:String id="Cite.OpenPanel.Label" DefaultValue="Abrir painel"/>
+        <bt:String id="Cite.Preferences.Label" DefaultValue="Preferências"/>
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="Cite.Citation.Desc" DefaultValue="Busque uma referência e insira a citação no cursor."/>
+        <bt:String id="Cite.Bib.Desc" DefaultValue="Insira a lista de referências da biblioteca carregada."/>
+        <bt:String id="Cite.Panel.Desc" DefaultValue="Abra o painel do Cite para navegar pela biblioteca."/>
+        <bt:String id="Cite.Prefs.Desc" DefaultValue="Configure a URL da bibliografia e o estilo de citação."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>
