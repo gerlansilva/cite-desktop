@@ -15,7 +15,8 @@ O add-in adiciona uma aba **Cite** à faixa de opções do Word, ao lado de abas
   - **Mais → Desvincular citações** — converte os campos em texto comum.
 - Conexão local com o aplicativo Cite aberto no mesmo computador.
 - Estilos ABNT, APA, MLA, Harvard, Vancouver e Chicago.
-- Citação no texto no formato autor-data, adequada ao estilo escolhido.
+- Citação no texto no formato autor-data, adequada ao estilo escolhido; Vancouver usa numeração por ordem de citação.
+- Regras de autores por estilo: ABNT lista até três e usa `et al.` a partir de quatro; APA usa `et al.` a partir de três; MLA idem; Harvard usa `and` para dois e `et al.` a partir de três; Chicago lista três e usa `et al.` a partir de quatro.
 - Citações e bibliografia como campos vinculados (`cite:citation:<id>` e `cite:bibliography`).
 - Edição de citação existente: com o cursor dentro do campo, escolher outra referência substitui a citação.
 - Cartão **Documento** no painel com contagem de campos, atualização automática e ações de atualizar/desvincular.
@@ -89,6 +90,8 @@ As citações e a bibliografia são gravadas em content controls do Word com as 
 - **Desvincular citações**: remove os campos e mantém o texto, que deixa de ser atualizado pelo Cite.
 
 A contagem de citações e bibliografias aparece no cartão **Documento** do painel. A atualização automática é opcional; desmarque **Atualizar citações automaticamente** para evitar reformatações enquanto edita o texto.
+
+No estilo **Vancouver**, as citações são numéricas `(1)`, `(2)` e a bibliografia é numerada na ordem de primeira citação. Ao inserir, remover ou reordenar citações, **Atualizar citações** refaz a numeração e a ordem da lista.
 
 ## Usar a bibliografia publicada
 

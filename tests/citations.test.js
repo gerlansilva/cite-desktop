@@ -90,3 +90,45 @@ test('MLA, Harvard and Vancouver formatting', () => {
   assert.match(format('MLA', pub), /A Paper/);
   assert.match(format('Unknown', pub), /\(2026\)\./);
 });
+
+test('every style formats every reference type without empty fields', () => {
+  const styles = ['ABNT', 'APA', 'MLA', 'Harvard', 'Vancouver', 'Chicago'];
+  const types = ['article', 'book', 'chapter', 'conference', 'thesis', 'report', 'webpage', 'newspaper', 'magazine'];
+  const base = {
+    title: 'Referência de teste',
+    authors: ['Silva, G.', 'Costa, M.'],
+    year: '2026',
+    journal: 'Revista',
+    volume: '12',
+    issue: '3',
+    pages: '10-20',
+    doi: '10.1/teste',
+    url: 'https://example.org',
+    place: 'São Paulo',
+    publisher: 'Editora',
+    edition: '2',
+    bookTitle: 'Livro',
+    editors: 'Lopes, R.',
+    conference: 'Congresso',
+    proceedings: 'Anais',
+    university: 'USP',
+    thesisType: 'Tese',
+    institution: 'Instituto',
+    reportNumber: 'RT-1',
+    accessed: '2026-10-24'
+  };
+
+  for (const style of styles) {
+    for (const type of types) {
+      const text = format(style, { ...base, type });
+      assert.ok(text.length > 20, `${style}/${type} vazio`);
+      assert.match(text, /Referência de teste/, `${style}/${type} sem título`);
+      assert.doesNotMatch(text, /undefined|null|\[object Object\]/, `${style}/${type} com campo inválido`);
+    }
+  }
+});
+
+test('does not mistake leading initials for a company suffix', () => {
+  assert.match(toABNT({ authors: ['SA Costa'], title: 'X', year: '2020' }), /^COSTA, S\. A\./);
+  assert.match(toABNT({ authors: ['Silva SA'], title: 'X', year: '2020' }), /^SILVA SA/);
+});

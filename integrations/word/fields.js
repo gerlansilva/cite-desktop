@@ -11,7 +11,12 @@
     return parts[parts.length - 1];
   }
 
-  function inTextCitation(item, style) {
+  function isNumericStyle(style) {
+    return style === 'Vancouver';
+  }
+
+  function inTextCitation(item, style, number) {
+    if (isNumericStyle(style)) return `(${number || 1})`;
     const names = (item?.authors || []).map(surname).filter(Boolean);
     const year = item?.year || 's.d.';
     if (!names.length) return `(${String(item?.title || 'sem título').slice(0, 35)}, ${year})`;
@@ -20,13 +25,24 @@
       if (upper.length > 3) return `(${upper[0]} et al., ${year})`;
       return `(${upper.join('; ')}, ${year})`;
     }
-    if (style === 'APA' || style === 'Vancouver') {
+    if (style === 'APA') {
       if (names.length > 2) return `(${names[0]} et al., ${year})`;
       if (names.length === 2) return `(${names[0]} & ${names[1]}, ${year})`;
       return `(${names[0]}, ${year})`;
     }
-    if (style === 'MLA' || style === 'Chicago') {
+    if (style === 'Harvard') {
+      if (names.length > 2) return `(${names[0]} et al., ${year})`;
+      if (names.length === 2) return `(${names[0]} and ${names[1]}, ${year})`;
+      return `(${names[0]}, ${year})`;
+    }
+    if (style === 'MLA') {
       if (names.length > 2) return `(${names[0]} et al. ${year})`;
+      if (names.length === 2) return `(${names[0]} and ${names[1]} ${year})`;
+      return `(${names[0]} ${year})`;
+    }
+    if (style === 'Chicago') {
+      if (names.length > 3) return `(${names[0]} et al. ${year})`;
+      if (names.length === 3) return `(${names[0]}, ${names[1]}, and ${names[2]} ${year})`;
       if (names.length === 2) return `(${names[0]} and ${names[1]} ${year})`;
       return `(${names[0]} ${year})`;
     }
@@ -41,11 +57,48 @@
     ].filter(Boolean).join('. ');
   }
 
-  function bibliographyText(items, style) {
-    const list = [...(items || [])].sort((a, b) =>
-      String(surname(a.authors?.[0]) || a.title || '').localeCompare(String(surname(b.authors?.[0]) || b.title || ''), 'pt-BR')
+  function compareItems(a, b) {
+    return String(surname(a.authors?.[0]) || a.title || '').localeCompare(
+      String(surname(b.authors?.[0]) || b.title || ''),
+      'pt-BR'
     );
-    return list.map((item) => referenceText(item, style)).join('\n\n');
+  }
+
+  function bibliographyText(items, style, numbers) {
+    const source = [...(items || [])];
+    if (isNumericStyle(style)) {
+      const map = numbers instanceof Map ? numbers : new Map();
+      const sorted = source.sort((a, b) => {
+        const first = map.get(String(a.id));
+        const second = map.get(String(b.id));
+        if (first && second) return first - second;
+        if (first) return -1;
+        if (second) return 1;
+        return compareItems(a, b);
+      });
+      let next = Math.max(0, ...map.values());
+      return sorted
+        .map((item) => {
+          const number = map.get(String(item.id)) || ++next;
+          return `${number}. ${referenceText(item, style)}`;
+        })
+        .join('\n\n');
+    }
+    return source.sort(compareItems).map((item) => referenceText(item, style)).join('\n\n');
+  }
+
+  function citationNumbers(tags) {
+    const numbers = new Map();
+    let next = 1;
+    for (const tag of tags || []) {
+      const ids = parseCitationTag(tag);
+      if (!ids) continue;
+      for (const id of ids) {
+        const key = String(id);
+        if (!numbers.has(key)) numbers.set(key, next++);
+      }
+    }
+    return numbers;
   }
 
   function citationTag(ids) {
@@ -76,8 +129,15 @@
 
   async function insertCitation(item, style) {
     requireWord();
-    const text = inTextCitation(item, style);
+    let text = '';
     await Word.run(async (context) => {
+      const existing = context.document.contentControls;
+      existing.load('items/tag');
+      await context.sync();
+      const numbers = citationNumbers(existing.items.map((control) => control.tag));
+      const number = numbers.get(String(item.id)) || numbers.size + 1;
+      text = inTextCitation(item, style, number);
+
       const range = context.document.getSelection();
       const inserted = range.insertText(text, Word.InsertLocation.replace);
       const control = inserted.insertContentControl();
@@ -93,11 +153,16 @@
   async function insertBibliography(items, style) {
     requireWord();
     if (!items?.length) throw new Error('Nenhuma referência na biblioteca.');
-    const text = bibliographyText(items, style);
+    let text = '';
     await Word.run(async (context) => {
+      const all = context.document.contentControls;
+      all.load('items/tag');
       const controls = context.document.contentControls.getByTag(BIBLIOGRAPHY_TAG);
       controls.load('items');
       await context.sync();
+
+      const numbers = citationNumbers(all.items.map((control) => control.tag));
+      text = bibliographyText(items, style, numbers);
 
       if (controls.items.length) {
         controls.items[0].insertText(text, Word.InsertLocation.replace);
@@ -120,12 +185,17 @@
     requireWord();
     let updated = false;
     await Word.run(async (context) => {
+      const all = context.document.contentControls;
+      all.load('items/tag');
       const control = context.document.getSelection().parentContentControlOrNullObject;
       control.load('tag');
       await context.sync();
       if (control.isNullObject || !parseCitationTag(control.tag)) return;
+
+      const numbers = citationNumbers(all.items.map((entry) => entry.tag));
+      const number = numbers.get(String(item.id)) || numbers.size + 1;
       control.tag = citationTag([item.id]);
-      control.insertText(inTextCitation(item, style), Word.InsertLocation.replace);
+      control.insertText(inTextCitation(item, style, number), Word.InsertLocation.replace);
       await context.sync();
       updated = true;
     });
@@ -143,12 +213,17 @@
       controls.load('items/tag');
       await context.sync();
 
+      const numbers = citationNumbers(controls.items.map((control) => control.tag));
+
       for (const control of controls.items) {
         const ids = parseCitationTag(control.tag);
         if (!ids) continue;
         const selected = ids.map((id) => byId.get(id)).filter(Boolean);
         if (!selected.length) continue;
-        control.insertText(selected.map((item) => inTextCitation(item, style)).join('; '), Word.InsertLocation.replace);
+        const text = isNumericStyle(style)
+          ? `(${ids.map((id) => numbers.get(String(id))).filter(Boolean).join(',')})`
+          : selected.map((item) => inTextCitation(item, style)).join('; ');
+        control.insertText(text, Word.InsertLocation.replace);
         citations += 1;
       }
       await context.sync();
@@ -156,7 +231,7 @@
       for (const control of controls.items) {
         if (control.tag !== BIBLIOGRAPHY_TAG) continue;
         if (!items?.length) continue;
-        control.insertText(bibliographyText(items, style), Word.InsertLocation.replace);
+        control.insertText(bibliographyText(items, style, numbers), Word.InsertLocation.replace);
         bibliographies += 1;
       }
       await context.sync();
@@ -217,6 +292,8 @@
     inTextCitation,
     referenceText,
     bibliographyText,
+    citationNumbers,
+    isNumericStyle,
     citationTag,
     parseCitationTag,
     insertCitation,

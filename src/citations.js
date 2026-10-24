@@ -55,7 +55,7 @@
   function abntName(author) {
     let raw = String(author || '').trim().replace(/\s+/g, ' ');
     if (!raw) return '';
-    if (/\b(ltda|s\.?a\.?|inc\.?|corp\.?)\b/i.test(raw)) return raw.toUpperCase();
+    if (/\s(ltda|s\.?a\.?|inc\.?|corp\.?)\b\.?$/i.test(raw)) return raw.toUpperCase();
     if (/^(organização|organizacao|instituto|universidade|minist[ée]rio|associa[çc][ãa]o|funda[çc][ãa]o|centro|departamento|secretaria|conselho|comiss[ãa]o|empresa|companhia)\b/i.test(raw)) {
       return raw.toUpperCase();
     }

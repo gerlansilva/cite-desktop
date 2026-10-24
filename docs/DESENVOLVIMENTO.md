@@ -144,6 +144,8 @@ Os testes de instalação usam `CITE_WORD_WEF_DIR`, `CITE_WORD_ADDIN_DIR`, `CITE
 
 O painel usa `Word.run` e `context.document.getSelection()` para inserir ou substituir citações. Cada citação vira um content control com a etiqueta `cite:citation:<ids>` e a bibliografia usa `cite:bibliography`. `refreshDocument` percorre `context.document.contentControls`, reformata os campos e é chamado pelo painel e por `commands.js`. `unlinkDocument` remove os content controls mantendo o texto.
 
+Os estilos autor-data são formatados em `inTextCitation`, com regras próprias para ABNT, APA, MLA, Harvard e Chicago. Vancouver é numérico: `citationNumbers` percorre as etiquetas na ordem do documento, atribui `1..n` na primeira aparição e alimenta tanto as citações quanto a bibliografia numerada. `tests/word-fields.test.js` cobre a matriz de estilos e autores, inserção, atualização e desvinculação com um mock de `Word.run`; `tests/citations.test.js` cobre os seis estilos em todos os tipos de referência.
+
 ## Tradução
 
 O trecho selecionado é normalizado, enviado pelo renderer ao processo principal e traduzido por um endpoint configurável. O padrão é o endpoint web do Google Translate. O limite é de 5.000 caracteres por trecho.

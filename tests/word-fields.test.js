@@ -159,3 +159,118 @@ test('edits the citation under the cursor', async () => {
   assert.equal(mock.controls[0].tag, 'cite:citation:b');
   assert.equal(mock.controls[0].text, '(COSTA, 2024)');
 });
+
+const CITATION_MATRIX = {
+  ABNT: {
+    1: '(SILVA, 2026)',
+    2: '(SILVA; COSTA, 2026)',
+    3: '(SILVA; COSTA; LOPES, 2026)',
+    4: '(SILVA et al., 2026)'
+  },
+  APA: {
+    1: '(Silva, 2026)',
+    2: '(Silva & Costa, 2026)',
+    3: '(Silva et al., 2026)',
+    4: '(Silva et al., 2026)'
+  },
+  MLA: {
+    1: '(Silva 2026)',
+    2: '(Silva and Costa 2026)',
+    3: '(Silva et al. 2026)',
+    4: '(Silva et al. 2026)'
+  },
+  Harvard: {
+    1: '(Silva, 2026)',
+    2: '(Silva and Costa, 2026)',
+    3: '(Silva et al., 2026)',
+    4: '(Silva et al., 2026)'
+  },
+  Chicago: {
+    1: '(Silva 2026)',
+    2: '(Silva and Costa 2026)',
+    3: '(Silva, Costa, and Lopes 2026)',
+    4: '(Silva et al. 2026)'
+  }
+};
+
+const AUTHORS = {
+  1: ['Silva, G.'],
+  2: ['Silva, G.', 'Costa, M.'],
+  3: ['Silva, G.', 'Costa, M.', 'Lopes, R.'],
+  4: ['Silva, G.', 'Costa, M.', 'Lopes, R.', 'Reis, A.']
+};
+
+for (const [style, expected] of Object.entries(CITATION_MATRIX)) {
+  test(`formats ${style} in-text citations for 1 to 4 authors`, () => {
+    const fields = loadFields();
+    for (const count of [1, 2, 3, 4]) {
+      const item = { id: `ref-${count}`, authors: AUTHORS[count], year: '2026', title: 'Título' };
+      assert.equal(fields.inTextCitation(item, style), expected[count]);
+    }
+  });
+}
+
+test('formats Vancouver citations as numbers', () => {
+  const fields = loadFields();
+  const item = { id: 'a', authors: ['Silva, G.'], year: '2026', title: 'Título' };
+  assert.equal(fields.isNumericStyle('Vancouver'), true);
+  assert.equal(fields.isNumericStyle('ABNT'), false);
+  assert.equal(fields.inTextCitation(item, 'Vancouver', 7), '(7)');
+  assert.deepEqual(fields.citationNumbers(['cite:citation:b', 'cite:citation:a', 'cite:citation:b']).get('a'), 2);
+});
+
+test('falls back to the title and s.d. when metadata is missing', () => {
+  const fields = loadFields();
+  for (const style of Object.keys(CITATION_MATRIX)) {
+    const text = fields.inTextCitation({ id: 'x', title: 'Sem autoria' }, style);
+    assert.match(text, /Sem autoria/);
+  }
+  assert.match(fields.inTextCitation({ id: 'x', authors: ['Silva, G.'] }, 'APA'), /s\.d\./);
+});
+
+test('inserts, refreshes and unlinks every citation style', async () => {
+  const fields = loadFields();
+  const item = { id: 'ref-1', authors: ['Silva, G.'], year: '2026', title: 'Título', citations: { ABNT: 'SILVA, G. Título. 2026.' } };
+
+  for (const style of [...Object.keys(CITATION_MATRIX), 'Vancouver']) {
+    const mock = loadFieldsWithWord().mock;
+    const sandbox = { window: {}, Word: mock.Word };
+    const code = fs.readFileSync(path.join(__dirname, '..', 'integrations', 'word', 'fields.js'), 'utf8');
+    vm.runInNewContext(code, sandbox);
+    const scoped = sandbox.window.CiteFields;
+
+    await scoped.insertCitation(item, style);
+    assert.equal(mock.controls.length, 1, style);
+    assert.equal(mock.controls[0].tag, 'cite:citation:ref-1', style);
+
+    await scoped.refreshDocument([item], style);
+    assert.equal(mock.controls[0].text, CITATION_MATRIX[style]?.[1] || '(1)', style);
+
+    const count = await scoped.unlinkDocument();
+    assert.equal(count, 1, style);
+    assert.equal(mock.controls.length, 0, style);
+  }
+});
+
+test('numbers Vancouver citations and bibliography in document order', async () => {
+  const { fields, mock } = loadFieldsWithWord();
+  const first = { id: 'a', authors: ['Alfa, A.'], year: '2020', title: 'Alfa', citations: { Vancouver: 'Alfa, A. Alfa. 2020.' } };
+  const second = { id: 'b', authors: ['Beta, B.'], year: '2021', title: 'Beta', citations: { Vancouver: 'Beta, B. Beta. 2021.' } };
+
+  await fields.insertCitation(first, 'Vancouver');
+  await fields.insertCitation(second, 'Vancouver');
+  await fields.insertCitation(first, 'Vancouver');
+  assert.deepEqual(mock.controls.map((control) => control.text), ['(1)', '(2)', '(1)']);
+
+  await fields.insertBibliography([second, first], 'Vancouver');
+  const bibliography = mock.controls.find((control) => control.tag === 'cite:bibliography');
+  assert.match(bibliography.text, /^1\. Alfa/);
+  assert.match(bibliography.text, /\n\n2\. Beta/);
+
+  const reordered = [mock.controls[1], mock.controls[0], mock.controls[2], mock.controls[3]];
+  mock.controls.splice(0, mock.controls.length, ...reordered);
+  await fields.refreshDocument([first, second], 'Vancouver');
+  assert.deepEqual(mock.controls.slice(0, 3).map((control) => control.text), ['(1)', '(2)', '(2)']);
+  assert.match(mock.controls[3].text, /^1\. Beta/);
+  assert.match(mock.controls[3].text, /\n\n2\. Alfa/);
+});
