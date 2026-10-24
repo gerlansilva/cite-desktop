@@ -8,6 +8,10 @@
 - Cartão **Cite no Word** na tela inicial, com instalação do painel local, certificado e manifesto em um clique.
 - Conexão local do add-in do Word por HTTPS em `localhost`, sem GitHub e sem internet.
 - Painel do Word com status da conexão, atualização automática da lista e modo alternativo com `bibliography.json` publicado.
+- Aba **Cite** com botões próprios e ícones distintos para citação, bibliografia, painel e menu **Mais**.
+- Citações e bibliografia inseridas como campos vinculados, com **Atualizar citações** e **Desvincular citações** na faixa de opções e no painel.
+- Edição de uma citação existente: com o cursor dentro dela, escolher outra referência substitui o campo sem perder o vínculo.
+- Cartão **Documento** no painel, com contagem de citações, atualização automática configurável e as ações de atualizar e desvincular.
 - Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela inicial pronta para uso.
 - Ação **Alterar pasta** na tela inicial e item **Arquivo > Início** no menu.
 - Tela de recuperação quando a pasta da biblioteca é excluída, movida ou fica sem permissão, com as opções **Usar a biblioteca padrão** e **Escolher outra pasta**.
@@ -16,6 +20,7 @@
 ### Corrigido
 
 - Paleta do painel do Word e do Google Docs alinhada ao azul do aplicativo.
+- Ícones sobrepostos da faixa de opções corrigidos; cada comando agora usa um ícone próprio, e o ícone do painel corresponde ao ícone do aplicativo.
 - Painel do Word passou a recarregar os arquivos atualizados a cada versão, sem cache antigo.
 - Testes não alteram mais a instalação real do add-in no Word.
 

@@ -10,13 +10,13 @@ const STATIC_FILES = new Map([
   ['/', { file: 'taskpane.html', type: 'text/html; charset=utf-8' }],
   ['/taskpane.html', { file: 'taskpane.html', type: 'text/html; charset=utf-8' }],
   ['/taskpane.js', { file: 'taskpane.js', type: 'text/javascript; charset=utf-8' }],
+  ['/fields.js', { file: 'fields.js', type: 'text/javascript; charset=utf-8' }],
   ['/commands.html', { file: 'commands.html', type: 'text/html; charset=utf-8' }],
   ['/commands.js', { file: 'commands.js', type: 'text/javascript; charset=utf-8' }],
-  ['/demo-bibliography.json', { file: 'demo-bibliography.json', type: 'application/json; charset=utf-8' }],
-  ['/assets/icon-16.png', { file: 'assets/icon-16.png', type: 'image/png' }],
-  ['/assets/icon-32.png', { file: 'assets/icon-32.png', type: 'image/png' }],
-  ['/assets/icon-80.png', { file: 'assets/icon-80.png', type: 'image/png' }]
+  ['/demo-bibliography.json', { file: 'demo-bibliography.json', type: 'application/json; charset=utf-8' }]
 ]);
+
+const ASSET_PATTERN = /^\/assets\/([a-z]+)-(16|32|80)\.png$/;
 
 function corsHeaders() {
   return {
@@ -111,6 +111,12 @@ function createConnector({
     const entry = STATIC_FILES.get(pathname);
     if (entry && staticDir) {
       sendFile(res, path.join(staticDir, entry.file), entry.type);
+      return;
+    }
+
+    const asset = ASSET_PATTERN.exec(pathname);
+    if (asset && staticDir) {
+      sendFile(res, path.join(staticDir, 'assets', `${asset[1]}-${asset[2]}.png`), 'image/png');
       return;
     }
 

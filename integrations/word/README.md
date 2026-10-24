@@ -8,12 +8,17 @@ O add-in adiciona uma aba **Cite** à faixa de opções do Word, ao lado de abas
 
 - Aba **Cite** com os comandos:
   - **Inserir citação** — busca uma referência e insere a citação no cursor.
-  - **Inserir bibliografia** — insere a lista completa ao final do documento.
+  - **Inserir bibliografia** — insere ou atualiza a lista completa no documento.
   - **Abrir painel** — abre a biblioteca para navegar e inserir.
-  - **Preferências** — configura a URL da bibliografia e o estilo.
+  - **Mais → Preferências do documento** — escolhe o estilo, a origem da bibliografia e a atualização automática.
+  - **Mais → Atualizar citações** — reformata todas as citações e a bibliografia com o estilo atual.
+  - **Mais → Desvincular citações** — converte os campos em texto comum.
 - Conexão local com o aplicativo Cite aberto no mesmo computador.
 - Estilos ABNT, APA, MLA, Harvard, Vancouver e Chicago.
 - Citação no texto no formato autor-data, adequada ao estilo escolhido.
+- Citações e bibliografia como campos vinculados (`cite:citation:<id>` e `cite:bibliography`).
+- Edição de citação existente: com o cursor dentro do campo, escolher outra referência substitui a citação.
+- Cartão **Documento** no painel com contagem de campos, atualização automática e ações de atualizar/desvincular.
 - Busca por título, autor, ano, periódico, DOI ou citação formatada.
 - Atualização automática da lista enquanto o Cite está aberto.
 - Modo alternativo com `bibliography.json` publicado, para quando o aplicativo estiver fechado.
@@ -74,6 +79,17 @@ No macOS, o Word lista os suplementos carregados pelo manifesto em **Página Ini
 
 O manifesto continua instalado; não é preciso reinstalar. Esse comportamento é do Word para macOS, que não mantém add-ins locais fixos na faixa de opções entre sessões.
 
+## Citações vinculadas
+
+As citações e a bibliografia são gravadas em content controls do Word com as etiquetas `cite:citation:<ids>` e `cite:bibliography`. O vínculo permite reformatar o documento sem reinserir cada citação.
+
+- **Inserir citação**: sem campo sob o cursor, insere uma nova citação vinculada. Com o cursor dentro de uma citação existente, substitui a referência mantendo o vínculo.
+- **Inserir bibliografia**: cria o campo de bibliografia ou atualiza o texto do campo existente.
+- **Atualizar citações**: percorre todos os campos e aplica o estilo escolhido, inclusive a ordenação da bibliografia.
+- **Desvincular citações**: remove os campos e mantém o texto, que deixa de ser atualizado pelo Cite.
+
+A contagem de citações e bibliografias aparece no cartão **Documento** do painel. A atualização automática é opcional; desmarque **Atualizar citações automaticamente** para evitar reformatações enquanto edita o texto.
+
 ## Usar a bibliografia publicada
 
 Quando o Cite não está aberto, o painel oferece o modo alternativo:
@@ -131,15 +147,17 @@ manifest.xml               manifesto de produção, com placeholders
 manifest.local-server.xml  manifesto local com __PORT__, usado na instalação
 manifest.localhost.xml     manifesto de desenvolvimento na porta 3000
 taskpane.html/js           painel do Word
-commands.html/js           FunctionFile dos comandos de faixa de opções
+fields.js                  formatação e content controls de citação e bibliografia
+commands.html/js           FunctionFile dos comandos Atualizar e Desvincular
 demo-bibliography.json     bibliografia fictícia para demonstração
-assets/                    ícones do add-in
+assets/                    ícones do add-in (16, 32 e 80 px)
 ```
 
 ## Limitações
 
 - O add-in precisa do Cite aberto para a conexão local; sem ele, só a bibliografia publicada funciona.
 - O painel precisa estar em HTTPS confiável.
-- A citação é inserida como texto, não como campo vinculado. Alterações posteriores no estilo ou na bibliografia não atualizam citações já inseridas.
+- A edição de uma citação substitui a referência inteira; não há editor de prefixo, sufixo ou supressão de autor.
+- Não há notas de rodapé nem anotações vinculadas ao documento.
 - A instalação automática do manifesto está disponível apenas no Word para macOS.
 - O build do add-in não é assinado nem publicado na Office Store.

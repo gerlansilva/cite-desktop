@@ -33,77 +33,121 @@
           <ExtensionPoint xsi:type="PrimaryCommandSurface">
             <CustomTab id="Cite.Tab">
               <Group id="Cite.Group">
-                <Label resid="Cite.GroupLabel"/>
+              <Label resid="Cite.GroupLabel"/>
+              <Icon>
+                <bt:Image size="16" resid="Cite.Icon16"/>
+                <bt:Image size="32" resid="Cite.Icon32"/>
+                <bt:Image size="80" resid="Cite.Icon80"/>
+              </Icon>
+              <Control xsi:type="Button" id="Cite.InsertCitation">
+                <Label resid="Cite.InsertCitation.Label"/>
+                <Supertip>
+                  <Title resid="Cite.InsertCitation.Label"/>
+                  <Description resid="Cite.Citation.Desc"/>
+                </Supertip>
                 <Icon>
-                  <bt:Image size="16" resid="Cite.Icon16"/>
-                  <bt:Image size="32" resid="Cite.Icon32"/>
-                  <bt:Image size="80" resid="Cite.Icon80"/>
+                  <bt:Image size="16" resid="Cite.CitationIcon16"/>
+                  <bt:Image size="32" resid="Cite.CitationIcon32"/>
+                  <bt:Image size="80" resid="Cite.CitationIcon80"/>
                 </Icon>
-                <Control xsi:type="Button" id="Cite.InsertCitation">
-                  <Label resid="Cite.InsertCitation.Label"/>
-                  <Supertip>
-                    <Title resid="Cite.InsertCitation.Label"/>
-                    <Description resid="Cite.Citation.Desc"/>
-                  </Supertip>
-                  <Icon>
-                    <bt:Image size="16" resid="Cite.Icon16"/>
-                    <bt:Image size="32" resid="Cite.Icon32"/>
-                    <bt:Image size="80" resid="Cite.Icon80"/>
-                  </Icon>
-                  <Action xsi:type="ShowTaskpane">
-                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
-                    <SourceLocation resid="Cite.CitationUrl"/>
-                  </Action>
-                </Control>
-                <Control xsi:type="Button" id="Cite.InsertBibliography">
-                  <Label resid="Cite.InsertBibliography.Label"/>
-                  <Supertip>
-                    <Title resid="Cite.InsertBibliography.Label"/>
-                    <Description resid="Cite.Bib.Desc"/>
-                  </Supertip>
-                  <Icon>
-                    <bt:Image size="16" resid="Cite.Icon16"/>
-                    <bt:Image size="32" resid="Cite.Icon32"/>
-                    <bt:Image size="80" resid="Cite.Icon80"/>
-                  </Icon>
-                  <Action xsi:type="ShowTaskpane">
-                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
-                    <SourceLocation resid="Cite.BibliographyUrl"/>
-                  </Action>
-                </Control>
-                <Control xsi:type="Button" id="Cite.OpenPanel">
-                  <Label resid="Cite.OpenPanel.Label"/>
-                  <Supertip>
-                    <Title resid="Cite.OpenPanel.Label"/>
-                    <Description resid="Cite.Panel.Desc"/>
-                  </Supertip>
-                  <Icon>
-                    <bt:Image size="16" resid="Cite.Icon16"/>
-                    <bt:Image size="32" resid="Cite.Icon32"/>
-                    <bt:Image size="80" resid="Cite.Icon80"/>
-                  </Icon>
-                  <Action xsi:type="ShowTaskpane">
-                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
-                    <SourceLocation resid="Cite.PanelUrl"/>
-                  </Action>
-                </Control>
-                <Control xsi:type="Button" id="Cite.Preferences">
-                  <Label resid="Cite.Preferences.Label"/>
-                  <Supertip>
-                    <Title resid="Cite.Preferences.Label"/>
-                    <Description resid="Cite.Prefs.Desc"/>
-                  </Supertip>
-                  <Icon>
-                    <bt:Image size="16" resid="Cite.Icon16"/>
-                    <bt:Image size="32" resid="Cite.Icon32"/>
-                    <bt:Image size="80" resid="Cite.Icon80"/>
-                  </Icon>
-                  <Action xsi:type="ShowTaskpane">
-                    <TaskpaneId>Cite.Taskpane</TaskpaneId>
-                    <SourceLocation resid="Cite.PreferencesUrl"/>
-                  </Action>
-                </Control>
-              </Group>
+                <Action xsi:type="ShowTaskpane">
+                  <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                  <SourceLocation resid="Cite.CitationUrl"/>
+                </Action>
+              </Control>
+              <Control xsi:type="Button" id="Cite.InsertBibliography">
+                <Label resid="Cite.InsertBibliography.Label"/>
+                <Supertip>
+                  <Title resid="Cite.InsertBibliography.Label"/>
+                  <Description resid="Cite.Bib.Desc"/>
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Cite.BibliographyIcon16"/>
+                  <bt:Image size="32" resid="Cite.BibliographyIcon32"/>
+                  <bt:Image size="80" resid="Cite.BibliographyIcon80"/>
+                </Icon>
+                <Action xsi:type="ShowTaskpane">
+                  <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                  <SourceLocation resid="Cite.BibliographyUrl"/>
+                </Action>
+              </Control>
+              <Control xsi:type="Button" id="Cite.OpenPanel">
+                <Label resid="Cite.OpenPanel.Label"/>
+                <Supertip>
+                  <Title resid="Cite.OpenPanel.Label"/>
+                  <Description resid="Cite.Panel.Desc"/>
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Cite.PanelIcon16"/>
+                  <bt:Image size="32" resid="Cite.PanelIcon32"/>
+                  <bt:Image size="80" resid="Cite.PanelIcon80"/>
+                </Icon>
+                <Action xsi:type="ShowTaskpane">
+                  <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                  <SourceLocation resid="Cite.PanelUrl"/>
+                </Action>
+              </Control>
+              <Control xsi:type="Menu" id="Cite.More">
+                <Label resid="Cite.More.Label"/>
+                <Supertip>
+                  <Title resid="Cite.More.Label"/>
+                  <Description resid="Cite.More.Desc"/>
+                </Supertip>
+                <Icon>
+                  <bt:Image size="16" resid="Cite.MoreIcon16"/>
+                  <bt:Image size="32" resid="Cite.MoreIcon32"/>
+                  <bt:Image size="80" resid="Cite.MoreIcon80"/>
+                </Icon>
+                <Items>
+                  <Item id="Cite.Preferences">
+                    <Label resid="Cite.Preferences.Label"/>
+                    <Supertip>
+                      <Title resid="Cite.Preferences.Label"/>
+                      <Description resid="Cite.Prefs.Desc"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Cite.SettingsIcon16"/>
+                      <bt:Image size="32" resid="Cite.SettingsIcon32"/>
+                      <bt:Image size="80" resid="Cite.SettingsIcon80"/>
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <TaskpaneId>Cite.Taskpane</TaskpaneId>
+                      <SourceLocation resid="Cite.PreferencesUrl"/>
+                    </Action>
+                  </Item>
+                  <Item id="Cite.Refresh">
+                    <Label resid="Cite.Refresh.Label"/>
+                    <Supertip>
+                      <Title resid="Cite.Refresh.Label"/>
+                      <Description resid="Cite.Refresh.Desc"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Cite.RefreshIcon16"/>
+                      <bt:Image size="32" resid="Cite.RefreshIcon32"/>
+                      <bt:Image size="80" resid="Cite.RefreshIcon80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>refreshCitations</FunctionName>
+                    </Action>
+                  </Item>
+                  <Item id="Cite.Unlink">
+                    <Label resid="Cite.Unlink.Label"/>
+                    <Supertip>
+                      <Title resid="Cite.Unlink.Label"/>
+                      <Description resid="Cite.Unlink.Desc"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Cite.UnlinkIcon16"/>
+                      <bt:Image size="32" resid="Cite.UnlinkIcon32"/>
+                      <bt:Image size="80" resid="Cite.UnlinkIcon80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>unlinkCitations</FunctionName>
+                    </Action>
+                  </Item>
+                </Items>
+              </Control>
+            </Group>
               <Label resid="Cite.TabLabel"/>
             </CustomTab>
           </ExtensionPoint>
@@ -115,6 +159,27 @@
         <bt:Image id="Cite.Icon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/icon-16.png"/>
         <bt:Image id="Cite.Icon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/icon-32.png"/>
         <bt:Image id="Cite.Icon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/icon-80.png"/>
+        <bt:Image id="Cite.CitationIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/citation-16.png"/>
+        <bt:Image id="Cite.CitationIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/citation-32.png"/>
+        <bt:Image id="Cite.CitationIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/citation-80.png"/>
+        <bt:Image id="Cite.BibliographyIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/bibliography-16.png"/>
+        <bt:Image id="Cite.BibliographyIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/bibliography-32.png"/>
+        <bt:Image id="Cite.BibliographyIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/bibliography-80.png"/>
+        <bt:Image id="Cite.PanelIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/panel-16.png"/>
+        <bt:Image id="Cite.PanelIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/panel-32.png"/>
+        <bt:Image id="Cite.PanelIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/panel-80.png"/>
+        <bt:Image id="Cite.MoreIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/more-16.png"/>
+        <bt:Image id="Cite.MoreIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/more-32.png"/>
+        <bt:Image id="Cite.MoreIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/more-80.png"/>
+        <bt:Image id="Cite.SettingsIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/settings-16.png"/>
+        <bt:Image id="Cite.SettingsIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/settings-32.png"/>
+        <bt:Image id="Cite.SettingsIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/settings-80.png"/>
+        <bt:Image id="Cite.RefreshIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/refresh-16.png"/>
+        <bt:Image id="Cite.RefreshIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/refresh-32.png"/>
+        <bt:Image id="Cite.RefreshIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/refresh-80.png"/>
+        <bt:Image id="Cite.UnlinkIcon16" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/unlink-16.png"/>
+        <bt:Image id="Cite.UnlinkIcon32" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/unlink-32.png"/>
+        <bt:Image id="Cite.UnlinkIcon80" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/assets/unlink-80.png"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Cite.CommandsUrl" DefaultValue="https://YOUR_GITHUB_USER.github.io/YOUR_REPO/integrations/word/commands.html"/>
@@ -129,13 +194,19 @@
         <bt:String id="Cite.InsertCitation.Label" DefaultValue="Inserir citação"/>
         <bt:String id="Cite.InsertBibliography.Label" DefaultValue="Inserir bibliografia"/>
         <bt:String id="Cite.OpenPanel.Label" DefaultValue="Abrir painel"/>
-        <bt:String id="Cite.Preferences.Label" DefaultValue="Preferências"/>
+        <bt:String id="Cite.More.Label" DefaultValue="Mais"/>
+        <bt:String id="Cite.Preferences.Label" DefaultValue="Preferências do documento"/>
+        <bt:String id="Cite.Refresh.Label" DefaultValue="Atualizar citações"/>
+        <bt:String id="Cite.Unlink.Label" DefaultValue="Desvincular citações"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="Cite.Citation.Desc" DefaultValue="Busque uma referência e insira a citação no cursor."/>
-        <bt:String id="Cite.Bib.Desc" DefaultValue="Insira a lista de referências da biblioteca carregada."/>
+        <bt:String id="Cite.Citation.Desc" DefaultValue="Busque uma referência e insira uma citação vinculada ao Cite no cursor."/>
+        <bt:String id="Cite.Bib.Desc" DefaultValue="Insira ou atualize a bibliografia do documento."/>
         <bt:String id="Cite.Panel.Desc" DefaultValue="Abra o painel do Cite para navegar pela biblioteca."/>
-        <bt:String id="Cite.Prefs.Desc" DefaultValue="Configure a URL da bibliografia e o estilo de citação."/>
+        <bt:String id="Cite.More.Desc" DefaultValue="Preferências do documento, atualização e desvinculação das citações."/>
+        <bt:String id="Cite.Prefs.Desc" DefaultValue="Escolha o estilo de citação e o comportamento de atualização."/>
+        <bt:String id="Cite.Refresh.Desc" DefaultValue="Atualize todas as citações e a bibliografia com o estilo atual."/>
+        <bt:String id="Cite.Unlink.Desc" DefaultValue="Converta citações e bibliografia em texto comum, sem vínculo com o Cite."/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

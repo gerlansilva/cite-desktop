@@ -2,10 +2,12 @@
   const LOCAL_PORTS = Array.from({ length: 10 }, (_, index) => 23120 + index);
   const DEMO_URL = 'demo-bibliography.json';
   const REFRESH_MS = 20000;
+  const F = window.CiteFields;
 
   let bibliography = null;
   let selected = null;
   let style = 'ABNT';
+  let autoRefresh = true;
   let initialized = false;
   let connected = false;
   let localPort = null;
@@ -54,42 +56,11 @@
   }
 
   function referenceText(item) {
-    return item?.citations?.[style] || item?.citations?.ABNT || [
-      item?.authors?.join('; '),
-      item?.title,
-      item?.year
-    ].filter(Boolean).join('. ');
-  }
-
-  function surname(author) {
-    const raw = String(author || '').trim().replace(/\s+/g, ' ');
-    if (!raw) return '';
-    if (raw.includes(',')) return raw.slice(0, raw.indexOf(',')).trim();
-    if (raw.includes('.')) return raw.slice(0, raw.indexOf('.')).trim();
-    const parts = raw.split(' ');
-    return parts[parts.length - 1];
+    return F.referenceText(item, style);
   }
 
   function inTextCitation(item) {
-    const names = (item?.authors || []).map(surname).filter(Boolean);
-    const year = item?.year || 's.d.';
-    if (!names.length) return `(${String(item?.title || 'sem título').slice(0, 35)}, ${year})`;
-    if (style === 'ABNT') {
-      const upper = names.map((name) => name.toUpperCase());
-      if (upper.length > 3) return `(${upper[0]} et al., ${year})`;
-      return `(${upper.join('; ')}, ${year})`;
-    }
-    if (style === 'APA' || style === 'Vancouver') {
-      if (names.length > 2) return `(${names[0]} et al., ${year})`;
-      if (names.length === 2) return `(${names[0]} & ${names[1]}, ${year})`;
-      return `(${names[0]}, ${year})`;
-    }
-    if (style === 'MLA' || style === 'Chicago') {
-      if (names.length > 2) return `(${names[0]} et al. ${year})`;
-      if (names.length === 2) return `(${names[0]} and ${names[1]} ${year})`;
-      return `(${names[0]} ${year})`;
-    }
-    return `(${names.join(', ')}, ${year})`;
+    return F.inTextCitation(item, style);
   }
 
   function renderStyles() {
@@ -290,6 +261,38 @@
     }
   }
 
+  async function updateFieldCount() {
+    try {
+      const counts = await F.countFields();
+      const parts = [];
+      if (counts.citations) parts.push(`${counts.citations} ${counts.citations === 1 ? 'citação' : 'citações'}`);
+      if (counts.bibliographies) parts.push(`${counts.bibliographies} ${counts.bibliographies === 1 ? 'bibliografia' : 'bibliografias'}`);
+      $('field-count').textContent = parts.join(' · ');
+    } catch {
+      $('field-count').textContent = '';
+    }
+  }
+
+  async function refreshFields({ silent = false } = {}) {
+    if (!bibliography?.items?.length) {
+      if (!silent) setStatus('Conecte o Cite ou carregue a bibliografia para atualizar.', true);
+      return;
+    }
+    try {
+      const result = await F.refreshDocument(bibliography.items, style);
+      if (!silent) {
+        const citations = `${result.citations} ${result.citations === 1 ? 'citação atualizada' : 'citações atualizadas'}`;
+        const bibs = result.bibliographies
+          ? ` e ${result.bibliographies} ${result.bibliographies === 1 ? 'bibliografia' : 'bibliografias'}`
+          : '';
+        setStatus(`${citations}${bibs}.`);
+      }
+      await updateFieldCount();
+    } catch (err) {
+      if (!silent) setStatus(`Não foi possível atualizar: ${err.message}`, true);
+    }
+  }
+
   async function insertText(text) {
     if (typeof Word === 'undefined' || !Word.run) {
       throw new Error('Abra este painel dentro do Word para inserir conteúdo.');
@@ -304,10 +307,22 @@
   async function insertCitation() {
     if (!selected) return;
     try {
-      await insertText(inTextCitation(selected));
-      setStatus('Citação inserida.');
+      const updated = await F.updateSelectedCitation(selected, style);
+      if (updated) {
+        setStatus('Citação atualizada para a referência selecionada.');
+      } else {
+        await F.insertCitation(selected, style);
+        setStatus('Citação inserida e vinculada ao Cite.');
+      }
+      if (autoRefresh) await refreshFields({ silent: true });
+      await updateFieldCount();
     } catch (err) {
-      setStatus(`Não foi possível inserir: ${err.message}`, true);
+      try {
+        await insertText(inTextCitation(selected));
+        setStatus(`Citação inserida como texto; não foi possível vinculá-la: ${err.message}`, true);
+      } catch (fallbackError) {
+        setStatus(`Não foi possível inserir: ${fallbackError.message}`, true);
+      }
     }
   }
 
@@ -315,7 +330,7 @@
     if (!selected) return;
     try {
       await insertText(referenceText(selected));
-      setStatus('Referência inserida.');
+      setStatus('Referência inserida como texto.');
     } catch (err) {
       setStatus(`Não foi possível inserir: ${err.message}`, true);
     }
@@ -324,20 +339,61 @@
   async function insertBibliography() {
     if (!bibliography?.items?.length) return;
     try {
-      const list = [...bibliography.items].sort((a, b) =>
-        String(surname(a.authors?.[0]) || a.title || '').localeCompare(String(surname(b.authors?.[0]) || b.title || ''), 'pt-BR')
-      );
-      if (typeof Word === 'undefined' || !Word.run) {
-        throw new Error('Abra este painel dentro do Word para inserir conteúdo.');
-      }
-      await Word.run(async (context) => {
-        const body = context.document.body;
-        body.insertText(`\n\n${list.map(referenceText).join('\n\n')}`, Word.InsertLocation.end);
-        await context.sync();
-      });
-      setStatus('Bibliografia inserida ao final do documento.');
+      await F.insertBibliography(bibliography.items, style);
+      setStatus('Bibliografia criada ou atualizada no documento.');
+      if (autoRefresh) await refreshFields({ silent: true });
+      await updateFieldCount();
     } catch (err) {
-      setStatus(`Não foi possível inserir: ${err.message}`, true);
+      try {
+        const text = bibliography.items.map((item) => referenceText(item)).join('\n\n');
+        await Word.run(async (context) => {
+          context.document.body.insertText(`\n\n${text}`, Word.InsertLocation.end);
+          await context.sync();
+        });
+        setStatus(`Bibliografia inserida como texto; não foi possível vinculá-la: ${err.message}`, true);
+      } catch (fallbackError) {
+        setStatus(`Não foi possível inserir: ${fallbackError.message}`, true);
+      }
+    }
+  }
+
+  async function unlinkFields() {
+    const ok = window.confirm('Desvincular todas as citações e a bibliografia? Elas passam a ser texto comum e não poderão ser atualizadas.');
+    if (!ok) return;
+    try {
+      const count = await F.unlinkDocument();
+      setStatus(`${count} ${count === 1 ? 'vínculo removido' : 'vínculos removidos'}.`);
+      await updateFieldCount();
+    } catch (err) {
+      setStatus(`Não foi possível desvincular: ${err.message}`, true);
+    }
+  }
+
+  async function preselectCitation() {
+    if (!F.available()) return;
+    try {
+      const ids = await F.selectedCitationIds();
+      if (!ids?.length) return;
+      const item = (bibliography?.items || []).find((entry) => String(entry.id) === ids[0]);
+      if (!item) return;
+      selected = item;
+      renderList();
+      renderPreview();
+      setStatus('Editando a citação selecionada. Escolha outra referência para substituir.');
+    } catch {}
+  }
+
+  function applyMode() {
+    const mode = new URLSearchParams(window.location.search).get('mode');
+    if (mode === 'settings') {
+      $('document-card').scrollIntoView({ block: 'nearest' });
+      setStatus('Escolha o estilo e o comportamento de atualização.');
+    } else if (mode === 'bibliography') {
+      $('bibliography-card').scrollIntoView({ block: 'nearest' });
+      setStatus('Use Inserir bibliografia para criar ou atualizar a lista.');
+    } else if (mode === 'citation') {
+      $('search').focus();
+      preselectCitation();
     }
   }
 
@@ -357,12 +413,22 @@
       } catch {}
       renderList();
       renderPreview();
+      if (autoRefresh) refreshFields({ silent: true });
+    });
+    $('auto-refresh').addEventListener('change', () => {
+      autoRefresh = $('auto-refresh').checked;
+      try {
+        localStorage.setItem('cite-auto-refresh', autoRefresh ? '1' : '0');
+      } catch {}
     });
     $('insert-citation').addEventListener('click', insertCitation);
     $('insert-reference').addEventListener('click', insertReference);
     $('insert-bibliography').addEventListener('click', insertBibliography);
+    $('refresh-doc').addEventListener('click', () => refreshFields());
+    $('unlink-doc').addEventListener('click', unlinkFields);
     window.addEventListener('focus', () => {
       if (connected && !refreshing) refreshLocal();
+      updateFieldCount();
     });
     setInterval(() => {
       if (connected && !refreshing && !document.hidden) refreshLocal();
@@ -373,10 +439,18 @@
     if (initialized) return;
     initialized = true;
     bindEvents();
+
+    if (!F) {
+      setStatus('Não foi possível carregar os campos do Cite. Reinstale o add-in.', true);
+      return;
+    }
+
     try {
       $('bibliography-url').value = localStorage.getItem('cite-bibliography-url') || '';
       style = localStorage.getItem('cite-citation-style') || 'ABNT';
+      autoRefresh = localStorage.getItem('cite-auto-refresh') !== '0';
     } catch {}
+    $('auto-refresh').checked = autoRefresh;
     renderStyles();
     renderList();
     renderPreview();
@@ -390,9 +464,10 @@
     setLocalState('Verificando…');
     const ok = await connectLocal();
     if (!ok && $('bibliography-url').value) {
-      loadBibliography($('bibliography-url').value);
+      await loadBibliography($('bibliography-url').value);
     }
-  }
+    updateFieldCount();
+    applyMode();  }
 
   if (typeof Office !== 'undefined' && typeof Office.onReady === 'function') {
     Office.onReady(() => init());

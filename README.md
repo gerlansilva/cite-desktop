@@ -24,7 +24,9 @@ Ao abrir, o Cite mostra a tela inicial com o resumo da biblioteca, as referênci
 
 ![Cite no Word, com aba própria e painel de citações](docs/images/word.png)
 
-O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do Zotero, com comandos para inserir citações, inserir a bibliografia, abrir o painel e configurar o estilo. O painel se conecta à biblioteca local pelo próprio aplicativo, sem publicar nada no GitHub.
+O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do Zotero. A aba tem os botões **Inserir citação**, **Inserir bibliografia** e **Abrir painel**, além do menu **Mais** com **Preferências do documento**, **Atualizar citações** e **Desvincular citações**. O painel se conecta à biblioteca local pelo próprio aplicativo, sem publicar nada no GitHub.
+
+As citações e a bibliografia são inseridas como campos vinculados do Cite. Ao trocar o estilo ou atualizar a biblioteca, use **Atualizar citações** para reformatar o documento inteiro. Com o cursor dentro de uma citação, escolher outra referência no painel substitui a citação existente. **Desvincular citações** converte os campos em texto comum.
 
 O Cite serve o painel e a API em `https://localhost:23120` com um certificado local. Na tela inicial, o cartão **Cite no Word** instala o certificado no chaveiro do sistema, copia o manifesto para a pasta `wef` do Word e inicia o painel. Depois é só reiniciar o Word e abrir **Página Inicial → Suplementos → Cite**.
 
@@ -48,6 +50,7 @@ No macOS, o Word não mantém add-ins locais fixos na faixa de opções entre se
   - tema claro e escuro;
   - tradução de trechos para português, inglês, espanhol e **Tetum Dili**.
 - Add-in do Microsoft Word com aba própria e conexão local por HTTPS.
+- Citações e bibliografia vinculadas ao Cite, com atualização e desvinculação pelo Word.
 - Publicação opcional de `bibliography.json` no GitHub.
 - Add-in do Google Docs em [`integrations/`](integrations/).
 - Backup e restauração da biblioteca.

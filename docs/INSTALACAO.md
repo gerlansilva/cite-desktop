@@ -63,6 +63,8 @@ Depois, reinicie o Word e abra **Página Inicial → Suplementos → Cite**. O p
 
 No macOS, o Word não mantém add-ins locais fixos na faixa de opções entre sessões. Se a aba **Cite** não estiver visível, abra **Página Inicial → Suplementos** e clique em **Cite** em **Suplementos do Desenvolvedor**. O manifesto permanece instalado; não é preciso reinstalar.
 
+Na aba **Cite**, use **Inserir citação** para buscar e inserir uma referência no cursor, **Inserir bibliografia** para criar ou atualizar a lista e **Abrir painel** para navegar pela biblioteca. O menu **Mais** traz **Preferências do documento**, **Atualizar citações** e **Desvincular citações**. As citações ficam vinculadas ao Cite e podem ser reformatadas quando você trocar o estilo; para substituir uma citação, coloque o cursor dentro dela e escolha outra referência no painel.
+
 O macOS pode pedir a senha do usuário ao confiar no certificado. É esperado: o certificado serve apenas para o painel local do Cite e não é enviado para nenhum servidor.
 
 - Estado da integração: `~/Library/Application Support/Cite/word-addin/install.json`

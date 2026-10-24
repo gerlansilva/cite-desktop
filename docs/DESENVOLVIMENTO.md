@@ -98,15 +98,17 @@ A seleção de texto gera um menu flutuante com destaque, sublinhado, tachado, c
 
 ## Add-in do Word
 
-O add-in fica em `integrations/word` e usa o manifesto XML de task pane com `VersionOverrides` para criar a aba **Cite**. Os botões da faixa de opções usam `ShowTaskpane`; o `commands.html` funciona como `FunctionFile` e deixa espaço para futuros comandos `ExecuteFunction`.
+O add-in fica em `integrations/word` e usa o manifesto XML de task pane com `VersionOverrides` para criar a aba **Cite**. Os botões **Inserir citação**, **Inserir bibliografia** e **Abrir painel** usam `ShowTaskpane`; o menu **Mais** reúne **Preferências do documento** (`ShowTaskpane`) e os comandos `ExecuteFunction` **Atualizar citações** e **Desvincular citações**. O `commands.html` é o `FunctionFile` e carrega `fields.js` antes de `commands.js`.
 
 - `manifest.xml`: produção, com placeholders de usuário/repositório.
 - `manifest.local-server.xml`: manifesto local com `__PORT__`, usado pelo conector do aplicativo.
 - `manifest.localhost.xml`: desenvolvimento local em `https://localhost:3000`.
-- `taskpane.html/js`: busca, prévia, estilos, conexão local e inserção no documento.
+- `taskpane.html/js`: busca, prévia, estilos, conexão local, cartão do documento e inserção no documento.
+- `fields.js`: formatação autor-data/referência e content controls `cite:citation:<ids>` e `cite:bibliography`; expõe `window.CiteFields`.
+- `commands.js`: implementa `refreshCitations` e `unlinkCitations` via `Office.actions.associate`.
 - `demo-bibliography.json`: bibliografia fictícia para demonstração.
 - `word-addin.js`: certificado, confiança, manifesto e instalação.
-- `connector.js`: servidor HTTPS local com `/ping`, `/library` e arquivos do painel.
+- `connector.js`: servidor HTTPS local com `/ping`, `/library`, `/fields.js` e arquivos do painel.
 - `scripts/serve-word-addin.js`: servidor HTTPS isolado para desenvolver o add-in.
 
 ### Conector local
@@ -134,13 +136,13 @@ O painel fica em `https://localhost:23120/taskpane.html`. O servidor isolado do 
 Testes:
 
 ```bash
-node --test tests/word-addin.test.js
+node --test tests/word-addin.test.js tests/word-fields.test.js
 npx playwright test tests/word-addin.spec.ts
 ```
 
-Eles usam `CITE_WORD_WEF_DIR`, `CITE_WORD_ADDIN_DIR`, `CITE_WORD_TRUST=skip` e `CITE_WORD_PORT` para não tocar na instalação real.
+Os testes de instalação usam `CITE_WORD_WEF_DIR`, `CITE_WORD_ADDIN_DIR`, `CITE_WORD_TRUST=skip` e `CITE_WORD_PORT` para não tocar na instalação real. Os testes de campos rodam `fields.js` em um sandbox `vm` com um mock de `Word.run`, cobrindo inserção, edição da citação sob o cursor, atualização e desvinculação de content controls.
 
-O painel usa `Word.run` e `context.document.getSelection()` para inserir citações e `context.document.body.insertText(..., Word.InsertLocation.end)` para acrescentar a bibliografia ao final do documento.
+O painel usa `Word.run` e `context.document.getSelection()` para inserir ou substituir citações. Cada citação vira um content control com a etiqueta `cite:citation:<ids>` e a bibliografia usa `cite:bibliography`. `refreshDocument` percorre `context.document.contentControls`, reformata os campos e é chamado pelo painel e por `commands.js`. `unlinkDocument` remove os content controls mantendo o texto.
 
 ## Tradução
 

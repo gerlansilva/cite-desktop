@@ -62,6 +62,9 @@
     .source-details summary { font-size: 11px; color: var(--muted); }
     .source-box { margin-top: 8px; }
     .source-box .row { margin-top: 7px; }
+    .check-line { display: flex; align-items: center; gap: 7px; margin-top: 4px; color: var(--text); font-size: 11.5px; }
+    .check-line input { width: auto; }
+    .check-line span { color: var(--text); }
     @media (max-height: 620px) { #list { max-height: 30vh; } }
   </style>
 </head>
@@ -119,7 +122,7 @@
     <div id="list"><div class="empty">Carregue uma bibliografia para começar.</div></div>
   </section>
 
-  <section class="card preview-card">
+  <section class="card preview-card" id="bibliography-card">
     <div class="preview-block">
       <div class="label">Citação no texto</div>
       <div id="preview-citation" class="preview-text">Nenhuma referência selecionada.</div>
@@ -136,11 +139,28 @@
     <p class="hint">A citação é inserida no cursor. A bibliografia insere todas as referências carregadas.</p>
   </section>
 
+  <section class="card" id="document-card">
+    <div class="list-head">
+      <span class="label">Documento</span>
+      <span id="field-count" class="count"></span>
+    </div>
+    <label class="check-line" for="auto-refresh">
+      <input type="checkbox" id="auto-refresh" checked>
+      <span>Atualizar citações automaticamente</span>
+    </label>
+    <div class="actions">
+      <button id="refresh-doc">Atualizar citações</button>
+      <button id="unlink-doc">Desvincular citações</button>
+    </div>
+    <p class="hint">As citações e a bibliografia ficam vinculadas ao Cite. Para editar uma citação, coloque o cursor nela e insira outra referência.</p>
+  </section>
+
   <details>
     <summary>Como conectar sua biblioteca</summary>
     <p>Com o Cite aberto neste computador, o painel se conecta sozinho à sua biblioteca. Se o aplicativo estiver fechado, publique a bibliografia em <strong>Ferramentas → Integrações</strong> e informe a URL pública do <code>bibliography.json</code>.</p>
   </details>
 
+  <script src="./fields.js"></script>
   <script src="./taskpane.js"></script>
 </body>
 </html>

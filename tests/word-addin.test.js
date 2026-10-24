@@ -22,7 +22,7 @@ function get(url, options = {}) {
   });
 }
 
-test('installs the local Word add-in and serves the pane over HTTPS', async () => {
+test('installs the local Word add-in and serves the pane over HTTPS', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cite-word-addin-'));
   const wefDir = path.join(root, 'wef');
   process.env.CITE_WORD_ADDIN_DIR = path.join(root, 'addin');
@@ -43,6 +43,8 @@ test('installs the local Word add-in and serves the pane over HTTPS', async () =
     })
   });
 
+  t.after(() => addin.uninstall());
+
   const result = await addin.install();
   assert.equal(result.ok, true, result.error);
   assert.equal(result.status.port, 23210);
@@ -56,6 +58,11 @@ test('installs the local Word add-in and serves the pane over HTTPS', async () =
   assert.doesNotMatch(manifest, /\?v=[^"<]*&(?!amp;)/);
   assert.match(manifest, /b7f3a9c2-6d41-4e8b-9c2a-1f0d5e7a3b64/);
   assert.doesNotMatch(manifest, /__PORT__/);
+  assert.match(manifest, /assets\/citation-32\.png/);
+  assert.match(manifest, /assets\/bibliography-32\.png/);
+  assert.match(manifest, /assets\/panel-32\.png/);
+  assert.match(manifest, /<FunctionName>refreshCitations<\/FunctionName>/);
+  assert.match(manifest, /<FunctionName>unlinkCitations<\/FunctionName>/);
 
   const ping = await get('https://localhost:23210/ping');
   assert.equal(ping.status, 200);
@@ -78,6 +85,17 @@ test('installs the local Word add-in and serves the pane over HTTPS', async () =
   const icon = await get('https://localhost:23210/assets/icon-32.png');
   assert.equal(icon.status, 200);
   assert.equal(icon.headers['content-type'], 'image/png');
+
+  const fields = await get('https://localhost:23210/fields.js');
+  assert.equal(fields.status, 200);
+  assert.match(fields.body, /window\.CiteFields/);
+
+  const commands = await get('https://localhost:23210/commands.js');
+  assert.equal(commands.status, 200);
+  assert.match(commands.body, /refreshCitations/);
+
+  const citationIcon = await get('https://localhost:23210/assets/citation-32.png');
+  assert.equal(citationIcon.status, 200);
 
   const missing = await get('https://localhost:23210/nao-existe');
   assert.equal(missing.status, 404);
