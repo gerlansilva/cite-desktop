@@ -61,6 +61,8 @@ O add-in do Word é instalado pela tela inicial do Cite, no cartão **Cite no Wo
 
 Depois, reinicie o Word e abra **Página Inicial → Suplementos → Cite**. O painel se conecta à biblioteca local direto do aplicativo, sem publicar nada no GitHub.
 
+No macOS, o Word não mantém add-ins locais fixos na faixa de opções entre sessões. Se a aba **Cite** não estiver visível, abra **Página Inicial → Suplementos** e clique em **Cite** em **Suplementos do Desenvolvedor**. O manifesto permanece instalado; não é preciso reinstalar.
+
 O macOS pode pedir a senha do usuário ao confiar no certificado. É esperado: o certificado serve apenas para o painel local do Cite e não é enviado para nenhum servidor.
 
 - Estado da integração: `~/Library/Application Support/Cite/word-addin/install.json`

@@ -62,7 +62,12 @@ test('installs the local Word add-in and serves the pane over HTTPS', async () =
 
   const lib = await get('https://localhost:23210/library');
   assert.equal(lib.status, 200);
+  assert.equal(lib.headers['access-control-allow-origin'], '*');
   assert.equal(JSON.parse(lib.body).items[0].title, 'Teste local');
+
+  const preflight = await get('https://localhost:23210/library', { method: 'OPTIONS' });
+  assert.equal(preflight.status, 204);
+  assert.equal(preflight.headers['access-control-allow-private-network'], 'true');
 
   const pane = await get('https://localhost:23210/taskpane.html');
   assert.equal(pane.status, 200);

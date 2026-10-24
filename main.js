@@ -684,7 +684,10 @@ app.whenReady().then(async () => {
     getLibraryPath: () => app.getPath('userData'),
     getPayload: async () => githubBibliographyPayload(await dataCall('library:all'))
   });
-  await wordAddin.ensureInstalled();
+  const isolatedProfile = app.commandLine.hasSwitch('user-data-dir') || Boolean(process.env.CITE_STORAGE_CONFIG);
+  const skipWordConnector = process.env.CITE_DISABLE_WORD === '1' ||
+    (isolatedProfile && process.env.CITE_FORCE_WORD !== '1');
+  if (!skipWordConnector) await wordAddin.ensureInstalled();
   if (pendingAttachmentRebase) {
     try {
       await dataCall('attachments:rebasePaths', pendingAttachmentRebase);

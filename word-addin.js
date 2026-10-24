@@ -194,7 +194,7 @@ function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getP
         lastError = trust.error;
         return { ok: false, error: trust.error, status: status() };
       }
-      const port = await ensureServer(settings.port || preferredPort);
+      const port = await ensureServer(preferredPort);
       writeManifest(port);
       writeSettings({ installed: true, trusted: true, port, installedAt: new Date().toISOString() });
       lastError = '';
@@ -208,10 +208,11 @@ function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getP
   async function ensureInstalled() {
     if (!settings.installed || !wefDir) return status();
     try {
-      await ensureServer(settings.port || preferredPort);
+      await ensureServer(preferredPort);
       if (connector.port !== settings.port) {
         writeManifest(connector.port);
         writeSettings({ port: connector.port });
+        console.log(`Manifesto do Word atualizado para a porta ${connector.port}.`);
       }
       lastError = '';
     } catch (err) {

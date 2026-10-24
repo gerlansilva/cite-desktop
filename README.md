@@ -28,7 +28,9 @@ O add-in cria uma aba **Cite** na faixa de opções do Word, no estilo da aba do
 
 O Cite serve o painel e a API em `https://localhost:23120` com um certificado local. Na tela inicial, o cartão **Cite no Word** instala o certificado no chaveiro do sistema, copia o manifesto para a pasta `wef` do Word e inicia o painel. Depois é só reiniciar o Word e abrir **Página Inicial → Suplementos → Cite**.
 
-A conexão é local e offline: o painel busca as referências direto da biblioteca aberta no Cite. Se o aplicativo estiver fechado, o painel oferece o modo alternativo com o `bibliography.json` publicado. As instruções completas estão em [integrations/word/README.md](integrations/word/README.md).
+A conexão é local e offline: o painel busca as referências direto da biblioteca aberta no Cite. Se o aplicativo estiver fechado, o painel oferece o modo alternativo com o `bibliography.json` publicado.
+
+No macOS, o Word não mantém add-ins locais fixos na faixa de opções entre sessões. Se a aba **Cite** não estiver visível ao reabrir o Word, clique em **Página Inicial → Suplementos → Cite**. As instruções completas estão em [integrations/word/README.md](integrations/word/README.md).
 
 ## Recursos
 

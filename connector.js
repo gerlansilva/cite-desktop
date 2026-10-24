@@ -18,12 +18,22 @@ const STATIC_FILES = new Map([
   ['/assets/icon-80.png', { file: 'assets/icon-80.png', type: 'image/png' }]
 ]);
 
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Private-Network': 'true'
+  };
+}
+
 function sendJson(res, statusCode, body) {
   const payload = JSON.stringify(body);
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(payload),
-    'Cache-Control': 'no-store'
+    'Cache-Control': 'no-store',
+    ...corsHeaders()
   });
   res.end(payload);
 }
@@ -56,6 +66,12 @@ function createConnector({
   let activePort = null;
 
   function handleRequest(req, res) {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, corsHeaders());
+      res.end();
+      return;
+    }
+
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       sendJson(res, 405, { error: 'method not allowed' });
       return;

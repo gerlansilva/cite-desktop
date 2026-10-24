@@ -64,6 +64,16 @@ certutil -addstore -user Root "%APPDATA%\Cite\word-addin\tls\word-cert.pem"
 3. A aba **Cite** aparece na faixa de opções e o painel é aberto.
 4. O painel mostra **Conectado** e o caminho da biblioteca.
 
+## Se a aba Cite não aparecer
+
+No macOS, o Word lista os suplementos carregados pelo manifesto em **Página Inicial → Suplementos**. Se a aba **Cite** não estiver na faixa de opções depois de reabrir o Word:
+
+1. abra **Página Inicial → Suplementos**;
+2. em **Suplementos do Desenvolvedor**, clique em **Cite**;
+3. a aba e o painel voltam a aparecer.
+
+O manifesto continua instalado; não é preciso reinstalar. Esse comportamento é do Word para macOS, que não mantém add-ins locais fixos na faixa de opções entre sessões.
+
 ## Usar a bibliografia publicada
 
 Quando o Cite não está aberto, o painel oferece o modo alternativo:

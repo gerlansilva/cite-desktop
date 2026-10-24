@@ -227,7 +227,7 @@
       const wasConnected = connected;
       setConnected(false);
       if (!silent || wasConnected) {
-        setStatus('Não foi possível conectar ao Cite. Abra o aplicativo ou use a bibliografia publicada.', true);
+        setStatus(`Não foi possível conectar: ${err.message}. Abra o aplicativo ou use a bibliografia publicada.`, true);
       }
       return false;
     } finally {
@@ -249,8 +249,10 @@
       applyBibliography(data, true);
       setStatus(`${data.items.length} ${data.items.length === 1 ? 'referência atualizada' : 'referências atualizadas'}.`);
     } catch {
-      setConnected(false);
-      setStatus('O aplicativo Cite não respondeu. Abra-o e clique em Conectar.', true);
+      const recovered = await connectLocal({ silent: true });
+      if (!recovered) {
+        setStatus('O aplicativo Cite não respondeu. Abra-o e clique em Conectar.', true);
+      }
     } finally {
       refreshing = false;
     }
