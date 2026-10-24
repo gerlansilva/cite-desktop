@@ -1,5 +1,13 @@
 # Histórico de mudanças
 
+## Não lançado
+
+### Adicionado
+
+- Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela vazia pronta para uso.
+- Tela de recuperação quando a pasta da biblioteca é excluída, movida ou fica sem permissão, com as opções **Usar a biblioteca padrão** e **Escolher outra pasta**.
+- Testes de primeira execução e de biblioteca ausente.
+
 ## 0.2.0
 
 ### Adicionado

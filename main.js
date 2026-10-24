@@ -17,7 +17,7 @@ const INTEGRATIONS_CONFIG = process.env.CITE_INTEGRATIONS_CONFIG ||
   path.join(app.getPath('appData'), APP_NAME, 'integrations.json');
 const SETTINGS_CONFIG = path.join(app.getPath('userData'), 'settings.json');
 let pendingAttachmentRebase = null;
-let storageNeedsSetup = false;
+let storageSetup = null;
 
 function samePath(a, b) {
   return path.resolve(a) === path.resolve(b);
@@ -217,43 +217,32 @@ function migrateStorage(source, target) {
   return true;
 }
 
-async function setupStorageAfterReady() {
-  const prior = readStorageConfig();
-  const missing = Boolean(prior?.storageDir);
-  const source = app.getPath('userData');
-  const result = await dialog.showOpenDialog({
-    title: missing ? t('A pasta de dados anterior não existe') : t('Escolha uma pasta para o Cite'),
-    message: missing
-      ? t('Escolha uma nova pasta para salvar os PDFs e os dados do Cite.')
-      : t('O Cite salvará os PDFs e todos os dados nesta pasta.'),
-    buttonLabel: t('Usar esta pasta'),
-    defaultPath: app.getPath('documents'),
-    properties: ['openDirectory', 'createDirectory']
-  });
-  if (result.canceled || !result.filePaths?.length) {
-    app.exit(0);
-    return;
-  }
+function defaultLibraryDir() {
+  return path.resolve(
+    process.env.CITE_DEFAULT_STORAGE_DIR || path.join(app.getPath('documents'), 'Cite')
+  );
+}
+
+function applyStorageChoice(dir) {
   try {
-    const dir = path.resolve(result.filePaths[0]);
-    fs.mkdirSync(dir, { recursive: true });
-    const migrated = !missing && migrateStorage(source, dir);
-    writeStorageConfig(dir, migrated ? path.join(source, 'attachments') : null);
+    const target = path.resolve(dir);
+    fs.mkdirSync(target, { recursive: true });
+    fs.accessSync(target, fs.constants.W_OK);
+    const source = storageSetup?.type === 'unwritable' ? storageSetup.path : null;
+    const migrated = source ? migrateStorage(source, target) : false;
+    writeStorageConfig(target, migrated ? path.join(source, 'attachments') : null);
     app.relaunch();
     app.exit(0);
+    return { ok: true, path: target };
   } catch (err) {
     console.error('Falha ao configurar a pasta de dados:', err.message);
-    dialog.showErrorBox(
-      t('Não foi possível usar esta pasta'),
-      `${t('Escolha outra pasta na próxima abertura do Cite.')}\n\n${err.message}`
-    );
-    app.exit(1);
+    return { ok: false, error: err.message };
   }
 }
 
 function prepareStorage() {
   // Testes e execuções isoladas já informam a pasta de dados pelo Chromium.
-  if (app.commandLine.hasSwitch('user-data-dir')) return;
+  if (app.commandLine.hasSwitch('user-data-dir') && process.env.CITE_FORCE_STORAGE_SETUP !== '1') return;
 
   const source = app.getPath('userData');
   const envDir = process.env.CITE_STORAGE_DIR;
@@ -272,15 +261,35 @@ function prepareStorage() {
 
   const config = readStorageConfig();
   if (!config?.storageDir) {
-    storageNeedsSetup = true;
+    const dir = defaultLibraryDir();
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      const migrated = migrateStorage(source, dir);
+      writeStorageConfig(dir, migrated ? path.join(source, 'attachments') : null);
+      app.setPath('userData', dir);
+      if (migrated) {
+        pendingAttachmentRebase = {
+          from: path.join(source, 'attachments'),
+          to: path.join(dir, 'attachments')
+        };
+      }
+    } catch (err) {
+      storageSetup = { type: 'first-run', path: dir, error: err.message };
+    }
     return;
   }
+
   const dir = path.resolve(config.storageDir);
   try {
     if (!fs.statSync(dir).isDirectory()) throw new Error('not a directory');
     fs.accessSync(dir, fs.constants.W_OK);
-  } catch {
-    storageNeedsSetup = true;
+  } catch (err) {
+    storageSetup = {
+      type: fs.existsSync(dir) ? 'unwritable' : 'missing',
+      path: dir,
+      error: err.message
+    };
     return;
   }
   app.setPath('userData', dir);
@@ -291,6 +300,34 @@ function prepareStorage() {
     };
   }
 }
+
+ipcMain.handle('storage:setup:state', () => ({
+  issue: storageSetup,
+  defaultPath: defaultLibraryDir()
+}));
+
+ipcMain.handle('storage:setup:choose', async (event) => {
+  const parent = BrowserWindow.fromWebContents(event.sender);
+  const issuePath = storageSetup?.path;
+  const options = {
+    title: t('Escolha uma pasta para o Cite'),
+    buttonLabel: t('Usar esta pasta'),
+    defaultPath: issuePath ? path.dirname(issuePath) : app.getPath('documents'),
+    properties: ['openDirectory', 'createDirectory']
+  };
+  const result = parent
+    ? await dialog.showOpenDialog(parent, options)
+    : await dialog.showOpenDialog(options);
+  if (result.canceled || !result.filePaths?.length) return { canceled: true };
+  return applyStorageChoice(result.filePaths[0]);
+});
+
+ipcMain.handle('storage:setup:default', () => applyStorageChoice(defaultLibraryDir()));
+
+ipcMain.handle('storage:setup:quit', () => {
+  app.quit();
+  return { ok: true };
+});
 
 function migrateLegacyUserData() {
   if (app.commandLine.hasSwitch('user-data-dir')) return;
@@ -359,6 +396,45 @@ async function reconcileAttachments() {
     const keep = records.map((r) => r.path).filter(Boolean);
     cleanupOrphans(keep, 24 * 60 * 60 * 1000);
   } catch {}
+}
+
+function buildSetupMenu() {
+  const isMac = process.platform === 'darwin';
+  const quit = { role: 'quit', label: t('Sair do Cite') };
+  const template = isMac
+    ? [
+        {
+          label: 'Cite',
+          submenu: [
+            { role: 'about', label: t('Sobre o Cite') },
+            { type: 'separator' },
+            quit
+          ]
+        },
+        { label: t('Arquivo'), submenu: [quit] }
+      ]
+    : [{ label: t('Arquivo'), submenu: [quit] }];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function createSetupWindow() {
+  const win = new BrowserWindow({
+    width: 640,
+    height: 700,
+    minWidth: 520,
+    minHeight: 520,
+    title: 'Cite',
+    backgroundColor: '#f3f6f9',
+    webPreferences: {
+      preload: path.join(__dirname, 'setup-preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  });
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.loadFile(path.join(__dirname, 'src', 'setup.html'), { query: { lang: readLanguage() } });
+  return win;
 }
 
 function createWindow() {
@@ -471,8 +547,12 @@ function buildMenu() {
 
 app.whenReady().then(async () => {
   I18n.setLanguage(readLanguage());
-  if (storageNeedsSetup) {
-    await setupStorageAfterReady();
+  if (storageSetup) {
+    buildSetupMenu();
+    createSetupWindow();
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createSetupWindow();
+    });
     return;
   }
   buildMenu();

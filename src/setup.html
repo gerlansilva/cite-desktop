@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:">
+  <title>Cite</title>
+  <link rel="stylesheet" href="./setup.css">
+</head>
+<body>
+  <main class="setup">
+    <div class="brand" aria-label="Cite">
+      <img class="brand-mark" src="./assets/cite-icon.png" alt="">
+      <span class="brand-name">Cite</span>
+    </div>
+
+    <div class="art">
+      <img id="art" src="./assets/empty-library.png" alt="">
+    </div>
+
+    <h1 id="title">Biblioteca não encontrada</h1>
+    <p id="message" class="message"></p>
+
+    <p class="path-label" id="path-label">Pasta configurada</p>
+    <code id="path" class="path">—</code>
+
+    <div class="actions">
+      <button id="default" class="btn primary" type="button">Usar a biblioteca padrão</button>
+      <button id="choose" class="btn" type="button">Escolher outra pasta</button>
+    </div>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <button id="quit" class="link" type="button">Sair do Cite</button>
+  </main>
+
+  <script src="./i18n.js"></script>
+  <script src="./setup.js"></script>
+</body>
+</html>

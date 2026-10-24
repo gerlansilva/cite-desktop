@@ -44,11 +44,22 @@ O worker mantém o banco IndexedDB com Dexie. As principais coleções são `Lib
 
 ## Fluxo de dados
 
-1. O usuário escolhe uma pasta de biblioteca no primeiro uso.
-2. O `main.js` grava o caminho em `storage.json` e redefine `userData` para essa pasta.
-3. O worker abre o IndexedDB e atende chamadas de leitura e escrita.
-4. Anexos são salvos em `attachments`, com hash SHA-256 para deduplicação.
-5. A interface renderiza a biblioteca a partir do worker.
+1. No primeiro uso, o `main.js` cria a biblioteca padrão em `~/Documents/Cite` e grava o caminho em `storage.json`.
+2. O `main.js` redefine `userData` para essa pasta; o worker abre o IndexedDB e atende chamadas de leitura e escrita.
+3. Anexos são salvos em `attachments`, com hash SHA-256 para deduplicação.
+4. A interface renderiza a biblioteca a partir do worker, inclusive quando ela está vazia.
+
+### Recuperação da biblioteca
+
+`prepareStorage()` valida a pasta configurada antes de criar qualquer janela de dados. Se a pasta não existir, não for um diretório ou não permitir escrita, ele preenche `storageSetup` e o app abre `src/setup.html` em vez da biblioteca. A tela recebe o estado pelo IPC `storage:setup:state` e oferece:
+
+- `storage:setup:default`: cria ou reutiliza a biblioteca padrão.
+- `storage:setup:choose`: abre o seletor nativo de pastas.
+- `storage:setup:quit`: encerra o aplicativo.
+
+Depois de configurar, o app grava `storage.json` e reinicia para abrir a biblioteca. Nenhum módulo de dados é carregado enquanto a pasta estiver inacessível, então uma biblioteca excluída não gera erro na inicialização.
+
+Para testes, `CITE_STORAGE_CONFIG` aponta para um `storage.json` alternativo, `CITE_DEFAULT_STORAGE_DIR` troca a biblioteca padrão e `CITE_FORCE_STORAGE_SETUP=1` executa `prepareStorage()` mesmo com `--user-data-dir`.
 
 ## Busca online e PDFs
 
@@ -109,7 +120,7 @@ npx playwright test
 npm run test:data
 ```
 
-Os testes Playwright usam um servidor mock para Crossref, Google Acadêmico, tradução e outras rotas. Os testes de dados usam `node:test`.
+Os testes Playwright usam um servidor mock para Crossref, Google Acadêmico, tradução e outras rotas. `tests/setup.spec.ts` cobre a primeira execução e a biblioteca excluída. Os testes de dados usam `node:test`.
 
 ## Build
 

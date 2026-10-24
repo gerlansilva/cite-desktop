@@ -70,10 +70,14 @@ O build não tem certificado digital. O Windows pode exibir o aviso do SmartScre
 
 ### Primeiro uso
 
-Na primeira execução, o Cite solicita uma pasta para armazenar a biblioteca. Essa pasta contém os dados locais e os anexos. O caminho fica registrado em:
+Na primeira execução, o Cite cria automaticamente a biblioteca em `~/Documents/Cite` e abre a tela vazia, pronta para receber a primeira referência. Nenhum projeto precisa ser criado.
+
+O caminho fica registrado em:
 
 - macOS: `~/Library/Application Support/Cite/storage.json`
 - Windows: `%APPDATA%\Cite\storage.json`
+
+Se a pasta configurada for excluída, movida ou ficar sem permissão de escrita, o Cite abre uma tela de recuperação com o caminho anterior e duas opções: usar a biblioteca padrão ou escolher outra pasta. A tela não tenta abrir a biblioteca ausente nem gera erro.
 
 ## Desenvolvimento
 
@@ -161,7 +165,7 @@ tests/                      testes Playwright e testes de dados
 ## Dados e privacidade
 
 - A biblioteca é local; o Cite não mantém um servidor próprio.
-- A pasta da biblioteca é escolhida pelo usuário no primeiro uso.
+- A biblioteca padrão fica em `~/Documents/Cite`; o usuário pode escolher outra pasta na tela de recuperação.
 - Anexos são armazenados na subpasta `attachments` da pasta da biblioteca.
 - A busca online envia consultas aos provedores escolhidos.
 - A tradução envia apenas o trecho selecionado ao serviço de tradução configurado. O padrão é o endpoint web do Google Translate.
