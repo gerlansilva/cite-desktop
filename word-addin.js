@@ -49,6 +49,10 @@ function certificateIsUsable(certPath) {
   }
 }
 
+// Incremente ao alterar painel, campos ou ícones para forçar o Word a
+// recarregar os arquivos mesmo quando a versão do aplicativo não muda.
+const ADDIN_REVISION = '3';
+
 function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getPayload }) {
   const baseDir = process.env.CITE_WORD_ADDIN_DIR || path.join(appDataDir, 'word-addin');
   const tlsDir = path.join(baseDir, 'tls');
@@ -143,7 +147,7 @@ function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getP
   function writeManifest(port) {
     if (!wefDir) throw new Error('pasta de suplementos do Word não encontrada');
     if (!fs.existsSync(templatePath)) throw new Error('modelo do manifesto não encontrado');
-    const version = encodeURIComponent(getVersion?.() || '0');
+    const version = encodeURIComponent(`${getVersion?.() || '0'}-r${ADDIN_REVISION}`);
     const template = fs.readFileSync(templatePath, 'utf8');
     const manifest = template
       .replace(/__PORT__/g, String(port))
