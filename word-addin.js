@@ -143,9 +143,16 @@ function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getP
   function writeManifest(port) {
     if (!wefDir) throw new Error('pasta de suplementos do Word não encontrada');
     if (!fs.existsSync(templatePath)) throw new Error('modelo do manifesto não encontrado');
+    const version = encodeURIComponent(getVersion?.() || '0');
     const template = fs.readFileSync(templatePath, 'utf8');
+    const manifest = template
+      .replace(/__PORT__/g, String(port))
+      .replace(/(taskpane|commands)\.html(\?[a-zA-Z0-9_=&-]+)?/g, (match, name, query) => {
+        const extra = query ? `&amp;${query.slice(1)}` : '';
+        return `${name}.html?v=${version}${extra}`;
+      });
     fs.mkdirSync(wefDir, { recursive: true });
-    fs.writeFileSync(manifestPath, template.replace(/__PORT__/g, String(port)));
+    fs.writeFileSync(manifestPath, manifest);
   }
 
   async function ensureServer(port) {
@@ -196,7 +203,7 @@ function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getP
       }
       const port = await ensureServer(preferredPort);
       writeManifest(port);
-      writeSettings({ installed: true, trusted: true, port, installedAt: new Date().toISOString() });
+      writeSettings({ installed: true, trusted: true, port, version: getVersion?.() || '', installedAt: new Date().toISOString() });
       lastError = '';
       return { ok: true, status: status() };
     } catch (err) {
@@ -209,10 +216,11 @@ function createWordAddin({ appDataDir, wordDir, getVersion, getLibraryPath, getP
     if (!settings.installed || !wefDir) return status();
     try {
       await ensureServer(preferredPort);
-      if (connector.port !== settings.port) {
-        writeManifest(connector.port);
-        writeSettings({ port: connector.port });
-        console.log(`Manifesto do Word atualizado para a porta ${connector.port}.`);
+      const version = getVersion?.() || '';
+      writeManifest(connector.port);
+      if (connector.port !== settings.port || settings.version !== version) {
+        writeSettings({ port: connector.port, version });
+        console.log(`Manifesto do Word atualizado para a porta ${connector.port} (versão ${version}).`);
       }
       lastError = '';
     } catch (err) {

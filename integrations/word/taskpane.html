@@ -6,7 +6,7 @@
   <title>Cite</title>
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   <style>
-    :root { color-scheme: light; --accent: #1f6f5c; --accent-dark: #175546; --accent-soft: #eef7f3; --line: #d9e1e6; --muted: #68727f; --text: #202a33; --paper: #ffffff; --surface: #f7f9fa; --danger: #b42318; }
+    :root { color-scheme: light; --accent: #0052cc; --accent-dark: #0043a8; --accent-soft: #eaf1ff; --line: #e4e9f0; --muted: #667085; --faint: #98a2b3; --text: #172033; --paper: #ffffff; --surface: #f7f9fc; --danger: #b42318; --success: #067647; --success-soft: #ecfdf3; --success-line: #abefc6; }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-width: 0; }
     body { padding: 14px; font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--paper); }
@@ -15,13 +15,13 @@
     .brand h1 { font-size: 18px; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
     .brand p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
     .card { border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin-top: 10px; background: var(--paper); }
-    .source { background: linear-gradient(180deg, #fbfdfc 0%, #f4f8f6 100%); }
+    .source { background: linear-gradient(180deg, #fbfcff 0%, #f2f6ff 100%); }
     .label { display: block; color: var(--muted); font-size: 10.5px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; margin-bottom: 5px; }
     input, select, button { font: inherit; }
     input, select { width: 100%; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--text); }
-    input:focus, select:focus { outline: 2px solid #c7e5db; outline-offset: 0; border-color: var(--accent); }
+    input:focus, select:focus { outline: 2px solid #d1e0ff; outline-offset: 0; border-color: var(--accent); }
     button { border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--text); padding: 7px 10px; cursor: pointer; white-space: nowrap; }
-    button:hover:not(:disabled) { border-color: #b8c7c2; background: #fbfdfc; }
+    button:hover:not(:disabled) { border-color: #c9d2de; background: var(--surface); }
     button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
     button.primary:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
     button:disabled { opacity: .45; cursor: default; }
@@ -35,7 +35,7 @@
     .list-head .label { margin: 0; }
     .count { color: var(--muted); font-size: 10.5px; }
     #list { max-height: 39vh; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
-    .item { display: block; width: 100%; border: 0; border-bottom: 1px solid #eef2f3; border-radius: 0; padding: 9px 10px; text-align: left; background: transparent; white-space: normal; }
+    .item { display: block; width: 100%; border: 0; border-bottom: 1px solid #eef1f6; border-radius: 0; padding: 9px 10px; text-align: left; background: transparent; white-space: normal; }
     .item:last-child { border-bottom: 0; }
     .item:hover { background: var(--surface); }
     .item.selected { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
@@ -45,7 +45,7 @@
     .preview-card { background: var(--surface); }
     .preview-block + .preview-block { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line); }
     .preview-text { min-height: 20px; font-size: 11.5px; line-height: 1.5; }
-    .preview-text.reference { color: #3c4852; }
+    .preview-text.reference { color: #344054; }
     .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
     .actions .wide { grid-column: 1 / -1; }
     .hint { margin: 8px 0 0; color: var(--muted); font-size: 10.5px; }
@@ -55,7 +55,7 @@
     details p { margin: 6px 0 0; }
     .local-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .state { padding: 2px 7px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 10px; font-weight: 600; }
-    .state.on { border-color: #c7e5db; background: var(--accent-soft); color: #0f7b5f; }
+    .state.on { border-color: var(--success-line); background: var(--success-soft); color: var(--success); }
     .state.off { color: var(--danger); border-color: #f3c7c2; background: #fef4f3; }
     .local-note { margin: 2px 0 0; color: var(--muted); font-size: 10.5px; line-height: 1.45; word-break: break-all; }
     .source-details { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }

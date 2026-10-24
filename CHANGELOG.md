@@ -13,6 +13,12 @@
 - Tela de recuperação quando a pasta da biblioteca é excluída, movida ou fica sem permissão, com as opções **Usar a biblioteca padrão** e **Escolher outra pasta**.
 - Testes de primeira execução e de biblioteca ausente.
 
+### Corrigido
+
+- Paleta do painel do Word e do Google Docs alinhada ao azul do aplicativo.
+- Painel do Word passou a recarregar os arquivos atualizados a cada versão, sem cache antigo.
+- Testes não alteram mais a instalação real do add-in no Word.
+
 ## 0.2.0
 
 ### Adicionado

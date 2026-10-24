@@ -51,7 +51,9 @@ test('installs the local Word add-in and serves the pane over HTTPS', async () =
   const manifestPath = path.join(wefDir, 'cite-word.xml');
   assert.equal(fs.existsSync(manifestPath), true);
   const manifest = fs.readFileSync(manifestPath, 'utf8');
-  assert.match(manifest, /https:\/\/localhost:23210\/taskpane\.html/);
+  assert.match(manifest, /https:\/\/localhost:23210\/taskpane\.html\?v=0\.2\.0/);
+  assert.match(manifest, /taskpane\.html\?v=0\.2\.0&amp;mode=citation/);
+  assert.doesNotMatch(manifest, /\?v=[^"<]*&(?!amp;)/);
   assert.match(manifest, /b7f3a9c2-6d41-4e8b-9c2a-1f0d5e7a3b64/);
   assert.doesNotMatch(manifest, /__PORT__/);
 
