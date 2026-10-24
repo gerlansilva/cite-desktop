@@ -1,7 +1,7 @@
 (() => {
   const LOCAL_PORTS = Array.from({ length: 10 }, (_, index) => 23120 + index);
   const DEMO_URL = 'demo-bibliography.json';
-  const REFRESH_MS = 20000;
+  const REFRESH_MS = 15000;
   const F = window.CiteFields;
 
   let bibliography = null;
@@ -13,6 +13,8 @@
   let localPort = null;
   let localPath = '';
   let refreshing = false;
+  let focusTimer = null;
+  let syncTimer = null;
 
   const $ = (id) => document.getElementById(id);
 
@@ -363,6 +365,7 @@
         setStatus(`${citations}${bibs}.`);
       }
       await updateFieldCount();
+      await F.watchCitations(scheduleSync);
     } catch (err) {
       if (!silent) setStatus(`Não foi possível atualizar: ${err.message}`, true);
     }
@@ -393,6 +396,7 @@
       }
       if (autoRefresh) await refreshFields({ silent: true });
       await updateFieldCount();
+      await F.watchCitations(scheduleSync);
       clearCitationOptions();
     } catch (err) {
       try {
@@ -402,6 +406,22 @@
         setStatus(`Não foi possível inserir: ${fallbackError.message}`, true);
       }
     }
+  }
+
+  async function syncFields() {
+    if (!bibliography?.items?.length) return;
+    try {
+      await F.syncBibliography(bibliography.items, style);
+      await updateFieldCount();
+    } catch {}
+  }
+
+  function scheduleSync() {
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(async () => {
+      await syncFields();
+      await F.watchCitations(scheduleSync);
+    }, 800);
   }
 
   async function insertReference() {
@@ -418,8 +438,13 @@
   async function insertBibliography() {
     if (!bibliography?.items?.length) return;
     try {
-      await F.insertBibliography(bibliography.items, style);
-      setStatus('Bibliografia criada ou atualizada no documento.');
+      const text = await F.insertBibliography(bibliography.items, style);
+      if (!text) {
+        setStatus('Nenhuma citação no documento. Insira uma citação antes da bibliografia.');
+        await updateFieldCount();
+        return;
+      }
+      setStatus('Bibliografia criada ou atualizada com as referências citadas.');
       if (autoRefresh) await refreshFields({ silent: true });
       await updateFieldCount();
     } catch (err) {
@@ -529,9 +554,17 @@
     window.addEventListener('focus', () => {
       if (connected && !refreshing) refreshLocal();
       updateFieldCount();
+      if (autoRefresh) {
+        clearTimeout(focusTimer);
+        focusTimer = setTimeout(() => {
+          syncFields();
+          preselectCitation();
+        }, 350);
+      }
     });
     setInterval(() => {
       if (connected && !refreshing && !document.hidden) refreshLocal();
+      if (autoRefresh && !document.hidden) syncFields();
     }, REFRESH_MS);
   }
 
@@ -567,6 +600,7 @@
       await loadBibliography($('bibliography-url').value);
     }
     updateFieldCount();
+    await F.watchCitations(scheduleSync);
     applyMode();
   }
 

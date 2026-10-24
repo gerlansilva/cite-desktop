@@ -298,6 +298,27 @@
     return numbers;
   }
 
+  function activeCitationControls(controls) {
+    return (controls || []).filter((control) => {
+      const ref = citationRef(control.tag);
+      if (!ref) return false;
+      return !('text' in control) || String(control.text || '').trim() !== '';
+    });
+  }
+
+  function citedIdsFromControls(controls) {
+    const ids = [];
+    for (const control of controls || []) {
+      const ref = citationRef(control.tag);
+      if (!ref) continue;
+      for (const id of ref.ids) {
+        const key = String(id);
+        if (!ids.includes(key)) ids.push(key);
+      }
+    }
+    return ids;
+  }
+
   function assignNumbers(tags, ids) {
     const numbers = citationNumbers(tags);
     let next = Math.max(0, ...numbers.values()) + 1;
@@ -315,6 +336,33 @@
 
   function requireWord() {
     if (!available()) throw new Error('Abra este painel dentro do Word para inserir conteúdo.');
+  }
+
+  const watchedControls = new Set();
+
+  async function watchCitations(onChange) {
+    if (!available() || typeof onChange !== 'function') return 0;
+    let added = 0;
+    try {
+      await Word.run(async (context) => {
+        const controls = context.document.contentControls;
+        controls.load('items/id/tag');
+        await context.sync();
+        for (const control of controls.items) {
+          if (!citationRef(control.tag) || watchedControls.has(control.id)) continue;
+          const handler = () => onChange();
+          try {
+            control.onDataChanged.add(handler);
+            control.onDeleted.add(handler);
+            control.track();
+            watchedControls.add(control.id);
+            added += 1;
+          } catch {}
+        }
+        await context.sync();
+      });
+    } catch {}
+    return added;
   }
 
   function hideControl(control) {
@@ -362,13 +410,25 @@
     let text = '';
     await Word.run(async (context) => {
       const all = context.document.contentControls;
-      all.load('items/tag');
+      all.load('items/tag/text');
       const controls = context.document.contentControls.getByTag(BIBLIOGRAPHY_TAG);
       controls.load('items');
       await context.sync();
 
-      const numbers = citationNumbers(all.items.map((control) => control.tag));
-      text = bibliographyText(items, style, numbers);
+      const active = activeCitationControls(all.items);
+      const numbers = citationNumbers(active.map((control) => control.tag));
+      const cited = citedIdsFromControls(active)
+        .map((id) => items.find((item) => String(item.id) === id))
+        .filter(Boolean);
+      text = cited.length ? bibliographyText(cited, style, numbers) : '';
+
+      if (!text) {
+        if (controls.items.length) {
+          controls.items[0].insertText('', Word.InsertLocation.replace);
+          await context.sync();
+        }
+        return;
+      }
 
       if (controls.items.length) {
         controls.items[0].insertText(text, Word.InsertLocation.replace);
@@ -429,12 +489,22 @@
 
     await Word.run(async (context) => {
       const controls = context.document.contentControls;
-      controls.load('items/tag');
+      controls.load('items/tag/text');
       await context.sync();
 
-      const numbers = citationNumbers(controls.items.map((control) => control.tag));
+      const active = activeCitationControls(controls.items);
+      const bibliographyControls = controls.items.filter((control) => control.tag === BIBLIOGRAPHY_TAG);
+      const empties = controls.items.filter(
+        (control) => citationRef(control.tag) && String(control.text || '').trim() === ''
+      );
+      if (empties.length) {
+        for (const control of empties) control.delete(true);
+        await context.sync();
+      }
 
-      for (const control of controls.items) {
+      const numbers = citationNumbers(active.map((control) => control.tag));
+
+      for (const control of active) {
         const ref = citationRef(control.tag);
         if (!ref) continue;
         const pairs = ref.ids
@@ -447,12 +517,51 @@
       }
       await context.sync();
 
-      for (const control of controls.items) {
-        if (control.tag !== BIBLIOGRAPHY_TAG) continue;
-        if (!items?.length) continue;
-        control.insertText(bibliographyText(items, style, numbers), Word.InsertLocation.replace);
+      const cited = citedIdsFromControls(active)
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean);
+
+      for (const control of bibliographyControls) {
+        control.insertText(cited.length ? bibliographyText(cited, style, numbers) : '', Word.InsertLocation.replace);
         bibliographies += 1;
       }
+      await context.sync();
+    });
+
+    return { citations, bibliographies };
+  }
+
+  async function syncBibliography(items, style) {
+    requireWord();
+    const byId = new Map((items || []).map((item) => [String(item.id), item]));
+    let citations = 0;
+    let bibliographies = 0;
+
+    await Word.run(async (context) => {
+      const controls = context.document.contentControls;
+      controls.load('items/tag/text');
+      await context.sync();
+
+      const active = activeCitationControls(controls.items);
+      const bibliographyControls = controls.items.filter((control) => control.tag === BIBLIOGRAPHY_TAG);
+      const empties = controls.items.filter(
+        (control) => citationRef(control.tag) && String(control.text || '').trim() === ''
+      );
+      if (empties.length) {
+        for (const control of empties) control.delete(true);
+        await context.sync();
+      }
+
+      const numbers = citationNumbers(active.map((control) => control.tag));
+      const cited = citedIdsFromControls(active)
+        .map((id) => byId.get(String(id)))
+        .filter(Boolean);
+
+      for (const control of bibliographyControls) {
+        control.insertText(cited.length ? bibliographyText(cited, style, numbers) : '', Word.InsertLocation.replace);
+        bibliographies += 1;
+      }
+      citations = active.length;
       await context.sync();
     });
 
@@ -490,11 +599,14 @@
     const counts = { citations: 0, bibliographies: 0 };
     await Word.run(async (context) => {
       const controls = context.document.contentControls;
-      controls.load('items/tag');
+      controls.load('items/tag/text');
       await context.sync();
       for (const control of controls.items) {
-        if (citationRef(control.tag)) counts.citations += 1;
-        else if (control.tag === BIBLIOGRAPHY_TAG) counts.bibliographies += 1;
+        if (citationRef(control.tag)) {
+          if (String(control.text || '').trim()) counts.citations += 1;
+        } else if (control.tag === BIBLIOGRAPHY_TAG) {
+          counts.bibliographies += 1;
+        }
       }
     });
     return counts;
@@ -532,6 +644,9 @@
     citationNumbers,
     citationIds,
     citationRef,
+    watchCitations,
+    activeCitationControls,
+    citedIdsFromControls,
     citationTag,
     parseCitationTag,
     fieldTag,
@@ -539,6 +654,7 @@
     insertBibliography,
     updateSelectedCitation,
     refreshDocument,
+    syncBibliography,
     unlinkDocument,
     countFields,
     selectedCitation,

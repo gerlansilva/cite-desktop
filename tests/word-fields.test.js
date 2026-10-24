@@ -376,3 +376,81 @@ test('keeps citation options in document settings between sessions', async () =>
   assert.equal(second.fields.citationRef(tag).options.locator, 'p. 12');
   assert.equal(second.fields.citationRef(tag).options.suffix, 'grifo nosso');
 });
+
+test('bibliography lists only the references cited in the document', async () => {
+  const { fields, mock } = loadFieldsWithWord();
+  const alfa = { id: 'a', authors: ['Alfa, A.'], year: '2020', title: 'Alfa', citations: { ABNT: 'ALFA, A. Alfa. 2020.' } };
+  const beta = { id: 'b', authors: ['Beta, B.'], year: '2021', title: 'Beta', citations: { ABNT: 'BETA, B. Beta. 2021.' } };
+
+  await fields.insertCitation(alfa, 'ABNT');
+  await fields.insertBibliography([alfa, beta], 'ABNT');
+  const bibliography = mock.controls.find((control) => control.tag === 'cite:bibliography');
+  assert.match(bibliography.text, /Alfa/);
+  assert.doesNotMatch(bibliography.text, /Beta/);
+
+  await fields.insertCitation(beta, 'ABNT');
+  await fields.refreshDocument([alfa, beta], 'ABNT');
+  assert.match(bibliography.text, /Alfa[\s\S]*Beta/);
+});
+
+test('removes a reference from the bibliography when its citation is deleted', async () => {
+  const { fields, mock } = loadFieldsWithWord();
+  const alfa = { id: 'a', authors: ['Alfa, A.'], year: '2020', title: 'Alfa', citations: { ABNT: 'ALFA, A. Alfa. 2020.' } };
+  const beta = { id: 'b', authors: ['Beta, B.'], year: '2021', title: 'Beta', citations: { ABNT: 'BETA, B. Beta. 2021.' } };
+
+  await fields.insertCitation(alfa, 'ABNT');
+  await fields.insertCitation(beta, 'ABNT');
+  await fields.insertBibliography([alfa, beta], 'ABNT');
+  const bibliography = mock.controls.find((control) => control.tag === 'cite:bibliography');
+  assert.match(bibliography.text, /Alfa[\s\S]*Beta/);
+
+  mock.controls[0].delete();
+  await fields.refreshDocument([alfa, beta], 'ABNT');
+  assert.doesNotMatch(bibliography.text, /Alfa/);
+  assert.match(bibliography.text, /Beta/);
+
+  mock.controls.find((control) => control.tag !== 'cite:bibliography').delete();
+  await fields.refreshDocument([alfa, beta], 'ABNT');
+  assert.equal(bibliography.text, '');
+});
+
+test('syncs the bibliography without reformatting the citation text', async () => {
+  const { fields, mock } = loadFieldsWithWord();
+  const alfa = { id: 'a', authors: ['Alfa, A.'], year: '2020', title: 'Alfa', citations: { ABNT: 'ALFA, A. Alfa. 2020.' } };
+  const beta = { id: 'b', authors: ['Beta, B.'], year: '2021', title: 'Beta', citations: { ABNT: 'BETA, B. Beta. 2021.' } };
+
+  await fields.insertCitation(alfa, 'ABNT', { locator: 'p. 5' });
+  await fields.insertBibliography([alfa, beta], 'ABNT');
+  const citation = mock.controls[0];
+  const bibliography = mock.controls.find((control) => control.tag === 'cite:bibliography');
+  const before = citation.text;
+
+  await fields.insertCitation(beta, 'ABNT');
+  await fields.syncBibliography([alfa, beta], 'ABNT');
+  assert.equal(citation.text, before);
+  assert.match(bibliography.text, /Alfa[\s\S]*Beta/);
+
+  mock.controls.find((control) => control.text === '(BETA, 2021)').delete();
+  await fields.syncBibliography([alfa, beta], 'ABNT');
+  assert.doesNotMatch(bibliography.text, /Beta/);
+  assert.match(bibliography.text, /Alfa/);
+});
+
+test('clears the bibliography when no citation remains and ignores empty controls', async () => {
+  const { fields, mock } = loadFieldsWithWord();
+  const alfa = { id: 'a', authors: ['Alfa, A.'], year: '2020', title: 'Alfa', citations: { ABNT: 'ALFA, A. Alfa. 2020.' } };
+
+  assert.equal(await fields.insertBibliography([alfa], 'ABNT'), '');
+  assert.equal(mock.controls.length, 0);
+
+  await fields.insertCitation(alfa, 'ABNT');
+  await fields.insertBibliography([alfa], 'ABNT');
+  const bibliography = mock.controls.find((control) => control.tag === 'cite:bibliography');
+  assert.match(bibliography.text, /Alfa/);
+
+  mock.controls[0].text = '   ';
+  const result = await fields.refreshDocument([alfa], 'ABNT');
+  assert.equal(result.citations, 0);
+  assert.equal(bibliography.text, '');
+  assert.equal(mock.controls.filter((control) => control.tag?.startsWith('cite:citation:')).length, 0);
+});

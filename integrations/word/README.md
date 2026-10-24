@@ -8,7 +8,7 @@ O add-in adiciona uma aba **Cite** à faixa de opções do Word, ao lado de abas
 
 - Aba **Cite** com os comandos:
   - **Inserir citação** — busca uma ou mais referências e insere a citação no cursor.
-  - **Inserir bibliografia** — insere ou atualiza a lista completa no documento.
+  - **Inserir bibliografia** — insere ou atualiza a lista com as referências citadas no documento.
   - **Abrir painel** — abre a biblioteca para navegar e inserir.
   - **Mais → Preferências do documento** — escolhe o estilo e as opções da próxima citação.
   - **Mais → Atualizar citações** — reformata todas as citações e a bibliografia com o estilo atual.
@@ -91,8 +91,9 @@ As citações e a bibliografia são gravadas em content controls do Word com as 
 - **Seleção múltipla**: clique em quantas referências precisar. A citação combina todas na ordem de seleção, com `;` entre elas (`,` no Vancouver).
 - **Editar citação do cursor**: carrega as referências e as opções da citação onde o cursor está.
 - **Opções**: prefixo, página, sufixo, complemento do ano, apud, citação narrativa, omitir autor e omitir ano.
-- **Inserir bibliografia**: cria o campo de bibliografia ou atualiza o texto do campo existente.
-- **Atualizar citações**: percorre todos os campos e aplica o estilo escolhido, preservando as opções de cada citação.
+- **Inserir bibliografia**: cria o campo de bibliografia ou atualiza o texto do campo existente com apenas as referências citadas.
+- **Atualizar citações**: percorre todos os campos e aplica o estilo escolhido, preservando as opções de cada citação e recalculando a bibliografia.
+- **Bibliografia viva**: quando uma citação é removida, a referência correspondente sai da bibliografia na atualização seguinte. O painel sincroniza ao editar ou excluir uma citação, ao ganhar foco e a cada 15 segundos.
 - **Desvincular citações**: remove os campos e mantém o texto, que deixa de ser atualizado pelo Cite.
 
 Exemplos de saída:
@@ -107,7 +108,7 @@ SILVA (2020, p. 10, grifo nosso)
 
 No estilo **Vancouver**, as citações são numéricas `(1)`, `(2)` e a bibliografia é numerada na ordem de primeira citação. Ao inserir, remover ou reordenar citações, **Atualizar citações** refaz a numeração e a ordem da lista.
 
-A contagem de citações e bibliografias aparece no cartão **Documento** do painel. A atualização automática é opcional; desmarque **Atualizar citações automaticamente** para evitar reformatações enquanto edita o texto.
+A contagem de citações e bibliografias aparece no cartão **Documento** do painel. A atualização automática é opcional; desmarque **Atualizar citações automaticamente** para evitar reformatações e sincronizações enquanto edita o texto.
 
 ## Usar a bibliografia publicada
 

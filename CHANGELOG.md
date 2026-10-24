@@ -16,6 +16,8 @@
 - Opções de citação: prefixo, página, sufixo, complemento do ano, apud, citação narrativa, omitir autor e omitir ano.
 - Atalhos para **grifo nosso**, **grifo do autor**, **adaptado de** e **cf.**
 - Botão **Editar citação do cursor**, que carrega as referências e opções da citação selecionada.
+- Bibliografia viva: lista apenas as referências citadas e remove a referência quando a citação correspondente é apagada.
+- Sincronização automática do painel ao editar ou excluir uma citação, ao ganhar foco e a cada 15 segundos, além de remover citações vazias.
 - Cartão **Documento** no painel, com contagem de citações, atualização automática configurável e as ações de atualizar e desvincular.
 - Biblioteca padrão automática em `~/Documents/Cite` na primeira execução, com a tela inicial pronta para uso.
 - Ação **Alterar pasta** na tela inicial e item **Arquivo > Início** no menu.
