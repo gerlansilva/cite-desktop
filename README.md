@@ -164,7 +164,7 @@ src/*.js                    citações, importação, exportação e utilitário
 integrations/               add-ins para Word e Google Docs
 scripts/                    build de assets e servidor do add-in
 build/                      ícones do aplicativo
-tests/                      testes Rust e testes Node
+tests/                      testes Node (os testes Rust ficam em src-tauri/src)
 ```
 
 ## Dados e privacidade
