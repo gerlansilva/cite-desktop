@@ -2,10 +2,10 @@
 
 ## 1. Preparar o repositório local
 
-O projeto não deve versionar dependências nem artefatos de build. O `.gitignore` já exclui `node_modules/`, `dist/`, `test-results/`, `playwright-report/`, DMGs e instaladores.
+O projeto não deve versionar dependências nem artefatos de build. O `.gitignore` já exclui `node_modules/`, `src-tauri/target/`, DMGs, instaladores e logs.
 
 ```bash
-cd /Users/gerlansilva/Documents/refdesk-desktop
+cd /Users/gerlansilva/Documents/cite-tauri
 git init -b main
 git add .
 git commit -m "Versão inicial do Cite"
@@ -48,36 +48,36 @@ git push -u origin main
 
 ## 3. Publicar os instaladores como release
 
-Não envie DMG ou EXE pelo histórico do Git. O limite por arquivo no Git é 100 MB e o DMG tem cerca de 118 MB. Use os anexos de release, que aceitam arquivos maiores.
+Não envie DMG ou EXE pelo histórico do Git. Use os anexos de release ou baixe os artefatos do workflow `Build`.
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
+git tag v0.3.9
+git push origin v0.3.9
 
-gh release create v0.2.0 \
-  dist/Cite-0.2.0-arm64.dmg \
-  dist/Cite-Setup-0.2.0.exe \
-  --title "Cite 0.2.0" \
+gh release create v0.3.9 \
+  src-tauri/target/release/bundle/dmg/Cite_0.3.9_aarch64.dmg \
+  src-tauri/target/release/bundle/nsis/Cite_0.3.9_x64-setup.exe \
+  --title "Cite 0.3.9" \
   --notes-file CHANGELOG.md
 ```
 
 Se a release já existir:
 
 ```bash
-gh release upload v0.2.0 \
-  dist/Cite-0.2.0-arm64.dmg \
-  dist/Cite-Setup-0.2.0.exe \
+gh release upload v0.3.9 \
+  src-tauri/target/release/bundle/dmg/Cite_0.3.9_aarch64.dmg \
+  src-tauri/target/release/bundle/nsis/Cite_0.3.9_x64-setup.exe \
   --clobber
 ```
 
 ## 4. Checklist de release
 
-- [ ] Atualizar a versão em `package.json`.
+- [ ] Atualizar a versão em `package.json`, `src-tauri/Cargo.toml` e `src-tauri/tauri.conf.json`.
 - [ ] Atualizar `CHANGELOG.md`.
-- [ ] Executar `npx playwright test`.
+- [ ] Executar `npm test`.
 - [ ] Executar `npm run test:data`.
-- [ ] Gerar o DMG no macOS.
-- [ ] Gerar o instalador Windows com `npm run build:win`.
+- [ ] Gerar o DMG no macOS com `npm run build`.
+- [ ] Gerar o instalador Windows com `npm run build:win` no Windows (ou baixar do GitHub Actions).
 - [ ] Testar a instalação em uma máquina Windows real.
 - [ ] Criar a tag `vX.Y.Z`.
 - [ ] Anexar os instaladores à release.
@@ -87,8 +87,8 @@ gh release upload v0.2.0 \
 
 Os builds atuais não são assinados.
 
-- macOS: Gatekeeper pode bloquear o aplicativo. Para distribuição pública, configure um certificado Developer ID e notarização.
-- Windows: SmartScreen pode avisar. Para distribuição pública, configure um certificado de assinatura de código.
+- macOS: Gatekeeper pode bloquear o aplicativo. Para distribuição pública, configure um certificado Developer ID e notarização nas variáveis `APPLE_CERTIFICATE`, `APPLE_SIGNING_IDENTITY` e credenciais de notarização.
+- Windows: SmartScreen pode avisar. Para distribuição pública, configure um certificado de assinatura de código e as variáveis de assinatura do Tauri.
 
 Nunca comite certificados, senhas ou tokens. Use secrets do GitHub Actions ou variáveis de ambiente.
 

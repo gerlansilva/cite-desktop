@@ -168,19 +168,22 @@
     .selection-rect { position: absolute; border-radius: 1.5px; background: rgba(56, 133, 219, .34); pointer-events: none; }
     .overlay { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
     .textLayer {
-      position: absolute; inset: 0; overflow: hidden; line-height: 1; z-index: 2;
+      position: absolute; inset: 0; overflow: hidden; line-height: 1; z-index: 2; -webkit-user-select: none; user-select: none;
       --min-font-size: 1;
       --text-scale-factor: calc(var(--total-scale-factor, 1) * var(--min-font-size));
       --min-font-size-inv: calc(1 / var(--min-font-size));
     }
     .textLayer span {
-      position: absolute; white-space: pre; transform-origin: 0 0; cursor: text; color: transparent;
+      position: absolute; white-space: pre; transform-origin: 0 0; cursor: text; color: transparent; -webkit-user-select: text; user-select: text;
       --scale-x: 1; --rotate: 0deg;
       font-size: calc(var(--text-scale-factor) * var(--font-height));
       transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
     }
+    .textLayer span.no-select { -webkit-user-select: none; user-select: none; }
     .textLayer span::selection { background: transparent; color: transparent; }
     .textLayer span::-moz-selection { background: transparent; color: transparent; }
+    ::selection { background: rgba(255, 255, 255, .01); }
+    ::-moz-selection { background: rgba(255, 255, 255, .01); }
     .hl { position: absolute; left: 8%; right: 8%; padding: 4px 6px; font-size: 12px; border-radius: 3px; color: #111; opacity: .85; }
     .hl-rect { position: absolute; border-radius: 2px; pointer-events: auto; cursor: pointer; opacity: .42; }
     .hl-rect:hover { opacity: .58; }
@@ -515,6 +518,7 @@
 
   <header id="toolbar">
     <button class="brand-btn" id="brand-button" title="Cite" aria-label="Cite"><img src="./assets/cite-icon.png" alt=""></button>
+    <span id="viewer-version" style="font: 11px/1 -apple-system, sans-serif; color: #8a929d; margin-left: -2px;"></span>
     <button class="tool-btn" id="comment-tool" title="Comentários" aria-label="Comentários"><svg class="icon"><use href="#i-message"/></svg></button>
     <div class="tb-sep"></div>
 
@@ -716,7 +720,8 @@
   </div>
 
   <div id="status-toast"></div>
-  <script src="./i18n.js"></script>
-  <script src="./pdf-viewer.bundle.js"></script>
+  <script src="./tauri-api.js?v=0.3.9"></script>
+  <script src="./i18n.js?v=0.3.9"></script>
+  <script src="./pdf-viewer.bundle.js?v=0.3.9"></script>
 </body>
 </html>

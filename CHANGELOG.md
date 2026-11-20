@@ -1,5 +1,59 @@
 # Histórico de mudanças
 
+## 0.3.9
+
+### Adicionado
+
+- Seleção de texto atravessa páginas: o destaque azul aparece nos trechos das duas páginas e a anotação é salva como uma única nota, exibida como "Página 10–11".
+- Arrastar a seleção até a borda da janela rola o PDF automaticamente, permitindo alcançar o texto da página seguinte.
+
+### Corrigido
+
+- Seleção que termina em outra página não é mais pintada apenas na primeira página.
+- Arrasto iniciado ou terminado no fundo da página não ancora mais a seleção no bloco inteiro (o que engolia páginas completas); as pontas são ajustadas para o texto mais próximo.
+- A seleção por arrasto passou a ser controlada pelo aplicativo (baseada nas linhas de texto), em vez da seleção nativa do WebKit, que pintava o bloco inteiro da camada de texto.
+- O evento `selectstart` é bloqueado durante o arrasto e a seleção nativa do WebKit não inicia mais por cima da seleção do aplicativo.
+- Duplo clique seleciona a palavra e triplo clique seleciona a linha, agora pelo próprio visualizador.
+- A barra do visualizador mostra a versão (`v0.3.9`) ao lado do ícone, para confirmar qual build está aberto.
+- Números de página, traços e numeração romana no rodapé/cabeçalho não entram mais na seleção nem no destaque.
+- Cabeçalhos e rodapés corridos (texto que se repete no topo ou no pé de 3 páginas ou mais, como o nome da revista) também ficam fora da seleção.
+
+## 0.3.3
+
+### Corrigido
+
+- Todos os HTML, JS e CSS são carregados com a versão do aplicativo na URL, evitando que o WebView use arquivos antigos em cache (o que mantinha o fundo rosa da seleção e escondia correções no visualizador).
+- Quando a seleção começa no topo da página, o menu flutuante sobe para a margem cinza acima da página em vez de cobrir o texto.
+
+## 0.3.1
+
+### Corrigido
+
+- Seleção de texto no PDF usa sempre o azul do aplicativo, sem herdar a cor de destaque do macOS (que aparecia como fundo rosa).
+- O menu flutuante de seleção fica ancorado à seleção e acompanha a rolagem.
+
+## 0.3.0
+
+### Alterado
+
+- Aplicativo reescrito em Tauri 2, com backend em Rust e a mesma interface HTML/CSS/JavaScript.
+- Biblioteca armazenada em `library.json` dentro da pasta da biblioteca, em vez de IndexedDB.
+- Anexos, busca online, tradução, backup, GitHub e o servidor do Word agora rodam no processo Rust.
+- Token do GitHub guardado no chaveiro do sistema (`keyring`).
+- Exportações usam o diálogo nativo de salvar arquivo.
+- Visualizador de PDF recebe os bytes do arquivo pelo backend e usa Blob URLs.
+- Builds para macOS (DMG) e Windows (NSIS) via Tauri e GitHub Actions.
+- Add-in do Word empacotado como recurso do aplicativo.
+
+### Removido
+
+- Processo principal, preloads e camada de dados do Electron.
+- Testes Playwright baseados em Electron.
+
+### Migração
+
+- Bibliotecas da versão 0.2.0 devem ser exportadas como backup `.json.gz` e restauradas no Cite 0.3.0.
+
 ## Não lançado
 
 ### Adicionado

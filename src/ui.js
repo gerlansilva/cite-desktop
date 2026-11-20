@@ -1,6 +1,21 @@
 const api = window.cite;
+const assetVersion = new URL(document.currentScript?.src || location.href).searchParams.get('v') || '';
 const i18n = window.CiteI18n;
 const t = i18n?.t || ((text) => text);
+
+async function saveTextFile(content, name, filter) {
+  if (api.files?.saveText) {
+    const result = await api.files.saveText({ content, name, filter });
+    return result || { canceled: true };
+  }
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  return { ok: true };
+}
 const listEl = document.getElementById('list');
 const notesResultsEl = document.getElementById('notes-results');
 const notesPanelEl = document.getElementById('notes-panel');
@@ -656,6 +671,7 @@ window.addEventListener('message', async (event) => {
       page,
       text,
       rects,
+      parts,
       comment,
       color,
       mode,
@@ -672,6 +688,7 @@ window.addEventListener('message', async (event) => {
       page,
       text,
       rects,
+      parts,
       comment: comment || '',
       color: color || '#ffe268',
       type: kind || 'highlight',
@@ -1524,8 +1541,14 @@ function openViewerForAttachment(file, key, displayName) {
         const notes = await api.data.call('notes:list', viewerKey);
         pdfFrame.contentWindow?.postMessage({ type: 'ppd-notes', notes }, '*');
       } catch {}
+      try {
+        const bytes = await api.attachments.read(file.path);
+        pdfFrame.contentWindow?.postMessage({ type: 'ppd-file', bytes }, '*');
+      } catch (err) {
+        statusEl.textContent = t('não foi possível abrir o PDF: {msg}', { msg: err.message });
+      }
     };
-    pdfFrame.src = `pdf-viewer.html?file=${encodeURIComponent(pathToFileUrl(file.path))}&attachment=${encodeURIComponent(viewerKey)}&lang=${encodeURIComponent(i18n?.getLanguage() || 'pt')}&theme=${encodeURIComponent(document.documentElement.dataset.theme || 'light')}`;
+    pdfFrame.src = `pdf-viewer.html?v=${assetVersion}&path=${encodeURIComponent(file.path)}&attachment=${encodeURIComponent(viewerKey)}&lang=${encodeURIComponent(i18n?.getLanguage() || 'pt')}&theme=${encodeURIComponent(document.documentElement.dataset.theme || 'light')}`;
   })();
 }
 
@@ -2817,12 +2840,8 @@ document.getElementById('bibfile').addEventListener('change', async (e) => {
 
 document.getElementById('export-bib').addEventListener('click', async () => {
   const pubs = await api.data.call('library:all');
-  const blob = new Blob([window.BibTeX.toBibtex(pubs)], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'library.bib';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const result = await saveTextFile(window.BibTeX.toBibtex(pubs), 'library.bib', 'BibTeX');
+  if (result.canceled) statusEl.textContent = t('exportação cancelada');
 });
 
 document.getElementById('duplicates').addEventListener('click', async () => {
@@ -2856,12 +2875,8 @@ document.getElementById('risfile').addEventListener('change', async (e) => {
 
 document.getElementById('export-ris').addEventListener('click', async () => {
   const pubs = await api.data.call('library:all');
-  const blob = new Blob([window.RIS.toRIS(pubs)], { type: 'application/x-research-info-systems' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'library.ris';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const result = await saveTextFile(window.RIS.toRIS(pubs), 'library.ris', 'RIS');
+  if (result.canceled) statusEl.textContent = t('exportação cancelada');
 });
 
 document.getElementById('import-notes').addEventListener('click', () => {
@@ -2889,12 +2904,8 @@ document.getElementById('notesfile').addEventListener('change', async (e) => {
 
 document.getElementById('export-notes').addEventListener('click', async () => {
   const notes = await api.data.call('notes:all');
-  const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'annotations.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const result = await saveTextFile(JSON.stringify(notes, null, 2), 'annotations.json', 'JSON');
+  if (result.canceled) statusEl.textContent = t('exportação cancelada');
 });
 
 document.getElementById('export-md').addEventListener('click', async () => {
@@ -2902,22 +2913,18 @@ document.getElementById('export-md').addEventListener('click', async () => {
     api.data.call('library:all'),
     api.data.call('notes:all')
   ]);
-  const blob = new Blob([window.MarkdownExport.toMarkdown(pubs, notes)], { type: 'text/markdown' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'library.md';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const result = await saveTextFile(
+    window.MarkdownExport.toMarkdown(pubs, notes),
+    'library.md',
+    'Markdown'
+  );
+  if (result.canceled) statusEl.textContent = t('exportação cancelada');
 });
 
 document.getElementById('export-csv').addEventListener('click', async () => {
   const pubs = await api.data.call('library:all');
-  const blob = new Blob([window.CSVExport.toCSV(pubs)], { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'library.csv';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const result = await saveTextFile(window.CSVExport.toCSV(pubs), 'library.csv', 'CSV');
+  if (result.canceled) statusEl.textContent = t('exportação cancelada');
 });
 
 async function addCollection() {
@@ -2962,13 +2969,10 @@ document.getElementById('export-selected').addEventListener('click', async () =>
   }
   const pubs = await api.data.call('library:all');
   const selected = pubs.filter((p) => ids.includes(p._id));
-  const blob = new Blob([window.BibTeX.toBibtex(selected)], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'selected.bib';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  statusEl.textContent = t('{n} exportada(s)', { n: selected.length });
+  const result = await saveTextFile(window.BibTeX.toBibtex(selected), 'selected.bib', 'BibTeX');
+  statusEl.textContent = result.canceled
+    ? t('exportação cancelada')
+    : t('{n} exportada(s)', { n: selected.length });
 });
 
 document.getElementById('delete-selected').addEventListener('click', async () => {
@@ -3137,8 +3141,9 @@ window.addEventListener('keydown', (event) => {
 });
 
 const launchParams = new URLSearchParams(window.location.search);
-const launchAction = launchParams.get('action');
-const launchFocus = launchParams.get('focus');
+const launchData = window.__CITE_LAUNCH__ || {};
+const launchAction = launchData.action || launchParams.get('action');
+const launchFocus = launchData.id || launchParams.get('focus');
 if (launchFocus) selectedPubId = launchFocus;
 
 function runLaunchAction() {

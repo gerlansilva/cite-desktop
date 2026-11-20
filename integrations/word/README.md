@@ -137,7 +137,7 @@ O arquivo precisa ser público e permitir CORS. Para repositórios privados, use
 O modo de desenvolvimento usa o mesmo servidor do aplicativo:
 
 ```bash
-npm start
+npm run dev
 ```
 
 O servidor do painel sobe junto e fica em `https://localhost:23120/taskpane.html`. Para abrir sem biblioteca, use `?demo=1`.

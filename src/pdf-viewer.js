@@ -5,6 +5,7 @@ const t = window.CiteI18n?.t || ((text) => text);
 
 const params = new URLSearchParams(location.search);
 const file = params.get('file');
+const filePath = params.get('path');
 const attachment = params.get('attachment');
 const pagesEl = document.getElementById('pages');
 const annList = document.getElementById('ann-list');
@@ -25,6 +26,8 @@ const settingsMenu = document.getElementById('settings-menu');
 const moreMenu = document.getElementById('more-menu');
 const lightThemeButton = document.getElementById('light-theme');
 const darkThemeButton = document.getElementById('dark-theme');
+const versionEl = document.getElementById('viewer-version');
+if (versionEl) versionEl.textContent = params.get('v') ? `v${params.get('v')}` : '';
 let notes = [];
 let notesRetryTimer = null;
 const pageMap = new Map();
@@ -351,7 +354,11 @@ function renderTextNote(note, overlay) {
 function renderOverlays() {
   for (const [pageNum, overlay] of pageMap) {
     overlay.innerHTML = '';
-    const pageNotes = notes.filter((n) => Number(n.page) === pageNum);
+    const pageNotes = notes.filter(
+      (n) =>
+        Number(n.page) === pageNum ||
+        (Array.isArray(n.parts) && n.parts.some((part) => Number(part.page) === pageNum))
+    );
     pageNotes.forEach((note, i) => {
       if (note.type === 'shape') {
         renderShape(note, overlay);
@@ -361,10 +368,14 @@ function renderOverlays() {
         renderTextNote(note, overlay);
         return;
       }
-      if (Array.isArray(note.rects) && note.rects.length) {
+      const part = Array.isArray(note.parts)
+        ? note.parts.find((item) => Number(item.page) === pageNum)
+        : null;
+      const geometry = part ? part.rects : Number(note.page) === pageNum ? note.rects : null;
+      if (Array.isArray(geometry) && geometry.length) {
         const mode = note.mode || 'highlight';
         const pageEl = pageElement(pageNum);
-        const displayRects = clampRects(mergeRects(note.rects), pageEl?.clientWidth, pageEl?.clientHeight);
+        const displayRects = clampRects(mergeRects(geometry), pageEl?.clientWidth, pageEl?.clientHeight);
         if (!displayRects.length) return;
         for (const r of displayRects) {
           const rect = document.createElement('div');
@@ -383,9 +394,12 @@ function renderOverlays() {
           });
           overlay.appendChild(rect);
         }
-        addCommentBadge(overlay, note, displayRects[displayRects.length - 1]);
+        if (Number(note.page) === pageNum) {
+          addCommentBadge(overlay, note, displayRects[displayRects.length - 1]);
+        }
         return;
       }
+      if (Number(note.page) !== pageNum) return;
       const div = document.createElement('div');
       div.className = 'hl';
       div.style.top = `${8 + i * 28}px`;
@@ -444,7 +458,13 @@ function renderAnnotations() {
     card.appendChild(quote);
     const meta = document.createElement('span');
     meta.className = 'ann-meta';
-    meta.innerHTML = `<svg class="icon sm"><use href="#i-page"/></svg><span>${t('Página {page}', { page: note.page || '—' })}</span>`;
+    const lastPage = Array.isArray(note.parts) && note.parts.length
+      ? note.parts[note.parts.length - 1].page
+      : note.page;
+    const pageLabel = lastPage && String(lastPage) !== String(note.page)
+      ? `${note.page}–${lastPage}`
+      : note.page || '—';
+    meta.innerHTML = `<svg class="icon sm"><use href="#i-page"/></svg><span>${t('Página {page}', { page: pageLabel })}</span>`;
     card.appendChild(meta);
     if (note.comment) {
       const comment = document.createElement('div');
@@ -605,19 +625,268 @@ function clearSelectionPaint() {
   document.querySelectorAll('.selection-rect').forEach((node) => node.remove());
 }
 
-function paintSelection(pageEl, rects) {
+function paintSelection(parts) {
   clearSelectionPaint();
-  const layer = pageEl?.querySelector('.selection-layer');
-  if (!layer) return;
-  for (const r of rects) {
-    const rect = document.createElement('div');
-    rect.className = 'selection-rect';
-    rect.style.left = `${r.x}px`;
-    rect.style.top = `${r.y}px`;
-    rect.style.width = `${r.w}px`;
-    rect.style.height = `${r.h}px`;
-    layer.appendChild(rect);
+  for (const part of Array.isArray(parts) ? parts : []) {
+    const layer = pageElement(part.page)?.querySelector('.selection-layer');
+    if (!layer) continue;
+    for (const r of part.rects || []) {
+      const rect = document.createElement('div');
+      rect.className = 'selection-rect';
+      rect.style.left = `${r.x}px`;
+      rect.style.top = `${r.y}px`;
+      rect.style.width = `${r.w}px`;
+      rect.style.height = `${r.h}px`;
+      layer.appendChild(rect);
+    }
   }
+}
+
+function pageBoxes() {
+  return [...pagesEl.querySelectorAll('.page')].map((el) => ({
+    el,
+    page: el.dataset.page,
+    rect: el.getBoundingClientRect()
+  }));
+}
+
+function firstTextNode(node) {
+  if (!node) return null;
+  if (node.nodeType === 3) return node.nodeValue?.trim() ? node : null;
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, {
+    acceptNode: (text) =>
+      text.nodeValue?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP
+  });
+  return walker.nextNode();
+}
+
+function lastTextNode(node) {
+  if (!node) return null;
+  if (node.nodeType === 3) return node.nodeValue?.trim() ? node : null;
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+  let last = null;
+  while (walker.nextNode()) {
+    if (walker.currentNode.nodeValue?.trim()) last = walker.currentNode;
+  }
+  return last;
+}
+
+// Quando o arrasto começa ou termina no fundo da página, o WebKit ancora a seleção
+// no elemento inteiro e engole páginas inteiras. Ajusta as pontas para o texto.
+function nearestPageElement(x, y) {
+  const hit = document.elementFromPoint(x, y)?.closest?.('.page');
+  if (hit) return hit;
+  let best = null;
+  for (const el of pagesEl.querySelectorAll('.page')) {
+    const rect = el.getBoundingClientRect();
+    const dx = Math.max(rect.left - x, 0, x - rect.right);
+    const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+    const distance = dx * dx + dy * dy;
+    if (!best || distance < best.distance) best = { distance, el };
+  }
+  return best?.el || null;
+}
+
+function nearestTextPosition(x, y) {
+  const pageEl = nearestPageElement(x, y);
+  if (!pageEl) return null;
+  let best = null;
+  for (const span of pageEl.querySelectorAll('.textLayer span')) {
+    const rect = span.getBoundingClientRect();
+    if (!rect.width || !rect.height) continue;
+    const dx = Math.max(rect.left - x, 0, x - rect.right);
+    const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+    const distance = dx * dx + dy * dy;
+    if (!best || distance < best.distance) best = { distance, span, rect };
+  }
+  const text = best ? firstTextNode(best.span) : null;
+  if (!text) return null;
+  const length = text.nodeValue.length;
+  let offset;
+  if (y >= best.rect.top && y <= best.rect.bottom) {
+    const ratio = Math.min(1, Math.max(0, (x - best.rect.left) / best.rect.width));
+    offset = Math.round(ratio * length);
+  } else {
+    offset = x > best.rect.left + best.rect.width / 2 ? length : 0;
+  }
+  return { node: text, offset };
+}
+
+function textPositionFromPoint(x, y) {
+  let caret = null;
+  try {
+    caret = document.caretRangeFromPoint?.(x, y) || null;
+  } catch {}
+  if (caret) {
+    const node = caret.startContainer;
+    if (node?.nodeType === 3 && node.nodeValue) {
+      return { node, offset: Math.min(caret.startOffset, node.nodeValue.length) };
+    }
+  }
+  return nearestTextPosition(x, y);
+}
+
+function trimSelectionToText(selection, downPoint, upPoint) {
+  if (!selection || selection.isCollapsed) return false;
+  const anchorIsElement = selection.anchorNode?.nodeType === 1;
+  const focusIsElement = selection.focusNode?.nodeType === 1;
+  if (!anchorIsElement && !focusIsElement) return false;
+  let anchorNode = selection.anchorNode;
+  let anchorOffset = selection.anchorOffset;
+  let focusNode = selection.focusNode;
+  let focusOffset = selection.focusOffset;
+  if (anchorIsElement) {
+    const near = downPoint ? nearestTextPosition(downPoint.x, downPoint.y) : null;
+    if (near) {
+      anchorNode = near.node;
+      anchorOffset = near.offset;
+    } else {
+      const children = anchorNode.childNodes;
+      const child = children[Math.min(anchorOffset, children.length - 1)];
+      const text = firstTextNode(child) || firstTextNode(anchorNode);
+      if (!text) return false;
+      anchorNode = text;
+      anchorOffset = 0;
+    }
+  }
+  if (focusIsElement) {
+    const near = upPoint ? nearestTextPosition(upPoint.x, upPoint.y) : null;
+    if (near) {
+      focusNode = near.node;
+      focusOffset = near.offset;
+    } else {
+      const children = focusNode.childNodes;
+      const index = Math.max(0, Math.min(focusOffset - 1, children.length - 1));
+      const text = lastTextNode(children[index]) || lastTextNode(focusNode);
+      if (!text) return false;
+      focusNode = text;
+      focusOffset = text.nodeValue.length;
+    }
+  }
+  try {
+    selection.setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+let manualSelection = null;
+
+function isWordChar(char) {
+  return /[\p{L}\p{N}_'’-]/u.test(char || '');
+}
+
+function wordAt(node, offset) {
+  const value = node.nodeValue || '';
+  let start = Math.min(offset, value.length);
+  let end = start;
+  while (start > 0 && isWordChar(value[start - 1])) start -= 1;
+  while (end < value.length && isWordChar(value[end])) end += 1;
+  if (start === end) return { start: 0, end: value.length };
+  return { start, end };
+}
+
+function lineAt(node, y) {
+  const layer = node.parentElement?.closest?.('.textLayer');
+  if (!layer) return null;
+  const spans = [...layer.querySelectorAll('span')]
+    .map((span) => {
+      const text = firstTextNode(span);
+      return text ? { text, rect: span.getBoundingClientRect() } : null;
+    })
+    .filter(Boolean);
+  const target = spans.find((item) => y >= item.rect.top && y <= item.rect.bottom);
+  if (!target) return null;
+  const center = (target.rect.top + target.rect.bottom) / 2;
+  const row = spans
+    .filter((item) => Math.abs((item.rect.top + item.rect.bottom) / 2 - center) <= 4)
+    .sort((a, b) => a.rect.left - b.rect.left);
+  if (!row.length) return null;
+  return {
+    startNode: row[0].text,
+    endNode: row[row.length - 1].text,
+    endOffset: row[row.length - 1].text.nodeValue.length
+  };
+}
+
+function startManualSelection(event) {
+  if (event.button !== 0) return false;
+  if (activeTool === 'shape' || activeTool === 'text') return false;
+  if (
+    event.target.closest?.(
+      '.hl-rect, .comment-badge, .shape-annotation, .text-annotation,' +
+        ' #comment-editor, #translation-panel, input, textarea, select, [contenteditable]'
+    )
+  ) {
+    return false;
+  }
+  const selection = window.getSelection();
+  if (!selection) return false;
+  if (event.detail >= 2) {
+    let caret = null;
+    try {
+      caret = document.caretRangeFromPoint?.(event.clientX, event.clientY) || null;
+    } catch {}
+    const node = caret?.startContainer;
+    if (node?.nodeType !== 3) return false;
+    if (event.detail >= 3) {
+      const line = lineAt(node, event.clientY);
+      if (line) {
+        selection.setBaseAndExtent(line.startNode, 0, line.endNode, line.endOffset);
+        manualSelection = { anchor: { node: line.startNode, offset: 0 } };
+        event.preventDefault();
+        return true;
+      }
+    }
+    const word = wordAt(node, caret.startOffset);
+    selection.setBaseAndExtent(node, word.start, node, word.end);
+    manualSelection = { anchor: { node, offset: word.start } };
+    event.preventDefault();
+    return true;
+  }
+  if (event.shiftKey && selection.rangeCount && selection.anchorNode?.nodeType === 3) {
+    manualSelection = {
+      anchor: { node: selection.anchorNode, offset: selection.anchorOffset }
+    };
+    event.preventDefault();
+    return true;
+  }
+  const position = textPositionFromPoint(event.clientX, event.clientY);
+  if (!position) return false;
+  manualSelection = { anchor: position };
+  selection.removeAllRanges();
+  const range = document.createRange();
+  range.setStart(position.node, position.offset);
+  range.collapse(true);
+  selection.addRange(range);
+  event.preventDefault();
+  return true;
+}
+
+function updateManualSelection(x, y) {
+  if (!manualSelection) return false;
+  const position = textPositionFromPoint(x, y);
+  if (!position) return false;
+  try {
+    window
+      .getSelection()
+      .setBaseAndExtent(
+        manualSelection.anchor.node,
+        manualSelection.anchor.offset,
+        position.node,
+        position.offset
+      );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function pageFurnitureRects(pageEl) {
+  return [...pageEl.querySelectorAll('.textLayer span.no-select')].map((span) =>
+    span.getBoundingClientRect()
+  );
 }
 
 function readSelection() {
@@ -625,25 +894,111 @@ function readSelection() {
   const text = selection?.toString().trim() || '';
   if (text.length < 2 || !selection.rangeCount) return null;
   const node = selection.anchorNode;
-  const pageEl = (node?.nodeType === 1 ? node : node?.parentElement)?.closest('.page');
-  const page = pageEl?.dataset.page;
-  if (!pageEl || !page) return null;
+  const anchorPage = (node?.nodeType === 1 ? node : node?.parentElement)?.closest('.page');
+  if (!anchorPage) return null;
   const range = selection.getRangeAt(0);
-  const pageRect = pageEl.getBoundingClientRect();
-  const rects = clampRects(
-    mergeRects(
-      [...range.getClientRects()].map((r) => ({
-        x: Math.round((r.left - pageRect.left) / viewerZoom),
-        y: Math.round((r.top - pageRect.top) / viewerZoom),
-        w: Math.round(r.width / viewerZoom),
-        h: Math.round(r.height / viewerZoom)
-      }))
-    ),
-    pageEl.clientWidth || pageRect.width / viewerZoom,
-    pageEl.clientHeight || pageRect.height / viewerZoom
+  const boxes = pageBoxes();
+  const groups = new Map();
+  const furniture = new Map();
+  for (const r of range.getClientRects()) {
+    if (r.width <= 0 || r.height <= 0) continue;
+    let box = null;
+    let bestOverlap = 0;
+    for (const candidate of boxes) {
+      const overlap =
+        Math.min(candidate.rect.bottom, r.bottom) - Math.max(candidate.rect.top, r.top);
+      if (overlap > bestOverlap) {
+        box = candidate;
+        bestOverlap = overlap;
+      }
+    }
+    if (!box) continue;
+    const pageWidth = box.el.clientWidth || box.rect.width;
+    const pageHeight = box.el.clientHeight || box.rect.height;
+    if (r.width >= pageWidth * 0.9 && r.height >= pageHeight * 0.5) continue;
+    if (!furniture.has(box.el)) furniture.set(box.el, pageFurnitureRects(box.el));
+    const isFurniture = furniture.get(box.el).some(
+      (f) =>
+        Math.abs(f.left - r.left) < 3 &&
+        Math.abs(f.top - r.top) < 3 &&
+        Math.abs(f.width - r.width) < 4 &&
+        Math.abs(f.height - r.height) < 4
+    );
+    if (isFurniture) continue;
+    const list = groups.get(box.page) || [];
+    list.push({
+      x: Math.round((r.left - box.rect.left) / viewerZoom),
+      y: Math.round((r.top - box.rect.top) / viewerZoom),
+      w: Math.round(r.width / viewerZoom),
+      h: Math.round(r.height / viewerZoom)
+    });
+    groups.set(box.page, list);
+  }
+  const parts = [];
+  for (const [page, list] of groups) {
+    const el = pageElement(page);
+    const rects = clampRects(mergeRects(list), el?.clientWidth || 0, el?.clientHeight || 0);
+    if (rects.length) parts.push({ page, rects });
+  }
+  parts.sort((a, b) => Number(a.page) - Number(b.page));
+  if (!parts.length) return null;
+  return {
+    page: parts[0].page,
+    pageEl: pageElement(parts[0].page),
+    text,
+    rects: parts[0].rects,
+    parts
+  };
+}
+
+let actionsFrame = 0;
+
+function placeSelectionActions() {
+  if (actions.style.display === 'none') return;
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return;
+  const rects = [...selection.getRangeAt(0).getClientRects()].filter(
+    (r) => r.width > 0 && r.height > 0
   );
-  if (!rects.length) return null;
-  return { pageEl, page, text, rects };
+  if (!rects.length) return;
+  const union = rects.reduce(
+    (acc, r) => ({
+      left: Math.min(acc.left, r.left),
+      top: Math.min(acc.top, r.top),
+      right: Math.max(acc.right, r.right),
+      bottom: Math.max(acc.bottom, r.bottom)
+    }),
+    { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity }
+  );
+  const width = actions.offsetWidth || 320;
+  const height = actions.offsetHeight || 34;
+  const left = Math.max(
+    8,
+    Math.min((union.left + union.right - width) / 2, window.innerWidth - width - 8)
+  );
+  let top = union.top - height - 8;
+  const pageEl = (selection.anchorNode?.nodeType === 1
+    ? selection.anchorNode
+    : selection.anchorNode?.parentElement
+  )?.closest('.page');
+  const pageTop = pageEl ? pageEl.getBoundingClientRect().top : 0;
+  const toolbarBottom = document.getElementById('toolbar')?.getBoundingClientRect().bottom || 0;
+  // Perto do topo da página, sobe o menu para a margem cinza e não cobre o texto.
+  if (pageTop >= height + 8 && union.top - pageTop < height + 20) {
+    const inMargin = Math.max(pageTop - height - 8, toolbarBottom + 4);
+    if (inMargin + height <= pageTop - 4) top = inMargin;
+  }
+  if (top < 8) top = Math.min(union.bottom + 8, window.innerHeight - height - 8);
+  actions.style.left = `${left}px`;
+  actions.style.top = `${top}px`;
+}
+
+function scheduleActionsPlacement() {
+  if (actionsFrame || actions.style.display === 'none') return;
+  actionsFrame = requestAnimationFrame(() => {
+    actionsFrame = 0;
+    placeSelectionActions();
+  });
 }
 
 function clearSelection() {
@@ -664,6 +1019,7 @@ function saveComment() {
         page: pendingSelection.page,
         text: pendingSelection.text,
         rects: pendingSelection.rects,
+        parts: pendingSelection.parts,
         comment,
         mode: activeHighlightMode,
         color: currentColor
@@ -917,11 +1273,11 @@ function requestExport() {
 document.getElementById('export-annotations').addEventListener('click', requestExport);
 document.getElementById('export-annotations-button').addEventListener('click', requestExport);
 document.getElementById('download-button').addEventListener('click', () => {
-  window.parent.postMessage({ type: 'ppd-open-external', path: file }, '*');
+  window.parent.postMessage({ type: 'ppd-open-external', path: filePath || file }, '*');
 });
 document.getElementById('open-external').addEventListener('click', () => {
   closeAllMenus();
-  window.parent.postMessage({ type: 'ppd-open-external', path: file }, '*');
+  window.parent.postMessage({ type: 'ppd-open-external', path: filePath || file }, '*');
 });
 document.getElementById('show-in-cite').addEventListener('click', () => {
   closeAllMenus();
@@ -1035,10 +1391,14 @@ function pageCoordinates(event) {
   };
 }
 
+let lastPointerDown = null;
+
 pagesEl.addEventListener('mousedown', (event) => {
+  lastPointerDown = { x: event.clientX, y: event.clientY };
   clearSelectionPaint();
   pendingSelection = null;
   actions.style.display = 'none';
+  if (startManualSelection(event)) return;
   if (activeTool !== 'shape') return;
   const point = pageCoordinates(event);
   if (!point) return;
@@ -1079,7 +1439,18 @@ pagesEl.addEventListener('mousedown', (event) => {
   document.body.classList.add('drawing');
 });
 
+document.addEventListener('selectstart', (event) => {
+  if (manualSelection) event.preventDefault();
+});
+
 document.addEventListener('mousemove', (event) => {
+  if (manualSelection) {
+    if (event.buttons !== 1) manualSelection = null;
+    else {
+      updateManualSelection(event.clientX, event.clientY);
+      event.preventDefault();
+    }
+  }
   if (!drawState) return;
   const point = pageCoordinates(event);
   if (!point) return;
@@ -1313,11 +1684,15 @@ const actions = document.getElementById('selection-actions');
 
 document.addEventListener('mouseup', (event) => {
   if (
-    event.target.closest('#selection-actions') ||
-    event.target.closest('#comment-editor') ||
-    event.target.closest('#translation-panel')
+    event.target.closest?.('#selection-actions') ||
+    event.target.closest?.('#comment-editor') ||
+    event.target.closest?.('#translation-panel')
   )
     return;
+  trimSelectionToText(window.getSelection(), lastPointerDown, {
+    x: event.clientX,
+    y: event.clientY
+  });
   const info = readSelection();
   if (!info) {
     actions.style.display = 'none';
@@ -1325,13 +1700,74 @@ document.addEventListener('mouseup', (event) => {
     clearSelectionPaint();
     return;
   }
-  pendingSelection = { page: info.page, text: info.text, rects: info.rects };
-  paintSelection(info.pageEl, info.rects);
+  pendingSelection = { page: info.page, text: info.text, rects: info.rects, parts: info.parts };
+  paintSelection(info.parts);
   actions.style.display = 'flex';
-  const maxLeft = window.innerWidth - actions.offsetWidth - 8;
-  actions.style.left = `${Math.max(8, Math.min(event.clientX + 6, maxLeft))}px`;
-  actions.style.top = `${Math.max(8, event.clientY + 6)}px`;
+  placeSelectionActions();
+  scheduleActionsPlacement();
 });
+
+// Rolagem automática ao arrastar a seleção até a borda (permite pegar texto de outra página).
+const mainEl = document.getElementById('main');
+let autoScrollFrame = 0;
+let autoScrollVelocity = 0;
+let pointerX = 0;
+let pointerY = 0;
+
+function stopAutoScroll() {
+  autoScrollVelocity = 0;
+  if (autoScrollFrame) cancelAnimationFrame(autoScrollFrame);
+  autoScrollFrame = 0;
+}
+
+function autoScrollTick() {
+  autoScrollFrame = 0;
+  if (!autoScrollVelocity) return;
+  const before = mainEl.scrollTop;
+  mainEl.scrollTop = before + autoScrollVelocity;
+  if (mainEl.scrollTop === before) {
+    stopAutoScroll();
+    return;
+  }
+  if (manualSelection) updateManualSelection(pointerX, pointerY);
+  autoScrollFrame = requestAnimationFrame(autoScrollTick);
+}
+
+function trackAutoScroll(event) {
+  pointerX = event.clientX;
+  pointerY = event.clientY;
+  if (event.buttons !== 1 || drawState) {
+    stopAutoScroll();
+    return;
+  }
+  const rect = mainEl.getBoundingClientRect();
+  const edge = 40;
+  let velocity = 0;
+  if (pointerY > rect.bottom - edge) {
+    velocity = Math.min(22, 4 + (pointerY - (rect.bottom - edge)) * 0.6);
+  } else if (pointerY < rect.top + edge) {
+    velocity = -Math.min(22, 4 + (rect.top + edge - pointerY) * 0.6);
+  }
+  autoScrollVelocity = Math.round(velocity);
+  if (autoScrollVelocity && !autoScrollFrame) autoScrollFrame = requestAnimationFrame(autoScrollTick);
+}
+
+mainEl.addEventListener('mousemove', trackAutoScroll);
+document.addEventListener('mouseup', () => {
+  manualSelection = null;
+  stopAutoScroll();
+});
+
+mainEl.addEventListener('mousedown', (event) => {
+  if (event.target.closest?.('.page')) return;
+  clearSelectionPaint();
+  pendingSelection = null;
+  actions.style.display = 'none';
+  startManualSelection(event);
+});
+
+document.addEventListener('scroll', scheduleActionsPlacement, true);
+window.addEventListener('resize', scheduleActionsPlacement);
 
 let selectionPaintFrame = 0;
 document.addEventListener('selectionchange', () => {
@@ -1339,8 +1775,10 @@ document.addEventListener('selectionchange', () => {
   selectionPaintFrame = requestAnimationFrame(() => {
     selectionPaintFrame = 0;
     const info = readSelection();
-    if (info) paintSelection(info.pageEl, info.rects);
-    else if (!pendingSelection) clearSelectionPaint();
+    if (info) {
+      paintSelection(info.parts);
+      scheduleActionsPlacement();
+    } else if (!pendingSelection) clearSelectionPaint();
   });
 });
 
@@ -1353,6 +1791,7 @@ function addHighlight(comment) {
       page: pendingSelection.page,
       text: pendingSelection.text,
       rects: pendingSelection.rects,
+      parts: pendingSelection.parts,
       comment,
       mode: activeHighlightMode,
       color: currentColor
@@ -1448,11 +1887,85 @@ document.getElementById('show-annotations').addEventListener('click', () => {
 });
 annSearch.addEventListener('input', renderAnnotations);
 
+let resolveBytes = null;
+const bytesPromise = new Promise((resolve) => {
+  resolveBytes = resolve;
+});
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'ppd-file') {
+    resolveBytes?.(event.data.bytes);
+  }
+});
+
+async function documentSource() {
+  if (filePath && window.cite?.attachments?.read) {
+    const raw = await window.cite.attachments.read(filePath);
+    const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
+    return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  }
+  if (file) return file;
+  const bytes = await bytesPromise;
+  return URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+}
+
+function markPageFurniture(pageEl) {
+  const pageRect = pageEl.getBoundingClientRect();
+  if (!pageRect.height || !pageRect.width) return;
+  const bottomZone = pageRect.bottom - pageRect.height * 0.11;
+  const topZone = pageRect.top + pageRect.height * 0.06;
+  for (const span of pageEl.querySelectorAll('.textLayer span')) {
+    const rect = span.getBoundingClientRect();
+    if (!rect.width || !rect.height) continue;
+    if (rect.top < bottomZone && rect.bottom > topZone) continue;
+    const text = span.textContent.trim();
+    if (!text) continue;
+    const numeric = /^[0-9]{1,4}$/.test(text) || /^[ivxlc]{1,6}$/i.test(text);
+    const rule = /^[_\-–—.·• ]+$/.test(text);
+    if ((numeric && rect.width < pageRect.width * 0.2) || rule) {
+      span.classList.add('no-select');
+    }
+  }
+}
+
+const runningHeads = new Map();
+
+// Cabeçalhos e rodapés corridos repetem o mesmo texto em várias páginas.
+// Marca como não selecionável quando o texto aparece em 3 páginas ou mais.
+function registerRepeatedLines(pageEl) {
+  const pageRect = pageEl.getBoundingClientRect();
+  if (!pageRect.height) return;
+  const zones = [
+    [pageRect.top - 2, pageRect.top + pageRect.height * 0.1],
+    [pageRect.bottom - pageRect.height * 0.1, pageRect.bottom + 2]
+  ];
+  for (const span of pageEl.querySelectorAll('.textLayer span')) {
+    if (span.classList.contains('no-select')) continue;
+    const rect = span.getBoundingClientRect();
+    if (!rect.width || !rect.height) continue;
+    const inZone = zones.some(([top, bottom]) => rect.top >= top && rect.bottom <= bottom);
+    if (!inZone) continue;
+    const key = span.textContent.replace(/\s+/g, ' ').replace(/\d+/g, '#').trim();
+    if (key.length < 5) continue;
+    let entry = runningHeads.get(key);
+    if (!entry) {
+      entry = { pages: new Set(), spans: [] };
+      runningHeads.set(key, entry);
+    }
+    entry.pages.add(pageEl);
+    entry.spans.push(span);
+    if (entry.pages.size >= 3) {
+      entry.spans.forEach((node) => node.classList.add('no-select'));
+    }
+  }
+}
+
 async function render() {
-  if (!file) return;
-  const base = new URL('../node_modules/pdfjs-dist/', location.href).href;
+  const source = await documentSource();
+  if (!source) return;
+  const base = new URL('./pdfjs/', location.href).href;
   const pdf = await pdfjsLib.getDocument({
-    url: file,
+    url: source,
     cMapUrl: `${base}cmaps/`,
     cMapPacked: true,
     standardFontDataUrl: `${base}standard_fonts/`
@@ -1492,6 +2005,8 @@ async function render() {
       });
       await textLayer.render();
     } catch {}
+    markPageFurniture(wrapper);
+    registerRepeatedLines(wrapper);
   }
   renderOverlays();
   renderAnnotations();

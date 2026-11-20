@@ -2,7 +2,7 @@
 
 Gerenciador de referências local para macOS e Windows, inspirado no Paperpile. O Cite organiza a biblioteca, importa metadados, pesquisa artigos online, abre PDFs com anotações e publica a bibliografia em um repositório GitHub.
 
-Versão atual: **0.2.0**.
+Versão atual: **0.3.9**.
 
 ## Interface
 
@@ -58,9 +58,11 @@ No macOS, o Word não mantém add-ins locais fixos na faixa de opções entre se
 
 ## Instalação
 
+O Cite 0.3.9 é um aplicativo Tauri 2. Os builds oficiais saem do workflow do GitHub Actions (`.github/workflows/build.yml`).
+
 ### macOS
 
-1. Abra `Cite-0.2.0-arm64.dmg`.
+1. Abra `Cite_0.3.9_aarch64.dmg`.
 2. Arraste o **Cite** para a pasta **Aplicativos**.
 3. Abra o aplicativo.
 
@@ -68,11 +70,11 @@ O build não é assinado. Se o macOS bloquear a abertura, use **Abrir** pelo men
 
 ### Windows
 
-1. Execute `Cite-Setup-0.2.0.exe`.
-2. Siga as telas do assistente: boas-vindas, pasta de instalação, instalação e conclusão.
+1. Execute `Cite_0.3.9_x64-setup.exe`.
+2. Siga as telas do instalador NSIS: idioma, pasta de instalação, instalação e conclusão.
 3. Ao final, o Cite pode ser aberto imediatamente.
 
-O instalador é x64 e instala por usuário em `%LOCALAPPDATA%\Programs\Cite`, sem exigir administrador. Ele cria atalhos na Área de Trabalho e no Menu Iniciar e registra o desinstalador em **Configurações > Aplicativos**.
+O instalador é x64 e instala por usuário em `%LOCALAPPDATA%\Cite`, sem exigir administrador. Ele cria atalhos na Área de Trabalho e no Menu Iniciar e registra o desinstalador em **Configurações > Aplicativos**. O WebView2 é baixado automaticamente quando não está presente.
 
 O build não tem certificado digital. O Windows pode exibir o aviso do SmartScreen; nesse caso, use **Mais informações > Executar assim mesmo**.
 
@@ -91,83 +93,78 @@ Se a pasta configurada for excluída, movida ou ficar sem permissão de escrita,
 
 ### Requisitos
 
-- Node.js 20 ou superior
-- npm
-- macOS ou Windows
+- Node.js 20 ou superior e npm
+- Rust stable (`rustup`)
+- macOS: Xcode Command Line Tools
+- Windows: Microsoft C++ Build Tools e WebView2 (já presente no Windows 10/11 atualizado)
 
 ### Executar a partir do código
 
 ```bash
 npm ci
-npm run build:viewer
-npm start
+npm run build:assets
+npm run dev
 ```
 
-`npm run build:viewer` gera os bundles do visualizador de PDF e do worker do pdf.js. Execute esse comando após alterar arquivos em `src/pdf-viewer.js` ou `src/pdf-text.js`.
+`npm run build:assets` gera os bundles do visualizador de PDF, o worker do pdf.js e copia `cmaps`/`standard_fonts` para `src/pdfjs`. O comando roda automaticamente antes de `dev` e `build`.
 
 ### Testes
 
 ```bash
-npx playwright test
-npm run test:data
+npm test          # testes Rust
+npm run test:data # testes Node
 ```
 
-Os testes Playwright cobrem biblioteca, busca online, visualizador, PDF, tema, tradução, armazenamento e ferramentas. Os testes de dados usam o runner nativo do Node.js.
+Os testes Rust cobrem store, anexos, citações, BibTeX, backup, rede e GitHub. Os testes Node usam o runner nativo e cobrem citações, BibTeX, RIS, CSV, Markdown e o add-in do Word.
 
 ## Build
 
 ### macOS
 
 ```bash
-npx electron-builder --mac dmg
+npm run build
 ```
 
-Saída: `dist/Cite-0.2.0-arm64.dmg`.
+Saída: `src-tauri/target/release/bundle/macos/Cite.app` e `src-tauri/target/release/bundle/dmg/Cite_0.3.9_aarch64.dmg`. Para um binário universal, use `npm run build:mac`.
 
 ### Windows
+
+Execute no Windows:
 
 ```bash
 npm run build:win
 ```
 
-O comando:
+O comando gera o instalador NSIS em `src-tauri/target/release/bundle/nsis/Cite_0.3.9_x64-setup.exe`. O Tauri exige o toolchain MSVC; o build cruzado a partir do macOS não é suportado.
 
-1. gera os bundles do visualizador;
-2. empacota o aplicativo Windows x64 em `dist/win-unpacked`;
-3. aplica ícone e informações de versão no executável;
-4. compila o instalador NSIS com as telas padrão.
+### Integração contínua
 
-Saída: `dist/Cite-Setup-0.2.0.exe`.
-
-O build Windows requer o compilador **makensis**:
-
-- macOS: `brew install makensis`
-- Windows: instale o NSIS e deixe `makensis` no `PATH`
-
-Também é possível definir o caminho manualmente:
-
-```bash
-MAKENSIS=/caminho/para/makensis npm run build:win
-```
-
-Os arquivos de `dist/` não são versionados. Distribua-os como anexos de uma release do GitHub; o DMG tem cerca de 118 MB e o instalador Windows cerca de 95 MB.
+O workflow `.github/workflows/build.yml` compila macOS (Apple Silicon) e Windows (x64) em runners oficiais e publica os artefatos da execução. Os arquivos de `target/` não são versionados; distribua-os como anexos de uma release do GitHub.
 
 ## Estrutura do projeto
 
 ```text
-main.js                     processo principal do Electron
-preload.js                  ponte segura entre renderer e main
-storage.js                  armazenamento de anexos
+src-tauri/src/lib.rs        comandos Tauri, janelas e ciclo de vida
+src-tauri/src/state.rs      diretórios, storage.json e recuperação
+src-tauri/src/store.rs      biblioteca em library.json
+src-tauri/src/attachments.rs anexos e hash SHA-256
+src-tauri/src/net.rs        busca, DOI, tradução e PDFs
+src-tauri/src/github.rs     publicação e chaveiro do token
+src-tauri/src/backup.rs     backup/restauração .json.gz
+src-tauri/src/word.rs       servidor HTTPS do add-in do Word
+src-tauri/src/citations.rs  estilos de citação
+src-tauri/src/bibtex.rs     exportação BibTeX
+src-tauri/src/windows.rs    criação das janelas
+src-tauri/src/menu.rs       menu nativo macOS/Windows
+src/tauri-api.js            ponte window.cite -> comandos Tauri
 src/ui.html, src/ui.js      biblioteca e interface principal
 src/pdf-viewer.html/.js     visualizador de PDF
 src/pdf-text.js             extração de texto do PDF
-src/data-worker.js          worker de dados
-src/data/db.js              banco IndexedDB com Dexie
 src/*.js                    citações, importação, exportação e utilitários
 integrations/               add-ins para Word e Google Docs
-scripts/                    build e instalador do Windows
+scripts/                    build de assets e servidor do add-in
 build/                      ícones do aplicativo
-tests/                      testes Playwright e testes de dados
+tests/                      testes Rust e testes Node
 ```
 
 ## Dados e privacidade
@@ -177,13 +174,15 @@ tests/                      testes Playwright e testes de dados
 - Anexos são armazenados na subpasta `attachments` da pasta da biblioteca.
 - A busca online envia consultas aos provedores escolhidos.
 - A tradução envia apenas o trecho selecionado ao serviço de tradução configurado. O padrão é o endpoint web do Google Translate.
-- A publicação no GitHub usa um token salvo com o `safeStorage` do Electron e envia a bibliografia ao repositório indicado pelo usuário.
+- A publicação no GitHub usa um token guardado no chaveiro do sistema (`keyring`) e envia a bibliografia ao repositório indicado pelo usuário.
 - Não há telemetria nem analytics.
 
 ## Limitações conhecidas
 
 - Os builds são não assinados; macOS Gatekeeper e Windows SmartScreen podem exibir avisos.
 - O instalador Windows é x64.
+- A instalação automática do add-in do Word existe apenas no macOS; no Windows siga o manifesto manual.
+- Bibliotecas da versão Electron (IndexedDB) não são lidas diretamente: exporte um backup na versão antiga e use **Restaurar** no Cite 0.3.9.
 - Não há sincronização automática entre computadores; a bibliografia pode ser publicada no GitHub e os dados podem ser copiados manualmente.
 - O download de PDFs prioriza acesso aberto. O Cite não contorna paywalls.
 - A tradução depende de um serviço externo e de conexão com a internet.

@@ -4,10 +4,10 @@
 
 | Plataforma | Arquivo | Arquitetura | Tamanho aproximado |
 | --- | --- | --- | --- |
-| macOS | `Cite-0.2.0-arm64.dmg` | Apple Silicon | 118 MB |
-| Windows | `Cite-Setup-0.2.0.exe` | x64 | 95 MB |
+| macOS | `Cite_0.3.9_aarch64.dmg` | Apple Silicon | 6 MB |
+| Windows | `Cite_0.3.9_x64-setup.exe` | x64 | 5 MB |
 
-Os artefatos são gerados em `dist/` e não entram no histórico do Git. Publique-os como anexos de uma release do GitHub.
+Os artefatos são gerados em `src-tauri/target/release/bundle/` e não entram no histórico do Git. Publique-os como anexos de uma release do GitHub.
 
 ## macOS
 
@@ -24,17 +24,18 @@ A biblioteca fica no diretório escolhido no primeiro uso. O arquivo que registr
 
 ## Windows
 
-1. Execute `Cite-Setup-0.2.0.exe`.
-2. Percorra as telas de boas-vindas, escolha da pasta, instalação e conclusão.
+1. Execute `Cite_0.3.9_x64-setup.exe`.
+2. Percorra as telas de instalação do NSIS: idioma, pasta, instalação e conclusão.
 3. Marque **Executar o Cite agora** se quiser abrir ao final.
 
 O instalador:
 
 - é x64;
-- instala por usuário em `%LOCALAPPDATA%\Programs\Cite`;
+- instala por usuário em `%LOCALAPPDATA%\Cite`;
 - não exige privilégios de administrador;
 - cria atalhos na Área de Trabalho e no Menu Iniciar;
 - registra o desinstalador em **Configurações > Aplicativos**;
+- instala o WebView2 automaticamente quando necessário;
 - preserva os dados da biblioteca ao desinstalar.
 
 O executável não possui assinatura digital. Se o SmartScreen exibir um aviso, use **Mais informações > Executar assim mesmo**.
@@ -71,7 +72,7 @@ O macOS pode pedir a senha do usuário ao confiar no certificado. É esperado: o
 - Certificado e chave: `~/Library/Application Support/Cite/word-addin/tls/`
 - Manifesto instalado: `~/Library/Containers/com.microsoft.Word/Data/Documents/wef/cite-word.xml`
 
-No Windows, a instalação automática ainda não está disponível; siga as instruções manuais em [integrations/word/README.md](../integrations/word/README.md).
+No Windows, a integração automática não é suportada (paridade com a versão 0.2.0). Use o fluxo manual em [integrations/word/README.md](../integrations/word/README.md).
 
 ## Desinstalação
 
@@ -97,9 +98,13 @@ xattr -dr com.apple.quarantine /Applications/Cite.app
 
 O instalador não tem certificado de assinatura de código. Use **Mais informações > Executar assim mesmo** ou configure um certificado antes de distribuir.
 
-### O PDF não abre no Windows
+### O PDF não abre
 
-Verifique se o caminho do arquivo contém caracteres especiais e se o arquivo ainda existe. O visualizador usa URLs `file:///` convertidas a partir do caminho local.
+Verifique se o caminho do arquivo contém caracteres especiais e se o arquivo ainda existe. O visualizador lê os bytes pelo comando `attachments.read` e cria um Blob URL; não depende de `file://`.
+
+### A biblioteca da versão anterior não aparece
+
+O Cite 0.3.9 usa `library.json` em vez do IndexedDB do Electron. Abra a versão 0.2.0, gere um backup `.json.gz` e use **Restaurar** no Cite 0.3.9. Copiar apenas a pasta da biblioteca antiga não migra os dados.
 
 ### O painel do Word não conecta
 
