@@ -58,7 +58,7 @@ No macOS, o Word não mantém add-ins locais fixos na faixa de opções entre se
 
 ## Instalação
 
-O Cite 0.3.9 é um aplicativo Tauri 2. Os builds oficiais saem do workflow do GitHub Actions (`.github/workflows/build.yml`).
+O Cite 0.3.9 é um aplicativo Tauri 2. Os instaladores estão na [release v0.3.9](https://github.com/gerlansilva/cite-desktop/releases/tag/v0.3.9); os builds oficiais saem do workflow do GitHub Actions (`.github/workflows/build.yml`).
 
 ### macOS
 
