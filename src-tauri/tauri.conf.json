@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Cite",
-  "version": "0.3.9",
+  "version": "0.3.10",
   "identifier": "com.gerlansilva.cite",
   "build": {
     "beforeDevCommand": "npm run build:assets",
@@ -29,6 +29,7 @@
       "../integrations/word": "integrations/word"
     },
     "macOS": {
+      "signingIdentity": "-",
       "minimumSystemVersion": "10.15"
     },
     "windows": {
